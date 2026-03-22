@@ -8,9 +8,6 @@ pancakes/cook/__pycache__/
 pancakes/datatype/__pycache__/
 pancakes/tool/__pycache__/
 
-# TEST FILES:
-tests/
-
 # USELES DIRECTORY
 pancakes/data/
 
