@@ -1,0 +1,20 @@
+# VENV
+pancakes/.venv/
+
+# CACHE
+pancakes/.pytest_cache/
+pancakes/__pycache__/
+pancakes/cook/__pycache__/
+pancakes/datatype/__pycache__/
+pancakes/tool/__pycache__/
+
+# TEST FILES:
+pancakes/conftest.py
+pancakes/test_class_pancakes_orm.py
+pancakes/test_function_pancakes.py
+
+# USELES DIRECTORY
+pancakes/data/
+
+# DEV-REQUIREMENTS
+pancakes/requirements-dev.txt
