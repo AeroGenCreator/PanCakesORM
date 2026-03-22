@@ -10,7 +10,7 @@
 
 **PanCakesORM: Gestión Evolutiva para SQLite3**
 
-PanCakesORM es un ORM ligero diseñado para acelerar el desarrollo de proyectos, permitiendo que tu base de datos esté lista en apenas unas líneas de código. Con PanCakesORM, el desarrollador se enfoca en la lógica de negocio y el frontend, mientras el motor se encarga del esquema:
+Con PanCakesORM, el desarrollador se enfoca en la lógica de negocio y el frontend, mientras el motor se encarga del esquema:
 
     Sincronización Automática: Gracias a __init_subclass__, 
     las tablas y esquemas se crean o migran en tiempo real al heredar de la clase padre.
@@ -66,7 +66,7 @@ User.write([
 
 ### Consultas con `pancakes`
 ```python
-from pancakes.tool.function import pancakes
+from pancakes.cook.flavor import pancakes
 
 results, columns = pancakes(
     db_path='my_app.db',
@@ -77,4 +77,20 @@ results, columns = pancakes(
     ]
 )
 ```
+## PanCakesORM a Fondo:
 
+1. Clase Padre PanCakesORM: Permite la creación automática de tablas en bases de datos mediante herencia de clase `pancakes/cook/mold.py`.
+
+2. Seguridad y Robustez: * Capa de Sanitización: Implementa métodos avanzados de limpieza y seguridad para prevenir ataques de Inyección SQL.
+
+3. Gestión de Transacciones: Configuración optimizada para múltiples lecturas, con soporte nativo para Rollbacks y Commits que aseguran la integridad de los datos.
+
+4. Operaciones CRUD Optimizadas: Métodos de Escritura (`.write()`), Actualización (`.update()`), Eliminación (`.delete()`) y Lectura (`.pancakes()`) testeados para alto rendimiento `pancakes/cook/mold.py` y `pancakes/cook/flavor`.
+
+5. Conexión Multihilo: Configuración de base de datos preparada para gestionar múltiples lecturas concurrentes de forma estable.
+
+6. Declaración de Tipos: Clases que operan en conjunto con el ORM para definir tipos de datos de forma estructurada `pancakes/datatype/sql_datatype`.
+
+7. SQLite3 ForeignKey(): Clase para relacionar tablas; el ORM gestiona automáticamente los constraints de llaves foráneas sin escribir una sola línea de SQL `pancakes/datatype/sql_datatype`.
+
+8. Método de Consulta Avanzada: Uso del método .query() para sentencias SQL puras. Se recomienda su uso exclusivo para lógica de desarrollo y no para interacción directa con el usuario `pancakes/cook/mold.py`.
