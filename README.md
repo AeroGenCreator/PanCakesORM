@@ -29,3 +29,5 @@ PanCakesORM es un ORM ligero diseñado para acelerar el desarrollo de proyectos,
 
     Preparado para Producción: Incluye logging profesional y está optimizado 
     para evitar validaciones redundantes tras la primera compilación.
+
+[PyPI](https://pypi.org/project/pancakes-orm/)
