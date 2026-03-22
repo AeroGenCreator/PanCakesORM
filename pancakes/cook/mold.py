@@ -8,9 +8,9 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 """
 
 # Modulos Originales
-from datatype import sql_datatype
-from tool.function import db_connection
-from cook.flavor import pancakes
+from ..datatype import sql_datatype
+from ..tool.function import db_connection
+from ..cook.flavor import pancakes
 
 # Modulos de Python
 import warnings

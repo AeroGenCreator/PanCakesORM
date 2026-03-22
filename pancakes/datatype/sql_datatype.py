@@ -5,8 +5,6 @@
 """
 Definiendo Todos Los Tipos De Datos SQLite3 A Traves De Clases
 """
-# Modulo Desarrollo
-import ipdb
 
 
 class DataTypeSQL:

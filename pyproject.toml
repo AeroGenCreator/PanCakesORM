@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pancakes-orm"
+version = "0.1.2"
+description = "Un ORM ligero llamado PanCakes"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name="Andres Alberto Lopez Mendoza", email="gallo85floyd@gmail.com" },
+]
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Database",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pancakes*"]
+exclude = ["tests*", "assets*"]

@@ -7,7 +7,7 @@ Este codigo recopila la funcion de query avanzado.
 """
 
 # Modulos Propios
-from tool.function import db_connection
+from ..tool.function import db_connection
 
 # Modulos Python
 import logging

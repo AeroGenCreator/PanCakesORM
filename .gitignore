@@ -1,5 +1,5 @@
 # VENV
-pancakes/.venv/
+.venv/
 
 # CACHE
 pancakes/.pytest_cache/
@@ -9,12 +9,14 @@ pancakes/datatype/__pycache__/
 pancakes/tool/__pycache__/
 
 # TEST FILES:
-pancakes/conftest.py
-pancakes/test_class_pancakes_orm.py
-pancakes/test_function_pancakes.py
+tests/
 
 # USELES DIRECTORY
 pancakes/data/
 
 # DEV-REQUIREMENTS
 pancakes/requirements-dev.txt
+
+# PROJECT CONF FOR PYPI
+dist/
+*.egg-info
