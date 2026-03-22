@@ -6,9 +6,9 @@
 """ Test Funcion -*- pancakes -*- """
 
 # Modulos Propios
-from cook.mold import PanCakesORM
-from datatype import sql_datatype
-from cook.flavor import pancakes
+from pancakes.cook.mold import PanCakesORM
+from pancakes.datatype import sql_datatype
+from pancakes.cook.flavor import pancakes
 
 # Modulos Python
 from pathlib import Path

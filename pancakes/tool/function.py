@@ -13,7 +13,7 @@ from contextlib import contextmanager
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,  # Captura todo desde DEBUG hacia arriba
+    level=logging.WARNING,  # Captura todo desde DEBUG hacia arriba
     format='%(asctime)s [%(levelname)s] '
     '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
 )

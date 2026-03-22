@@ -10,9 +10,10 @@ pancakes/tool/__pycache__/
 
 # USELES DIRECTORY
 pancakes/data/
+data/
 
 # DEV-REQUIREMENTS
-pancakes/requirements-dev.txt
+requirements-dev.txt
 
 # PROJECT CONF FOR PYPI
 dist/

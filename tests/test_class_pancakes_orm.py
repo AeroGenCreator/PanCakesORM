@@ -6,8 +6,8 @@
 """ Test Main Class -*- PanCakesORM -*- """
 
 # Modulos Propios
-from cook.mold import PanCakesORM
-from datatype import sql_datatype
+from pancakes.cook.mold import PanCakesORM
+from pancakes.datatype import sql_datatype
 
 # Modulos Python
 from pathlib import Path
@@ -165,6 +165,21 @@ def test_update():
         (4, 'Levadura', 5.0, 3)
     ]
 
+def test_update_by_id():
+    Product.update(
+        [
+            {
+            "column": 'price',
+            "value": 18,
+            "on": "product_id",
+            "key": "1"
+            }
+        ]
+    )
+
+    result = Product.return_all()
+    assert result[0] == (1, 'Mantequilla', 18.0, 1)
+
 def test_delete():
 
     Product.write(
@@ -220,4 +235,4 @@ def test_output():
     )
     print()
 
-    # print(pd.DataFrame(data=result,columns=cols))
+    print(pd.DataFrame(data=result,columns=cols))
