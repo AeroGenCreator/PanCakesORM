@@ -30,4 +30,51 @@ PanCakesORM es un ORM ligero diseñado para acelerar el desarrollo de proyectos,
     Preparado para Producción: Incluye logging profesional y está optimizado 
     para evitar validaciones redundantes tras la primera compilación.
 
-[PyPI](https://pypi.org/project/pancakes-orm/)
+[Link a PyPI](https://pypi.org/project/pancakes-orm/)
+
+## 🚀 Instalación
+
+Instálalo directamente desde PyPI:
+
+```bash
+pip install pancakes-orm
+```
+
+## 🛠️ Uso Básico
+
+### Definir un Modelo
+Crea tus tablas definiendo clases que hereden de `PanCakesORM`.
+
+```python
+from pancakes.cook.mold import PanCakesORM
+from pancakes.datatype import sql_datatype
+
+class User(PanCakesORM):
+    _table = 'users'
+    
+    name = sql_datatype.Char(comment='User Name')
+    age = sql_datatype.Integer(comment='User Age')
+```
+
+### Insertar Datos
+```python
+User.write([
+    (None, 'Andres Lopez', 30),
+    (None, 'Gemini AI', 1)
+])
+```
+
+### Consultas con `pancakes`
+```python
+from pancakes.tool.function import pancakes
+
+results, columns = pancakes(
+    db_path='my_app.db',
+    select='*',
+    from_='users',
+    condition=[
+        {'table': 'users', 'column': 'age', 'operator': '>', 'value': 18}
+    ]
+)
+```
+
