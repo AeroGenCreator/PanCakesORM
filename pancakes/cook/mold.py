@@ -1,7 +1,8 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
 """
 Clase Padre Abstracta:
 Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
@@ -18,7 +19,7 @@ from pathlib import Path
 import logging
 
 logging.basicConfig(
-    level=logging.WARNING,  # Captura todo desde DEBUG hacia arriba
+    level=logging.WARNING,  # Captura todo desde WARNING hacia arriba
     format='%(asctime)s [%(levelname)s] '
     '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
 )
@@ -36,6 +37,8 @@ class PanCakesORM:
     Clase dependiente de herencia. Opera despues de ser heredada en
     una clase hija.
 
+    EN EL CONSTRUCTOR:
+
     1. _clean_table_name:
     Valida que la el atributo '_table' exista (dato: str).
     Sanitiza el string.
@@ -51,6 +54,13 @@ class PanCakesORM:
     4. _init_table:
     Genera la tabla en la base de datos.
     Los nombres de columna son sanitizados a traves de "[]".
+
+    SIEMPRE AL CARGAR:
+
+    5. Revisar el esto del loop.
+    Si Es la primera carga del fichero '.py', se actualiza el esquema
+    en la base de datos, de lo contrario. Se salta la sincronizacion
+    del esquema.
     """
 
     # -> _db_dir
@@ -64,6 +74,7 @@ class PanCakesORM:
         cls._init_database()
         cls._get_fields()
         cls._init_table()
+        cls._which_loop()
 
     @classmethod  # Inyeccion Segura | Test Seguro
     def _clean_table_name(cls):
@@ -80,17 +91,21 @@ class PanCakesORM:
                         cleaned.append(char)
                 cleaned = "".join(cleaned)
                 if not cleaned:
-                    raise ValueError(
-                        f'Variable "_table" Has Not Valid Characters'
-                    )
+                    msg = f'Variable "_table" Has Not Valid Characters.'
+                    logger.critical(msg)
+                    raise ValueError(msg)
                 cls._table = cleaned
             else:
-                raise TypeError('Variable "_table" Must Be A String')
+                msg = 'Variable "_table" Must Be A String'
+                logger.critical(msg)
+                raise TypeError(msg)
         else:
-            raise Exception(
-                """There Is No "_table" Variable Defined.
-                Use It To Name Your Table"""
+            msg = (
+                "There Is No '_table' Variable Defined. "
+                "Use It To Name Your Table"
             )
+            logger.critical(msg)
+            raise Exception(msg)
 
     @classmethod  # Test seguro
     def _init_database(cls):
@@ -101,6 +116,8 @@ class PanCakesORM:
         """
         cls._db_dir.mkdir(exist_ok=True, parents=True)
         cls._db_file.touch(exist_ok=True)
+        msg = (f'Structure of directories evaluated at {cls._db_file}.')
+        logger.debug(msg)
 
     @classmethod  # Inyeccion Segura | Test seguro
     def _get_fields(cls):
@@ -273,7 +290,7 @@ class PanCakesORM:
             cls._synchronize_table()
             cls._loop_validation = True
             msg = ('Current schema synchronized.')
-            logger.debug(msg)
+            logger.info(msg)
         else:
             logger.debug(
                 f"Skipping synchronization: "

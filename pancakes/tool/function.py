@@ -13,7 +13,7 @@ from contextlib import contextmanager
 import logging
 
 logging.basicConfig(
-    level=logging.WARNING,  # Captura todo desde DEBUG hacia arriba
+    level=logging.WARNING,  # Captura todo desde WARNING hacia arriba
     format='%(asctime)s [%(levelname)s] '
     '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
 )
@@ -36,11 +36,11 @@ def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
             conn.execute('PRAGMA foreign_keys = OFF;')
         else:
             conn.execute('PRAGMA foreign_keys = ON;')
-        logger.info(f"Opened Connection: database {db_path}")
+        logger.debug(f"Opened Connection: database {db_path}")
         conn.execute('PRAGMA journal_mode = WAL;')
         yield conn, conn.cursor()
         conn.commit()
-        logger.info('SQLite3 succeded commit action.')
+        logger.debug('SQLite3 succeded commit action.')
     except Exception as e:
         conn.rollback()
         logger.error(
@@ -51,4 +51,4 @@ def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
         raise e
     finally:
         conn.close()
-        logger.info(f"Closed Connection: database {db_path}.")
+        logger.debug(f"Closed Connection: database {db_path}.")
