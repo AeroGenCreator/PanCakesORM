@@ -12,6 +12,7 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 from ..datatype import sql_datatype
 from ..tool.function import db_connection
 from ..cook.flavor import pancakes
+from ..cook.ingredient import update
 
 # Modulos de Python
 import warnings
@@ -441,73 +442,25 @@ class PanCakesORM:
             print(f'Table {cls._table} Does Not Exist')
 
     @classmethod
-    def update(cls, parameters: list, update_all: bool = False):
+    def update(
+        cls,
+        params: list,
+        db_path: str = None,
+        update_all: bool = None
+    ):
         """
-        Esta funcion permite actualizar datos de manera dinamica
-        y si es necesario varios a la vez, incluso por distinta condicion.
-
-        Parametros:
-
-        * parameters -> Lista de Diccionarios 'Llaves Obligatorias':
-
-        'column' = Columna Donde Se Hara La Actualizacion
-        'value' = Nuevo valor
-        'on' = Columna Donde Se Realiza La Condicion
-        'key' = Valor De Condicion
-
-        [{'column': ,'value': ,'on', 'key'}]
-
-        La sentencia:
-        UPDATE tabla SET email = nuevo@.gmail.com WHERE id = 20;
-        Equivale:
-        [
-        {'column':'email', 'value':'nuevo@.gmail.com', 'on':'id', 'key':20}
-        ...]
-
-        * update_all -> Valor booleano que permite especificar la operacion
-        de cambio sobre toda la columna.
-        Con el argumento en True, se buscaran las llaves 'column' y 'value'.
+        Invoka a la funcion update()
+        Documentacion de los parametros en /cook/ingredient.py
         """
         cls._which_loop()
-        new_columns, old_columns = cls._columns_table_validation()
-        if update_all:  # Inyeccion Segura
-            errors = []
-            with db_connection(db_path=cls._db_file) as (conn, cur):
-                for dic in parameters:
-                    column = dic.get('column')
-                    value = dic.get('value')
-                    if '[' + column + ']' in new_columns:
-                        sentence = f'UPDATE [{cls._table}] SET [{column}] = ?;'
-                        cur.execute(sentence, (value,))
-                    else:
-                        errors.append(column)
-                if errors:
-                    print(
-                        f"""Following columns do not exist {errors}.
-                        The rest of columns were altered"""
-                    )
-        else:  # Inyeccion Segura
-            errors = []
-            with db_connection(db_path=cls._db_file) as (conn, cur):
-                for dic in parameters:
-                    column = dic.get('column')
-                    value = dic.get('value')
-                    on = dic.get('on')
-                    key = dic.get('key')
-                    if '[' + column + ']' in new_columns:
-                        sentence = f"""
-                        UPDATE [{cls._table}]
-                        SET [{column}] = ?
-                        WHERE [{on}] = ?;"""
-                        data = tuple([value, key])
-                        cur.execute(sentence, data)
-                    else:
-                        errors.append(column)
-                if errors:
-                    print(
-                        f"""Following columns do not exist {errors}.
-                        The rest of columns were altered"""
-                    )
+        db_path = cls._db_file if db_path is None else db_path
+        update_all = False if update_all is None else update_all
+
+        update(
+            db_path=db_path,
+            params=params,
+            update_all=update_all
+        )
 
     @classmethod  # Inyeccion Segura
     def delete(

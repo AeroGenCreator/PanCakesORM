@@ -126,59 +126,54 @@ def test_write():
     ]
 
 def test_update():
-    Product.update(
-            [
-                {
-                'column':'category_id',
-                'value':1,
-                'on':'name',
-                'key':'Mantequilla',
-                },
-                {
-                'column':'category_id',
-                'value':2,
-                'on':'name',
-                'key':'Harina Trigo',
-                },
-                {
-                'column':'category_id',
-                'value':3,
-                'on':'name',
-                'key':'Huevo',
-                },
-                {
-                'column':'category_id',
-                'value':3,
-                'on':'name',
-                'key':'Levadura',
-                },
-
-            ]
-        )
-
-    result = Product.return_all()
-
-    assert result == [
-        (1, 'Mantequilla', 10.5, 1),
-        (2, 'Harina Trigo', 20.0, 2),
-        (3, 'Huevo', 15.5, 3),
-        (4, 'Levadura', 5.0, 3)
-    ]
-
-def test_update_by_id():
-    Product.update(
-        [
+    Category.update(
+        params=[
             {
-            "column": 'price',
-            "value": 18,
-            "on": "product_id",
-            "key": "1"
+            'table':'product',
+            'name':'category_id',
+            'data':3,
+            'condition':[
+                    {
+                    'column':'product_id',
+                    'operator':'in',
+                    'value':[2,3],
+                    }
+                ]
+            },
+            {
+            'table':'product',
+            'name':'category_id',
+            'data':2,
+            'condition':[
+                    {
+                    'column':'product_id',
+                    'operator':'=',
+                    'value':1,
+                    }
+                ]
+            },
+            {
+            'table':'product',
+            'name':'category_id',
+            'data':1,
+            'condition':[
+                    {
+                    'column':'product_id',
+                    'operator':'=',
+                    'value':4,
+                    }
+                ]
             }
         ]
     )
-
     result = Product.return_all()
-    assert result[0] == (1, 'Mantequilla', 18.0, 1)
+
+    assert result == [
+        (1, 'Mantequilla', 10.5, 2),
+        (2, 'Harina Trigo', 20.0, 3),
+        (3, 'Huevo', 15.5, 3),
+        (4, 'Levadura', 5.0, 1)
+    ]
 
 def test_delete():
 
@@ -199,11 +194,10 @@ def test_delete():
     )
 
     result = Product.return_all()
-
     assert result == [
-        (2, 'Harina Trigo', 20.0, 2),
+        (2, 'Harina Trigo', 20.0, 3),
         (3, 'Huevo', 15.5, 3),
-        (4, 'Levadura', 5.0, 3),
+        (4, 'Levadura', 5.0, 1),
         (5, 'Leche', 20.5, 1)
     ]
 
@@ -233,10 +227,10 @@ def test_output():
             }
         ]
     )
-    
+
     assert result == [
-        (1, 1, 1, 2, 3.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 2, 'Harina Trigo', 20.0, 2),
+        (1, 1, 1, 2, 3.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 2, 'Harina Trigo', 20.0, 3),
         (2, 1, 1, 3, 2.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 3, 'Huevo', 15.5, 3),
-        (3, 1, 1, 4, 5.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 4, 'Levadura', 5.0, 3),
+        (3, 1, 1, 4, 5.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 4, 'Levadura', 5.0, 1),
         (4, 1, 1, 1, 8.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', None, None, None, None)
     ]
