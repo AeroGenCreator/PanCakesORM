@@ -233,6 +233,10 @@ def test_output():
             }
         ]
     )
-    print()
-
-    print(pd.DataFrame(data=result,columns=cols))
+    
+    assert result == [
+        (1, 1, 1, 2, 3.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 2, 'Harina Trigo', 20.0, 2),
+        (2, 1, 1, 3, 2.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 3, 'Huevo', 15.5, 3),
+        (3, 1, 1, 4, 5.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', 4, 'Levadura', 5.0, 3),
+        (4, 1, 1, 1, 8.0, 1, 'S1', '2026-03-24', 1, 'Andres', 'Lopez', None, None, None, None)
+    ]

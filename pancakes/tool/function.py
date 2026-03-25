@@ -52,3 +52,13 @@ def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
     finally:
         conn.close()
         logger.debug(f"Closed Connection: database {db_path}.")
+
+def clean_string(string: str):
+    line = [char for char in string if char.isalnum() or char == '_']
+    f_line = "".join(line)
+    if f_line:
+        return f_line
+    else:
+        msg = f'Invalid string passed for cleaning {string}.'
+        logger.critical(msg)
+        raise ValueError(msg)
