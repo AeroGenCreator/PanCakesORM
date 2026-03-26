@@ -5,9 +5,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 """
-Este fichero centraliza las funciones Update y Delete.
-La funcion Read, la cual esta nombrada como pancakes() se haya en:
-/pancakes/cook/flavor.py -> pancakes
+Este fichero centraliza la funcion update()
 """
 
 # Modulos Propios

@@ -5,3 +5,4 @@
 from . import mold
 from . import flavor
 from . import ingredient
+from . import clean
