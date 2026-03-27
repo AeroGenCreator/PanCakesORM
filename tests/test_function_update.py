@@ -120,7 +120,7 @@ def test_update_all_one_table():
             {
             'table':'curso',
             'name':'date',
-            'data': date.today().isoformat()
+            'data':'2026-03-24'
             }
         ],
         update_all=True
@@ -245,6 +245,7 @@ def test_update_one_register_multiple_tables():
     ]
 
 def test_update_one_register_one_table_or():
+
     update(
         db_path=global_path,
         params=[

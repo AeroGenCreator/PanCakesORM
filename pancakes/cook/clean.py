@@ -9,19 +9,11 @@ Este fichero centraliza la funcion delete()
 """
 
 # Modulos Propios
-from ..tool.function import db_connection, clean_string
+from ..tool.function import db_connection, clean_string, logger
 
 # Modulos Python
 import logging
 from pathlib import Path
-
-# Captura todo desde WARNING hacia arriba
-logging.basicConfig(
-    level=logging.WARNING,
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 
 def delete(
@@ -96,7 +88,9 @@ def delete(
         raise TypeError(msg)
 
     if not isinstance(params, list):
-        msg = f'Argument params must be a list of dictionaries. {params}.'
+        msg = (
+            f'Argument params must be a list of dictionaries. {params}.'
+        )
         logger.error(msg)
         raise TypeError(msg)
 
@@ -192,14 +186,19 @@ def delete(
                     b_cache_data.append(b_val)
                     continue
 
-                if (isinstance(b_val, (list, tuple)) and
-                        b_op in ('IN', 'NOT IN')):
+                if b_op in ('IN', 'NOT IN'):
+                    if isinstance(b_val, (list, tuple, set)):
+                        b_mark = f"({', '.join(['?'] * len(b_val))})"
+                        b_line = f"[{b_col}] {b_op} {b_mark} {b_log}"
+                        b_line = b_line.replace("  ", " ").strip()
+                        b_cache_line.append(b_line)
+                        b_cache_data.extend(b_val)
+                        continue
 
-                    b_mark = f"({', '.join(['?'] * len(b_val))})"
-                    b_line = f"[{b_col}] {b_op} {b_mark} {b_log}"
+                    b_line = f"[{b_col}] {b_op} (?) {b_log}"
                     b_line = b_line.replace("  ", " ").strip()
                     b_cache_line.append(b_line)
-                    b_cache_data.extend(b_val)
+                    b_cache_data.append(b_val)
                     continue
 
             del_clause = f"DELETE FROM [{b_table}] "
