@@ -390,7 +390,7 @@ class PanCakesORM:
     @classmethod  # Inyeccion Segura
     def insert(
         cls,
-        chart: list,
+        params: list,
         db_path: str = None
     ):
         """
@@ -402,7 +402,7 @@ class PanCakesORM:
 
         insert(
             db_path=db_path,
-            chart=chart
+            params=params
         )
 
     @classmethod  # Inyeccion Segura

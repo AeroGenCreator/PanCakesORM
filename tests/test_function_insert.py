@@ -82,7 +82,7 @@ class SaleLine(PanCakesORM):
 def test_insert_one_table_one_tuple():
     insert(
         db_path=file,
-        chart=[
+        params=[
             {
             'table':'category',
             'data':[
@@ -98,7 +98,7 @@ def test_insert_one_table_one_tuple():
 def test_insert_two_tables_one_tuple():
     insert(
         db_path=file,
-        chart=[
+        params=[
             {
             'table':'category',
             'data':[
@@ -123,7 +123,7 @@ def test_insert_two_tables_one_tuple():
 def test_insert_one_table_multiple_tuples():
     insert(
         db_path=file,
-        chart=[
+        params=[
             {
             'table':'category',
             'data':[
@@ -147,7 +147,7 @@ def test_insert_one_table_multiple_tuples():
 def test_insert_multiple_tables_multiple_tuples():
     insert(
         db_path=file,
-        chart=[
+        params=[
             {
             'table':'client',
             'data':[

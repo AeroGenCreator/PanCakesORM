@@ -79,7 +79,7 @@ class SaleLine(PanCakesORM):
 
 def test_insert():
     Category.insert(
-        chart=[
+        params=[
             {
             'table':'category',
             'data':[

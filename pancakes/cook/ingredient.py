@@ -12,7 +12,6 @@ Este fichero centraliza la funcion update()
 from ..tool.function import db_connection, clean_string, logger
 
 # Modulos Python
-import logging
 from pathlib import Path
 
 

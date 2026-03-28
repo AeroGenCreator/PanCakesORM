@@ -82,7 +82,7 @@ class CursoEstudiante(PanCakesORM):
 
 insert(
     db_path=global_path,
-    chart=[
+    params=[
         {
         'table':'country',
         'data':[

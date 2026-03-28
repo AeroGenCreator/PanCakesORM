@@ -70,7 +70,7 @@ class SaleLine(PanCakesORM):
 
 insert(
     db_path=file_path,
-    chart=[
+    params=[
         {
         'table':'category',
         'data':[
@@ -169,7 +169,7 @@ def test_delete_one_row_between_condition():
 def test_new_data():
     insert(
         db_path=file_path,
-        chart=[
+        params=[
             {
             'table':'category',
             'data':[
@@ -293,7 +293,7 @@ def test_delete_all_multiple_table():
 def test_new_relational_data():
     insert(
         db_path=file_path,
-        chart=[
+        params=[
             {
             'table':'client',
             'data':[
@@ -350,7 +350,7 @@ def test_delete_relationals_by_cascade():
 def test_delete_relationals_by_force():
     insert(
         db_path=file_path,
-        chart=[
+        params=[
             {
             'table':'product',
             'data':[

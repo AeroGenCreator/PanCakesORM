@@ -17,7 +17,7 @@ from pathlib import Path
 
 def insert(
     db_path: str,
-    chart: list
+    params: list
 ):
     """
     Parametros:
@@ -25,11 +25,11 @@ def insert(
     -*- db_path -*-
     Ruta a la base de datos.
 
-    -*- chart -*-
+    -*- params -*-
     Lista de diccionarios:
     Debe contener las siguientes llaves "table", "data"
 
-    chart = [
+    params = [
         {
         'table':'user',     <- Nombre de tabla
         'data':[(1, 'Omar')]  <- Iterable de tuplas
@@ -50,15 +50,15 @@ def insert(
         logger.critical(msg)
         raise TypeError(type(db_path))
 
-    if not isinstance(chart, list):
-        msg = f"Invalid datatype for 'db_path': {chart}."
+    if not isinstance(params, list):
+        msg = f"Invalid datatype for 'db_path': {params}."
         logger.critical(msg)
-        raise TypeError(type(chart))
+        raise TypeError(type(params))
 
     sentence = []
     data = []
 
-    for i_info in chart:
+    for i_info in params:
 
         if not isinstance(i_info, dict):
             msg = f"Invalid datatype for 'db_path': {i_info}."
