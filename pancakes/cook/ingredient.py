@@ -79,17 +79,17 @@ def update(
     if not isinstance(db_path, (str, Path)):
         msg = (f'Invalid datatype {db_path}.')
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(db_path))
 
     if not isinstance(params, list):
         msg = (f'Invalid datatype {params}.')
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(params))
 
     if not isinstance(update_all, bool):
         msg = (f'Invalid datatype {update_all}.')
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(update_all))
 
     sentences = []
     raw_data = []
@@ -105,11 +105,11 @@ def update(
                     f'dictionaries. {s_info}'
                 )
                 logger.error(msg)
-                raise TypeError(msg)
+                raise TypeError(type(s_info))
 
             if set(s_info.keys()) not in (MIN_KEYS, BAS_KEYS):
                 msg = f'Invalid passed keys for argument "params" {params}.'
-                raise KeyError(msg)
+                raise KeyError(params)
 
             s_tab = clean_string(s_info.get('table', ''))
             s_name = clean_string(s_info.get('name', ''))
@@ -124,7 +124,7 @@ def update(
                     f'{s_con}. Or Invalid datatype.'
                 )
                 logger.error(msg)
-                raise TypeError(msg)
+                raise TypeError(type(s_con))
 
             s_condition = []
             for s_args in s_con:
@@ -135,7 +135,7 @@ def update(
                         f'of dictionaries. {s_args}.'
                     )
                     logger.error(msg)
-                    raise TypeError(msg)
+                    raise TypeError(type(s_args))
 
                 if set(s_args.keys()) not in (COMP_KEYS, LOG_KEYS):
                     msg = (
@@ -143,7 +143,7 @@ def update(
                         f'"conditions" {s_args}.'
                     )
                     logger.error(msg)
-                    raise Exception(msg)
+                    raise Exception(s_args)
 
                 s_col = clean_string(s_args.get('column', ''))
                 s_oper = s_args.get('operator', '').upper()
@@ -153,12 +153,12 @@ def update(
                 if s_oper not in COMPS:
                     msg = f'Invalid operator {s_oper}.'
                     logger.error(msg)
-                    raise Exception(msg)
+                    raise Exception(s_oper)
 
                 if s_logic not in LOGICS:
                     msg = f'Invalid logic operator {s_logic}.'
                     logger.error(msg)
-                    raise Exception(msg)
+                    raise Exception(s_logic)
 
                 if s_oper == 'BETWEEN' and len(s_val) != 2:
                     msg = (
@@ -166,7 +166,7 @@ def update(
                         f'of 2 items for key "value" {s_val}.'
                     )
                     logger.error(msg)
-                    raise TypeError(msg)
+                    raise TypeError(type(s_val))
 
                 if s_oper == 'BETWEEN':
                     s_line = f"[{s_col}] BETWEEN ? AND ? {s_logic}"
@@ -216,14 +216,14 @@ def update(
                     f'"name" and "data" keys only. {params}.'
                 )
                 logger.error(msg)
-                raise Exception(msg)
+                raise Exception(params)
 
             if set(a_info.keys()) != MIN_KEYS:
                 msg = (
                     f'Invalid keys passed for argument "params" {a_info}.'
                 )
                 logger.error(msg)
-                raise KeyError(msg)
+                raise KeyError(a_info)
 
             a_tab = clean_string(a_info.get('table', ''))
             a_name = clean_string(a_info.get('name', ''))

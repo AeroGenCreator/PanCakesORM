@@ -8,23 +8,17 @@ Clase Padre Abstracta:
 Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 """
 
-# Modulos Originales
+# Modulos Originales PanCakesORM
 from ..datatype import sql_datatype
-from ..tool.function import db_connection
+from ..tool.function import db_connection, logger
 from ..cook.flavor import pancakes
 from ..cook.ingredient import update
+from ..cook.clean import delete
+from ..cook.furnace import insert
 
 # Modulos de Python
 import warnings
 from pathlib import Path
-import logging
-
-logging.basicConfig(
-    level=logging.WARNING,  # Captura todo desde WARNING hacia arriba
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 # Ruta Por Defecto Para Cualquier Proyecto:
 # data/mi_app_database.sqlite
@@ -334,8 +328,25 @@ class PanCakesORM:
             return data
 
     # --*-- Metodos: CRUD --*--
+    @classmethod  # PARA DESARROLLADORES
+    def query(cls, command: str):
+        """
+        Metodo Avanzado de Consulta.
+        Pensado Para Desarrolladores.
+        Evitar Que Un input de usuario termine en
+        un query como este.
+        """
+        cls._which_loop()
+        try:
+            with db_connection(db_path=cls._db_file) as (conn, cur):
+                cur.execute(command)
+                columns = [col[0] for col in cur.description]
+                result = cur.fetchall()
+                return result, columns
+        except Exception as e:
+            print(e)
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def pancakes(
         cls,
         db_path: str = None,
@@ -363,7 +374,7 @@ class PanCakesORM:
         order_by = None if order_by is None else order_by
         limit = None if limit is None else limit
 
-        result = pancakes(
+        res, col = pancakes(
             db_path=db_path,
             select=select,
             from_=from_,
@@ -374,74 +385,27 @@ class PanCakesORM:
             order_by=order_by,
             limit=limit
         )
-        return result
+        return res, col
 
-    @classmethod  # PARA DESARROLLADORES
-    def query(cls, command: str):
+    @classmethod  # Inyeccion Segura
+    def insert(
+        cls,
+        chart: list,
+        db_path: str = None
+    ):
         """
-        Metodo Avanzado de Consulta.
-        Pensado Para Desarrolladores.
-        Evitar Que Un input de usuario termine en
-        un query como este.
+        Invoca a la funcion insert()
+        Documentacion de los parametros en /cook/furnace.py
         """
         cls._which_loop()
-        try:
-            with db_connection(db_path=cls._db_file) as (conn, cur):
-                cur.execute(command)
-                columns = [col[0] for col in cur.description]
-                result = cur.fetchall()
-                return result, columns
-        except Exception as e:
-            print(e)
+        db_path = db_path if db_path else cls._db_file
 
-    @classmethod
-    def write(cls, new_data: list):
-        """
-        Metodo "escritura".
-        Este metodo permite insertar data de manera segura.
+        insert(
+            db_path=db_path,
+            chart=chart
+        )
 
-        Parametros: Lista de tuplas, siguiendo el orden de columnas de
-        la tabla.
-
-        new_data = [(indice, valor_1, valor2, ...)]
-
-        IMPORTANTE:
-        El indice puede ser None, esto lo asigna SQLite3 por su cuenta.
-        """
-        marks = None
-        # Obtencion De Las Columnas En Tiempo Real Al Ejecutar Este Metodo
-        new_columns, old_columns = cls._columns_table_validation()
-        dtypes_list = [obj._dtype for obj in cls._fields]
-        # Se suma en uno el largo del calculo para las ? por el hecho de
-        # La columna id, la cual no se pasa en la inyeccion de datos.
-        marks = ", ".join(['?'] * (len(cls._fields) + 1))
-        # Diferencia Tiempo Real Columnas:
-        diference = len(new_columns) - len(old_columns)
-        if cls.table_exists():
-            if diference > 0:
-                cls._table_on_change(
-                    marks=marks,
-                    new_data=new_data,
-                    less_columns=old_columns
-                )
-            elif diference < 0:
-                cls._table_on_change(
-                    marks=marks,
-                    new_data=new_data,
-                    less_columns=new_columns
-                )
-            else:  # Inyeccion segura
-                with db_connection(db_path=cls._db_file) as (conn, cur):
-                    cur.executemany(
-                        f"""
-                        INSERT INTO [{cls._table}]
-                        VALUES({marks});""",
-                        new_data
-                    )
-        else:
-            print(f'Table {cls._table} Does Not Exist')
-
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def update(
         cls,
         params: list,
@@ -449,7 +413,7 @@ class PanCakesORM:
         update_all: bool = None
     ):
         """
-        Invoka a la funcion update()
+        Invoca a la funcion update()
         Documentacion de los parametros en /cook/ingredient.py
         """
         cls._which_loop()
@@ -465,66 +429,23 @@ class PanCakesORM:
     @classmethod  # Inyeccion Segura
     def delete(
         cls,
-        parameters: list,
+        params: list,
+        db_path: str = None,
         delete_all: bool = None,
         force: bool = None
     ):
         """
-        Elimina Filas De Una Tabla;
-
-        Parametros:
-
-        parameters -> Lista De Diccionarios, especifica los parametros
-        de borrado.
-        Lo siguiente:
-        parameters = [{'on':'name', 'key':'andres'}...]
-        Equivale:
-        DELETE FROM <table> WHERE name = andres;
-
-        delete_all -> Simplemente Limpia Toda La Tabla:
-        Lo siguiente con delete_all = True
-        [{'table':'test'}]
-        Equivale:
-        DELETE FROM test;
+        Invoca a la funcion delete()
+        Documentacion de los parametros en /cook/clean.py
         """
-        force = False if not force else force
         cls._which_loop()
-        if not isinstance(parameters, (list, tuple)):
-            print(f"""
-                Invalid data in {parameters}.
-                Parameters must be a list or tuple of dictionaries.
-            """)
-            return
-        if delete_all:  # Inyeccion Segura
-            sentence = f'DELETE FROM [{cls._table}];'
-            with db_connection(
-                db_path=cls._db_file,
-                no_foreign=force
-            ) as (conn, cur):
-                cur.execute(sentence)
+        db_path = db_path if db_path else cls._db_file
+        delete_all = delete_all if delete_all else False
+        force = force if force else False
 
-        else:  # Inyeccion Segura
-            with db_connection(
-                db_path=cls._db_file,
-                no_foreign=force
-            ) as (conn, cur):
-                errors = []
-                valid_columns = []
-                for data in cls._fields:
-                    valid_columns.append("[" + data._name + "]")
-                valid_columns = set(valid_columns)
-                for dic in parameters:
-                    if "[" + dic['on'] + "]" in valid_columns:
-                        column = dic.get('on')
-                        key = dic.get('key')
-                        sentence = f"""
-                        DELETE FROM [{cls._table}]
-                        WHERE [{column}] = ?;"""
-                        cur.execute(sentence, (key,))
-                    else:
-                        errors.append(dic.get('on'))
-                if errors:
-                    print(
-                        f"""Following columns do not exist {errors}.
-                        The rest of columns were altered"""
-                    )
+        delete(
+            db_path=db_path,
+            params=params,
+            delete_all=delete_all,
+            force=force
+        )

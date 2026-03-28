@@ -77,22 +77,22 @@ def delete(
     if not isinstance(db_path, (str, Path)):
         msg = f'Argument "db_path" must be a string. {db_path}.'
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(db_path))
 
     if not all(isinstance(x, bool) for x in [delete_all, force]):
         msg = (
-            f'Argument "delete_all" o "force" must be bools. '
-            f'{db_path, force}.'
+            f'Argument "delete_all" or "force" must be bools. '
+            f'{delete_all, force}.'
         )
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(delete_all), type(force))
 
     if not isinstance(params, list):
         msg = (
             f'Argument params must be a list of dictionaries. {params}.'
         )
         logger.error(msg)
-        raise TypeError(msg)
+        raise TypeError(type(params))
 
     sentences = []
     all_data = []
@@ -109,12 +109,12 @@ def delete(
                     f'{b_dict}.'
                 )
                 logger.error(msg)
-                raise TypeError(msg)
+                raise TypeError(type(b_dict))
 
             if set(b_dict.keys()) != BASIC_SET:
                 msg = f'Invalid passed keys. {b_dict}.'
                 logger.error(msg)
-                raise KeyError(msg)
+                raise KeyError(b_dict)
 
             b_table = clean_string(b_dict.get('table', ''))
             b_condition = b_dict.get('condition', '')
@@ -125,7 +125,7 @@ def delete(
                     f'dictionaries. {b_condition}.'
                 )
                 logger.error(msg)
-                raise TypeError(msg)
+                raise TypeError(type(b_condition))
 
             for b_args in b_condition:
 
@@ -135,12 +135,12 @@ def delete(
                         f'dictionaries. {b_condition}.'
                     )
                 logger.error(msg)
-                raise TypeError(msg)
+                raise TypeError(type(b_condition))
 
                 if set(b_args.keys()) not in (MIN_CON, PLUS_CON):
                     msg = f'Invalid passed keys. {b_args}.'
                     logger.error(msg)
-                    raise KeyError(msg)
+                    raise KeyError(b_args)
 
                 b_col = clean_string(b_args.get('column', ''))
                 b_op = b_args.get('operator', '').upper()
@@ -152,14 +152,14 @@ def delete(
                         f'Invalid value passed for "logic". {b_log}.'
                     )
                     logger.error(msg)
-                    raise KeyError(msg)
+                    raise KeyError(b_log)
 
                 if b_op not in COMPS:
                     msg = (
                         f'Invalid value passed for "operator". {b_op}.'
                     )
                     logger.error(msg)
-                    raise KeyError(msg)
+                    raise KeyError(b_op)
 
                 if b_op == 'BETWEEN' and len(b_val) != 2:
                     msg = (
@@ -167,7 +167,7 @@ def delete(
                         f'with an iterable of two values. {b_val}.'
                     )
                     logger.error(msg)
-                    raise TypeError(msg)
+                    raise TypeError(type(b_val))
 
                 if b_op == 'BETWEEN':
 
@@ -222,7 +222,7 @@ def delete(
                     f'only: "table". {a_dict}.'
                 )
                 logger.error(msg)
-                raise KeyError(msg)
+                raise KeyError(a_dict)
 
             a_table = clean_string(a_dict.get('table', ''))
             a_line = f"DELETE FROM [{a_table}];"

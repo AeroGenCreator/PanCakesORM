@@ -1,7 +1,8 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at 
+# http://www.apache.org/licenses/LICENSE-2.0
 
 """ Test Funcion -*- pancakes -*- """
 
@@ -9,6 +10,7 @@
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 from pancakes.cook.flavor import pancakes
+from pancakes.cook.furnace import insert
 
 # Modulos Python
 from pathlib import Path
@@ -78,38 +80,51 @@ class CursoEstudiante(PanCakesORM):
         on_upd = 'set null')
     fecha = sql_datatype.Text(comment = 'Fecha', nls = False)
 
-Country.write([
-    (None, 'Mexico'),
-    (None, 'Brasil'),
-    (None, 'China'),
-    ])
-
-Estudiante.write([
-        (None, 'Chanchito', 5, True, 7, 1),
-        (None, 'Feliz', 10, False, 7, 1),
-        (None, 'Andres', 30, False, 7, 2),
-        (None, 'Polar', 6, True, 4, 2),
-        (None, 'Malteada', 8, False, 2, 1),
-        ])
-
-Curso.write([
-    (None, 'Matematicas', datetime(2020,6,22).isoformat()),
-    (None, 'Ciencias', datetime(2021,8,15).isoformat()),
-    (None, 'Quimica', datetime(2020,6,20).isoformat()),
-    (None, 'Literatura', datetime(2010,6,20).isoformat()),
-    (None, 'Cocina', datetime(2003,3,9).isoformat()),
-    (None, 'Fisica', datetime(2008,7,10).isoformat()),
-    ])
-
-CursoEstudiante.write(
-    new_data = [
-    (None, 1, 1,'2018'),
-    (None, 2, 1,'2019'),
-    (None, 2, 2,'2018'),
-    (None, 4, 1,'2014'),
-    (None, 4, 2,'2015'),
-    (None, 1, 3,'2019'),
-    ])
+insert(
+    db_path=global_path,
+    chart=[
+        {
+        'table':'country',
+        'data':[
+                (None, 'Mexico'),
+                (None, 'Brasil'),
+                (None, 'China')
+            ]
+        },
+        {
+        'table':'estudiante',
+        'data':[
+                (None, 'Chanchito', 5, True, 7, 1),
+                (None, 'Feliz', 10, False, 7, 1),
+                (None, 'Andres', 30, False, 7, 2),
+                (None, 'Polar', 6, True, 4, 2),
+                (None, 'Malteada', 8, False, 2, 1)
+            ]
+        },
+        {
+        'table':'curso',
+        'data':[
+                (None, 'Matematicas', datetime(2020,6,22).isoformat()),
+                (None, 'Ciencias', datetime(2021,8,15).isoformat()),
+                (None, 'Quimica', datetime(2020,6,20).isoformat()),
+                (None, 'Literatura', datetime(2010,6,20).isoformat()),
+                (None, 'Cocina', datetime(2003,3,9).isoformat()),
+                (None, 'Fisica', datetime(2008,7,10).isoformat())
+            ]
+        },
+        {
+        'table':'curso_estudiante',
+        'data':[
+                (None, 1, 1,'2018'),
+                (None, 2, 1,'2019'),
+                (None, 2, 2,'2018'),
+                (None, 4, 1,'2014'),
+                (None, 4, 2,'2015'),
+                (None, 1, 3,'2019')
+            ]
+        },
+    ]
+)
 
 # -*- TEST QUERY: SELECT AND SPECIAL SELECT -*-
 def test_select_star():
