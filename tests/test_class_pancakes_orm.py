@@ -106,7 +106,7 @@ def test_insert():
             },
             {
             'table':'sale',
-            'data':[(None, 'S1', date.today().isoformat())]
+            'data':[(None, 'S1', '2026-03-28')]
             },
             {
             'table':'sale_line',
@@ -119,6 +119,7 @@ def test_insert():
             }
         ]
     )
+    
     res1 = Category.return_all()
     res2 = Product.return_all()
     res3 = Client.return_all()
@@ -140,7 +141,7 @@ def test_insert():
     (1, 'Andres', 'Lopez'),
     (2, 'Polar', 'Poo')
     ]
-    assert res4 == [(1, 'S1', '2026-03-27')]
+    assert res4 == [(1, 'S1', '2026-03-28')]
     assert res5 == [
     (1, 1, 1, 2, 3.0),
     (2, 1, 1, 3, 2.0), 

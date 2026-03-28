@@ -134,8 +134,8 @@ def delete(
                         f'Argument "condition" must be a list of '
                         f'dictionaries. {b_condition}.'
                     )
-                logger.error(msg)
-                raise TypeError(type(b_condition))
+                    logger.error(msg)
+                    raise TypeError(type(b_condition))
 
                 if set(b_args.keys()) not in (MIN_CON, PLUS_CON):
                     msg = f'Invalid passed keys. {b_args}.'

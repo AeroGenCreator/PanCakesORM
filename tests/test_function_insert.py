@@ -168,7 +168,7 @@ def test_insert_multiple_tables_multiple_tuples():
             {
             'table':'sale',
             'data':[
-                    (None, 'F01', date.today().isoformat())
+                    (None, 'F01', '2026-03-27')
                 ]
             }
         ]
