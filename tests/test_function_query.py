@@ -9,7 +9,6 @@
 # Modulos Propios
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
-from pancakes.cook.flavor import pancakes
 from pancakes.cook.furnace import insert
 from pancakes.cook.layer import query
 

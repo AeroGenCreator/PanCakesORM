@@ -17,7 +17,6 @@ manteniendo hacia el estado del esquema optimizado.
 
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
-from pancakes.cook.flavor import pancakes
 from pathlib import Path
 
 DIR = Path.cwd() / 'data'
