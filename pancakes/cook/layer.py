@@ -157,7 +157,10 @@ def query(
 
             s_all = s_info.get('all', '')
             s_agg = s_info.get('agg', '').upper()
-            s_name = clean_string(s_info.get('name', ''))
+            s_name = s_info.get('name', '')
+
+            if s_name:
+                s_name = clean_string(s_name)
 
             if isinstance(s_all, bool) and s_all is True:
                 s_all_confirm = True
@@ -466,6 +469,7 @@ def query(
 
     sql = " ".join(sql.split())
 
+    # Conexion a la base de datos
     with db_connection(db_path=db_path) as (conn, cur):
         if c_data:
             res = cur.execute(sql, tuple(c_data))

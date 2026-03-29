@@ -54,6 +54,8 @@ def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
         logger.debug(f"Closed Connection: database {db_path}.")
 
 def clean_string(string: str):
+    if string == "*":
+        return string
     line = [char for char in string if char.isalnum() or char == '_']
     f_line = "".join(line)
     if f_line:

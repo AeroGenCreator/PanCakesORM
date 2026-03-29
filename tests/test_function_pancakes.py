@@ -11,6 +11,7 @@ from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 from pancakes.cook.flavor import pancakes
 from pancakes.cook.furnace import insert
+from pancakes.cook.layer import query
 
 # Modulos Python
 from pathlib import Path
@@ -131,17 +132,17 @@ def test_select_star():
     # -----------------------------------------------
     # (select = *, uniones = 1, condiciones = 1)
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = "*",
-        from_ = 'country',
+        _from = 'country',
         join = [
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         condition = [
@@ -161,21 +162,21 @@ def test_select_str():
     # -----------------------------------------------
     # (select = columns, uniones = 1, condiciones = 1)
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_ = 'country',
+        _from = 'country',
         join = [
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         condition = [
@@ -184,7 +185,7 @@ def test_select_str():
             'column':'estudiante_id',
             'operator':'=',
             'value':1,
-            'join':''
+            'logic':''
             }
         ]
     )
@@ -195,34 +196,34 @@ def test_select_str():
 
 def test_select_list():
     # (select = list, uniones = 1, condiciones = 1)
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'name'
+            'name':'name'
             },
             {
-            'column':'age'
+            'name':'age'
             },
             {
-            'column':'is_student'
+            'name':'is_student'
             },
         ],
-        from_ = 'estudiante',
+        _from = 'estudiante',
         join = [
             {
             'join':'inner',
-            'extra':'curso_estudiante',
-            'fkey':'estudiante_id',
-            'origin':'estudiante',
-            'id':'estudiante_id'
+            'tab1':'curso_estudiante',
+            'id1':'estudiante_id',
+            'tab2':'estudiante',
+            'id2':'estudiante_id'
             },
             {
             'join':'inner',
-            'extra':'curso',
-            'fkey':'curso_id',
-            'origin':'curso_estudiante',
-            'id':'curso_id'
+            'tab1':'curso',
+            'id1':'curso_id',
+            'tab2':'curso_estudiante',
+            'id2':'curso_id'
             }
         ],
         condition = [
@@ -244,43 +245,43 @@ def test_select_list():
             ('Feliz', 10, 0)
         ]
 
-def test_special_select_str():
-    # (special_select = str, special = str, uniones = 1, condiciones = 1)
+def test_sp_select_str():
+    # (sp_select = str, special = str, uniones = 1, condiciones = 1)
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'name'
+            'name':'name'
             },
             {
-            'column':'age'
+            'name':'age'
             },
             {
-            'column':'is_student'
+            'name':'is_student'
             }
         ],
-        special_select = [
+        sp_select = [
             {
             'table':'curso',
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_ = 'estudiante',
+        _from = 'estudiante',
         join = [
             {
             'join':'inner',
-            'extra':'curso_estudiante',
-            'fkey':'estudiante_id',
-            'origin':'estudiante',
-            'id':'estudiante_id'
+            'tab1':'curso_estudiante',
+            'id1':'estudiante_id',
+            'tab2':'estudiante',
+            'id2':'estudiante_id'
             },
             {
             'join':'inner',
-            'extra':'curso',
-            'fkey':'curso_id',
-            'origin':'curso_estudiante',
-            'id':'curso_id'
+            'tab1':'curso',
+            'id1':'curso_id',
+            'tab2':'curso_estudiante',
+            'id2':'curso_id'
             }
         ],
         condition = [
@@ -289,7 +290,7 @@ def test_special_select_str():
             'column':'name',
             'operator':'in',
             'value':['Chanchito','Feliz'],
-            'join':''
+            'logic':''
             }
         ]
     )
@@ -303,47 +304,47 @@ def test_special_select_str():
     ('Feliz', 10, 0, 'Literatura')
     ]
 
-def test_special_select_list():
-    # (special_select = list, special = str, uniones = 1, condiciones = 1)
+def test_sp_select_list():
+    # (sp_select = list, special = str, uniones = 1, condiciones = 1)
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'name'
+            'name':'name'
             },
             {
-            'column':'age'
+            'name':'age'
             },
             {
-            'column':'is_student'
+            'name':'is_student'
             }
         ],
-        special_select = [
+        sp_select = [
             {
             'table':'curso',
-            'column':'name',
+            'name':'name',
             },
             {
             'table':'curso',
-            'column':'date',
+            'name':'date',
             }
         ],
-        from_ = 'estudiante',
+        _from = 'estudiante',
         join = [
             {
             'join':'inner',
-            'extra':'curso_estudiante',
-            'fkey':'estudiante_id',
-            'origin':'estudiante',
-            'id':'estudiante_id'
+            'tab1':'curso_estudiante',
+            'id1':'estudiante_id',
+            'tab2':'estudiante',
+            'id2':'estudiante_id'
             },
             {
             'join':'inner',
-            'extra':'curso',
-            'fkey':'curso_id',
-            'origin':'curso_estudiante',
-            'id':'curso_id'
+            'tab1':'curso',
+            'id1':'curso_id',
+            'tab2':'curso_estudiante',
+            'id2':'curso_id'
             }
         ],
         condition = [
@@ -374,17 +375,17 @@ def test_many_to_one():
     # Quien es el padre de...
     # Estudiante "Andres"? en la tabla hija (estudiante)
     
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
         select="*",
-        from_='country',
+        _from='country',
         join=[
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         condition=[
@@ -393,7 +394,7 @@ def test_many_to_one():
             'column':'name',
             'operator':'=',
             'value':'Andres',
-            'join':''
+            'logic':''
             }
         ]
     )
@@ -408,17 +409,17 @@ def test_one_to_many():
     # quienes son los hijos del padre...
     # "Mexico" en tabla padre (curso)
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
         select="*",
-        from_='country',
+        _from='country',
         join=[
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         condition=[
@@ -446,24 +447,24 @@ def test_many_to_many():
     # en
     # Diferences cursos
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
         select="*",
-        from_="estudiante",
+        _from="estudiante",
         join=[
             {
             'join':'left',
-            'extra':'curso_estudiante',
-            'fkey':'estudiante_id',
-            'origin':'estudiante',
-            'id':'estudiante_id'
+            'tab1':'curso_estudiante',
+            'id1':'estudiante_id',
+            'tab2':'estudiante',
+            'id2':'estudiante_id'
             },
             {
             'join':'left',
-            'extra':'curso',
-            'fkey':'curso_id',
-            'origin':'curso_estudiante',
-            'id':'curso_id'
+            'tab1':'curso',
+            'id1':'curso_id',
+            'tab2':'curso_estudiante',
+            'id2':'curso_id'
             }
         ]
     )
@@ -480,10 +481,10 @@ def test_many_to_many():
 
 # -*- TEST NO JOINS | NO CONDITIONS | (SIMPLE QUERY) RETURNS ALL -*-
 def test_no_join():
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = "*",
-        from_ = "country"
+        _from = "country"
     )
 
     # Salida:
@@ -496,10 +497,10 @@ def test_no_join():
 # -*- TEST CONDITIONS -*-
 def test_one_condition():
     # Notar que para este test no paso el argumento join de la condicion:
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
         select="*",
-        from_="estudiante",
+        _from="estudiante",
         condition=[
             {
             'table':'estudiante',
@@ -517,17 +518,17 @@ def test_one_condition():
     ]
 
 def test_multiple_condition_and():
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select="*",
-        from_="estudiante",
+        _from="estudiante",
         condition = [
             {
             'table':'estudiante',
             'column':'name',
             'operator':'in',
             'value': ['Andres', 'Polar', 'Malteada'],
-            'join': 'and'
+            'logic': 'and'
             },
             {
             'table':'estudiante',
@@ -545,24 +546,24 @@ def test_multiple_condition_and():
     ]
 
 def test_multiple_condition_and_or():
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select="*",
-        from_="estudiante",
+        _from="estudiante",
         condition = [
             {
             'table':'estudiante',
             'column':'name',
             'operator':'in',
             'value': ('Andres', 'Polar', 'Malteada'),
-            'join': 'and'
+            'logic': 'and'
             },
             {
             'table': 'estudiante',
             'column': 'age',
             'operator': '>=',
             'value': 8,
-            'join': 'or'
+            'logic': 'or'
             },
             {
             'table': 'estudiante',
@@ -582,38 +583,38 @@ def test_multiple_condition_and_or():
 
 # -*- TEST AGREGATION FUNCTIONS -*-
 def test_simple_agg_func():
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
-        select=[{'agg':'count','column':'name'}],
-        from_='estudiante'
+        select=[{'agg':'count','name':'name'}],
+        _from='estudiante'
         )
 
     assert result == [(5,)]
 
-def test_special_select_agg_func():
+def test_sp_select_agg_func():
 
-    result, cols = pancakes(
+    result, cols = query(
         db_path=global_path,
         select=[
             {
-            'column':'name'
+            'name':'name'
             }
         ],
-        special_select = [
+        sp_select = [
             {
             'agg':'count',
             'table':'country',
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_='estudiante',
+        _from='estudiante',
         join=[
                 {
                 'join':'inner',
-                'extra':'country',
-                'fkey':'country_id',
-                'origin':'estudiante',
-                'id':'country_id'
+                'tab1':'country',
+                'id1':'country_id',
+                'tab2':'estudiante',
+                'id2':'country_id'
                 }
             ]
         )
@@ -626,35 +627,35 @@ def test_special_select_agg_func():
 def test_group_by():
     # Cuenta los estudiantes
     # Agrupados por pais
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
             'agg':'count',
-            'column':'name'
+            'name':'name'
             }
         ],
-        special_select=[
+        sp_select=[
             {
             'table':'country',
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_ = 'estudiante',
+        _from = 'estudiante',
         join = [
             {
             'join':'right',
-            'extra':'country',
-            'fkey':'country_id',
-            'origin':'estudiante',
-            'id':'country_id',
+            'tab1':'country',
+            'id1':'country_id',
+            'tab2':'estudiante',
+            'id2':'country_id',
             }
         ],
         group_by = 
             [
                 {
                 'table':'country',
-                'column':'name'
+                'name':'name'
                 }
             ]
         )
@@ -666,39 +667,39 @@ def test_group_by():
     ]
 
 def test_group_by_multiple():
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'fecha'
+            'name':'fecha'
             }
         ],
-        special_select=[
+        sp_select=[
             {
             'agg':'count',
             'table':'estudiante',
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_ = 'curso_estudiante',
+        _from = 'curso_estudiante',
         join = [
             {
             'join':'right',
-            'extra':'estudiante',
-            'fkey':'estudiante_id',
-            'origin':'curso_estudiante',
-            'id':'estudiante_id',
+            'tab1':'estudiante',
+            'id1':'estudiante_id',
+            'tab2':'curso_estudiante',
+            'id2':'estudiante_id',
             }
         ],
         group_by = 
             [
                 {
                 'table':'estudiante',
-                'column':'name'
+                'name':'name'
                 },
                 {
                 'table':'curso_estudiante',
-                'column':'fecha'
+                'name':'fecha'
                 }
             ]
         )
@@ -718,41 +719,41 @@ def test_group_by_multiple():
 def test_group_by():
     # Cuenta los estudiantes
     # Agrupados por pais
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
             'agg':'count',
-            'column':'name'
+            'name':'name'
             }
         ],
-        special_select=[
+        sp_select=[
             {
             'table':'country',
-            'column':'name'
+            'name':'name'
             }
         ],
-        from_ = 'estudiante',
+        _from = 'estudiante',
         join = [
             {
             'join':'right',
-            'extra':'country',
-            'fkey':'country_id',
-            'origin':'estudiante',
-            'id':'country_id',
+            'tab1':'country',
+            'id1':'country_id',
+            'tab2':'estudiante',
+            'id2':'country_id',
             }
         ],
         group_by = 
             [
                 {
                 'table':'country',
-                'column':'name'
+                'name':'name'
                 }
             ],
         order_by = [
                 {
                 'table':'estudiante',
-                'column':'name',
+                'name':'name',
                 'order':'desc'
                 }
             ]
@@ -773,23 +774,24 @@ def test_group_by():
 
 # -*- TEST SELECT * AND SEPECIAL SELECT * -*-
 def test_s_start_and_sp_star():
-    result, cols = pancakes(
+
+    result, cols = query(
         db_path = global_path,
         select = "*",
-        special_select = [
+        sp_select = [
             {
             'table':'estudiante',
-            'column':'*'
+            'name':'*'
             }
         ],
-        from_ = 'country',
+        _from = 'country',
         join = [
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         condition = [
@@ -807,36 +809,36 @@ def test_s_start_and_sp_star():
 
 # -*- TEST SELECT T1 * | T2 [COLUMNS]: -*- 
 
-def test_t1_star_and_t2_columns():
-    result, cols = pancakes(
+def test_t1_all_and_t2_columns():
+
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'*',
-            'alias': True
+            'all': True
             }
         ],
-        special_select = [
+        sp_select = [
             {
             'agg':'sum',
             'table':'estudiante',
-            'column':'age'
+            'name':'age'
             }
         ],
-        from_ = 'country',
+        _from = 'country',
         join = [
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         group_by = [
             {
             'table':'country',
-            'column':'name'
+            'name':'name'
             }
         ]
     )
@@ -856,41 +858,40 @@ def test_t1_star_and_t2_columns():
 
 # -*- TEST LIMIT -*-
 def test_limit_in_query():
-    result, cols = pancakes(
+    result, cols = query(
         db_path = global_path,
         select = [
             {
-            'column':'*',
-            'alias': True
+            'all': True
             }
         ],
-        special_select = [
+        sp_select = [
             {
             'agg':'sum',
             'table':'estudiante',
-            'column':'age'
+            'name':'age'
             }
         ],
-        from_ = 'country',
+        _from = 'country',
         join = [
             {
             'join':'inner',
-            'extra':'estudiante',
-            'fkey':'country_id',
-            'origin':'country',
-            'id':'country_id'
+            'tab1':'estudiante',
+            'id1':'country_id',
+            'tab2':'country',
+            'id2':'country_id'
             }
         ],
         group_by = [
             {
             'table':'country',
-            'column':'name'
+            'name':'name'
             }
         ],
         order_by = [
             {
             'table':'estudiante',
-            'column':'age',
+            'name':'age',
             'order':'desc'
             }
         ],
@@ -908,8 +909,8 @@ def test_limit_in_query():
     # GROUP BY [c].[name]
     # LIMIT 1;
 
-def test_pancakes_direct_in_class():
-    result, cols = Estudiante.pancakes()
+def test_query_direct_in_class():
+    result, cols = Estudiante.query()
 
     assert result == [
         (1, 'Chanchito', 5, 1, 7, 1),
@@ -919,5 +920,5 @@ def test_pancakes_direct_in_class():
         (5, 'Malteada', 8, 0, 2, 1)
     ]
 
-    print()
+    # print()
     # print(pd.DataFrame(data=result, columns=cols))

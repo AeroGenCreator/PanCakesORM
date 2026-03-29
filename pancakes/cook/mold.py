@@ -11,7 +11,7 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 # Modulos Originales PanCakesORM
 from ..datatype import sql_datatype
 from ..tool.function import db_connection, logger
-from ..cook.flavor import pancakes
+from ..cook.layer import query
 from ..cook.ingredient import update
 from ..cook.clean import delete
 from ..cook.furnace import insert
@@ -329,7 +329,7 @@ class PanCakesORM:
 
     # --*-- Metodos: CRUD --*--
     @classmethod  # PARA DESARROLLADORES
-    def query(cls, command: str):
+    def sql(cls, command: str):
         """
         Metodo Avanzado de Consulta.
         Pensado Para Desarrolladores.
@@ -347,12 +347,12 @@ class PanCakesORM:
             print(e)
 
     @classmethod  # Inyeccion Segura
-    def pancakes(
+    def query(
         cls,
         db_path: str = None,
         select: str | list = None,
-        from_: str = None,
-        special_select: list = None,
+        _from: str = None,
+        sp_select: list = None,
         join: list = None,
         condition: list = None,
         group_by: list = None,
@@ -366,19 +366,19 @@ class PanCakesORM:
         cls._which_loop()
         db_path = cls._db_file if db_path is None else db_path
         select = "*" if select is None else select
-        from_ = cls._table if from_ is None else from_
-        special_select = None if special_select is None else special_select
+        _from = cls._table if _from is None else _from
+        sp_select = None if sp_select is None else sp_select
         join = None if join is None else join
         condition = None if condition is None else condition
         group_by = None if group_by is None else group_by
         order_by = None if order_by is None else order_by
         limit = None if limit is None else limit
 
-        res, col = pancakes(
+        res, col = query(
             db_path=db_path,
             select=select,
-            from_=from_,
-            special_select=special_select,
+            _from=_from,
+            sp_select=sp_select,
             join=join,
             condition=condition,
             group_by=group_by,
