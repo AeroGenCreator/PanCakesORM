@@ -5,7 +5,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 """
-Este codigo recopila la funcion de query avanzado sanitizado .query()
+Este codigo centraliza la funcion de lectura avanzada query()
 """
 
 # Modulos Propios
@@ -34,44 +34,46 @@ def query(
 
     No soporta: HAVING, FOR, PARTITION BY, PIVOT, RECURSIVE CTE, CROSS APPLY.
 
-    :param db_path: Ruta al archivo de base de datos (.db, .sqlite).
+    Params:
+
+    -*- db_path -*- Ruta al archivo de base de datos (.db, .sqlite).
     :type db_path: str | Path
 
-    :param select: Especificación de columnas de la tabla principal.
+    -*- select -*- Especificación de columnas de la tabla principal.
         Si es '*', selecciona todo. Si es lista, usa diccionarios:
         [{'name': str, 'agg': str, 'all': bool}]
     :type select: str | list
 
-    :param _from: Nombre de la tabla de origen principal (T1).
+    -*- _from -*- Nombre de la tabla de origen principal (T1).
     :type _from: str
 
-    :param sp_select: Columnas de tablas relacionadas (Joins).
+    -*- sp_select -*- Columnas de tablas relacionadas (Joins).
         Estructura: [{'table': str, 'name': str, 'agg': str}]
         Soporta name='*' para traer todas las columnas de dicha tabla.
     :type sp_select: list, optional
 
-    :param join: Lista de uniones entre tablas.
+    -*- join -*- Lista de uniones entre tablas.
         Estructura: [{'join': str, 'tab1': str, 'id1': str,
         'tab2': str, 'id2': str}]
         Joins permitidos: 'INNER', 'LEFT', 'RIGHT'.
     :type join: list, optional
 
-    :param condition: Filtros WHERE (sanitizados mediante parámetros ?).
+    -*- condition -*- Filtros WHERE (sanitizados mediante parámetros ?).
         Estructura: [{'table': str, 'column': str, 'operator': str,
         'value': any, 'logic': str}]
         Operadores: '=', '>', 'IN', 'BETWEEN', 'LIKE', 'IS', etc.
     :type condition: list, optional
 
-    :param group_by: Agrupamiento de resultados.
+    -*- group_by -*- Agrupamiento de resultados.
         Estructura: [{'table': str, 'name': str}]
     :type group_by: list, optional
 
-    :param order_by: Ordenamiento de resultados.
+    -*- order_by -*- Ordenamiento de resultados.
         Estructura: [{'table': str, 'name': str, 'order': str}]
         Order: 'ASC', 'DESC' o ''.
     :type order_by: list, optional
 
-    :param limit: Cantidad máxima de registros a retornar.
+    -*- limit -*- Cantidad máxima de registros a retornar.
     :type limit: int, optional
 
     :return: Una tupla con (lista de filas, lista de nombres de columnas).

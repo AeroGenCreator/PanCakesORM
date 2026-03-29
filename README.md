@@ -45,7 +45,7 @@ pip install pancakes-orm
 ## 🛠️ Uso Básico
 
 ### Definir un Modelo
-Crea tus tablas definiendo clases que hereden de `PanCakesORM`.
+Crea tus tablas definiendo clases que hereden de `PanCakesORM`. Atributo `_table` obligatorio.
 
 ```python
 from pancakes.cook.mold import PanCakesORM
@@ -58,22 +58,31 @@ class User(PanCakesORM):
     age = sql_datatype.Integer(comment='User Age')
 ```
 
-### Insertar Datos
+### Insertar Datos con `insert()`
 ```python
-User.write([
-    (None, 'Andres Lopez', 30),
-    (None, 'Gemini AI', 1)
-])
+from pancakes.cook.furnace import insert
+insert(
+    db_path="data/my_app_database.sqlite",
+    params=[
+        {
+        'table':'users',
+        'data':[
+                (None, 'Andres', 25),
+                (None, 'Polar', 10),
+            ]
+        }
+    ]
+)
 ```
 
-### Consultas con `pancakes`
+### Consultas con `query()`
 ```python
-from pancakes.cook.flavor import pancakes
+from pancakes.cook.layer import query
 
-results, columns = pancakes(
-    db_path='my_app.db',
+results, columns = query(
+    db_path="data/my_app_database.sqlite",
     select='*',
-    from_='users',
+    _from='users',
     condition=[
         {'table': 'users', 'column': 'age', 'operator': '>', 'value': 18}
     ]
@@ -87,7 +96,7 @@ results, columns = pancakes(
 
 3. Gestión de Transacciones: Configuración optimizada para múltiples lecturas, con soporte nativo para Rollbacks y Commits que aseguran la integridad de los datos.
 
-4. Operaciones CRUD Optimizadas: Métodos de Escritura (`.write()`), Actualización (`.update()`), Eliminación (`.delete()`) y Lectura (`.pancakes()`) testeados para alto rendimiento `pancakes/cook/mold.py` y `pancakes/cook/flavor`.
+4. Operaciones CRUD Optimizadas: Métodos de Escritura (`.insert()`), Actualización (`.update()`), Eliminación (`.delete()`) y Lectura (`.query()`) testeados para alto rendimiento.
 
 5. Conexión Multihilo: Configuración de base de datos preparada para gestionar múltiples lecturas concurrentes de forma estable.
 
@@ -95,4 +104,4 @@ results, columns = pancakes(
 
 7. SQLite3 ForeignKey(): Clase para relacionar tablas; el ORM gestiona automáticamente los constraints de llaves foráneas sin escribir una sola línea de SQL `pancakes/datatype/sql_datatype`.
 
-8. Método de Consulta Avanzada: Uso del método .query() para sentencias SQL puras. Se recomienda su uso exclusivo para lógica de desarrollo y no para interacción directa con el usuario `pancakes/cook/mold.py`.
+8. Método de Consulta Avanzada: Uso del método .sql() para sentencias SQL puras. Se recomienda su uso exclusivo para lógica de desarrollo y no para interacción directa con el usuario `pancakes/cook/mold.py`.
