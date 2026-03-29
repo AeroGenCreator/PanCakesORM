@@ -183,7 +183,7 @@ def update(
 
                     s_line = f"[{s_col}] {s_oper} (?) {s_logic}"
                     s_condition.append(s_line)
-                    s_cache.extend(s_val)
+                    s_cache.append(s_val)
                     continue
 
                 if isinstance(s_val, (int, float, str, bool)):
