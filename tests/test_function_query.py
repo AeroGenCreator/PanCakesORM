@@ -921,3 +921,39 @@ def test_query_direct_in_class():
 
     # print()
     # print(pd.DataFrame(data=result, columns=cols))
+
+def test_query_multi_table_one_all_one():
+    res, col = query(
+        db_path=global_path,
+        select=[{'name':'fecha'}],
+        _from='curso_estudiante',
+        sp_select=[
+            {'table':'curso', 'name':'*'},
+            {'table':'estudiante', 'name':'name'},
+        ],
+        join=[
+            {
+            'join':'left',
+            'tab1':'curso',
+            'id1':'curso_id',
+            'tab2':'curso_estudiante',
+            'id2':'curso_id'
+            },
+            {
+            'join':'left',
+            'tab1':'estudiante',
+            'id1':'estudiante_id',
+            'tab2':'curso_estudiante',
+            'id2':'estudiante_id'
+            }
+        ]
+    )
+
+    assert res == [
+        ('2018', 1, 'Matematicas', '2020-06-22T00:00:00', 'Chanchito'),
+        ('2019', 2, 'Ciencias', '2021-08-15T00:00:00', 'Chanchito'),
+        ('2018', 2, 'Ciencias', '2021-08-15T00:00:00', 'Feliz'),
+        ('2014', 4, 'Literatura', '2010-06-20T00:00:00', 'Chanchito'),
+        ('2015', 4, 'Literatura', '2010-06-20T00:00:00', 'Feliz'),
+        ('2019', 1, 'Matematicas', '2020-06-22T00:00:00', 'Andres')
+    ]

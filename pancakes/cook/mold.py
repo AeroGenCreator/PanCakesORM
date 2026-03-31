@@ -77,30 +77,28 @@ class PanCakesORM:
         Esta Funcion Valida El Nombre De La Tabla:
         Evita Inyeccion De Datos Al Crear La Tabla.
         """
-        if cls.__dict__.get('_table'):
-            table = cls.__dict__.get('_table')
-            if isinstance(table, str):
-                cleaned = []
-                for char in table:
-                    if char.isalnum() or char == '_':
-                        cleaned.append(char)
-                cleaned = "".join(cleaned)
-                if not cleaned:
-                    msg = f'Variable "_table" Has Not Valid Characters.'
-                    logger.critical(msg)
-                    raise ValueError(msg)
-                cls._table = cleaned
-            else:
-                msg = 'Variable "_table" Must Be A String'
-                logger.critical(msg)
-                raise TypeError(msg)
-        else:
-            msg = (
-                "There Is No '_table' Variable Defined. "
-                "Use It To Name Your Table"
-            )
+        if '_table' not in cls.__dict__.keys():
+            msg = "Key '_table' was not defined."
             logger.critical(msg)
-            raise Exception(msg)
+            raise KeyError
+
+        table = cls.__dict__.get('_table')
+
+        if not isinstance(table, str):
+            msg = 'Variable "_table" Must Be A String'
+            logger.critical(msg)
+            raise TypeError(msg)
+
+        clean = [c for c in table if c.isalnum() or c == '_']
+        c_table = "".join(clean)
+
+        if not c_table:
+            msg = f'Invalid characters passed: {table}.'
+            logger.critical(msg)
+            raise ValueError(msg)
+
+        logger.info(f"New table named as {c_table}")
+        cls._table = c_table
 
     @classmethod  # Test seguro
     def _init_database(cls):
@@ -217,7 +215,12 @@ class PanCakesORM:
         return sql
 
     @classmethod  # Inyeccion Segura
-    def _table_on_change(cls, marks=None, new_data=None, less_columns=None):
+    def _table_on_change(
+        cls,
+        marks=None,
+        new_data=None,
+        less_columns=None
+    ):
         """
         Este metodo edita el esquema basado en la declaracion de clase
         en tiempo real. (renombra  -> crea -> copia data -> elimina).
@@ -228,29 +231,29 @@ class PanCakesORM:
         # Inyeccion Segura
         with db_connection(db_path=cls._db_file) as (conn, cur):
             cur.execute(
-                f"""ALTER TABLE [{cls._table}]
-                RENAME TO [{cls._table + '_old'}];"""
+                f"ALTER TABLE [{cls._table}] "
+                f"RENAME TO [{cls._table + '_old'}];"
             )
             cur.execute(
-                f"""CREATE TABLE IF NOT EXISTS [{cls._table}](
-                [{cls._table}_id] INTEGER PRIMARY KEY,
-                {sql});"""
+                f"CREATE TABLE IF NOT EXISTS [{cls._table}]("
+                f"[{cls._table}_id] INTEGER PRIMARY KEY, "
+                f"{sql});"
             )
             cur.execute(
-                f"""INSERT INTO [{cls._table}]({less_columns})
-                SELECT {less_columns}
-                FROM [{cls._table + '_old'}];"""
+                f"INSERT INTO [{cls._table}]({less_columns}) "
+                f"SELECT {less_columns} "
+                f"FROM [{cls._table + '_old'}];"
             )
             if marks and new_data:
                 cur.executemany(
-                    f"""INSERT INTO [{cls._table}] VALUES({marks})""",
+                    f"INSERT INTO [{cls._table}] VALUES({marks})",
                     new_data
                 )
         with db_connection(
             db_path=cls._db_file,
             no_foreign=True
         ) as (conn, cur):
-            cur.execute(f'DROP TABLE [{cls._table + '_old'}];')
+            cur.execute(f"DROP TABLE [{cls._table + '_old'}];")
 
     @classmethod
     def _synchronize_table(cls):
@@ -323,7 +326,7 @@ class PanCakesORM:
         """
         cls._which_loop()
         with db_connection(db_path=cls._db_file) as (conn, cur):
-            cur.execute(f'SELECT * FROM [{cls._table}];')
+            cur.execute(f"SELECT * FROM [{cls._table}];")
             data = cur.fetchall()
             return data
 
