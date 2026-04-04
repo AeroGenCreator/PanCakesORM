@@ -5,8 +5,8 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 """
-Declaracion De Clase Context Manager: Inyeccion De Dependencia
-(Conexion y Cursor) - Es Utilizada Por La Clase ORM Principal.
+Declaracion De Clase QueryBox() Queries declarativos a traves
+de **kwargs y encadenamiento de metodes.
 """
 
 # Modulos Propios

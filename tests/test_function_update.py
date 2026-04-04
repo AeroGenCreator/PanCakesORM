@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-""" Test Funcion -*- update -*- """
+""" Test Update -*- update -*- """
 
 # Modulos Propios
 from pancakes.cook.mold import PanCakesORM

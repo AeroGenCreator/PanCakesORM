@@ -4,7 +4,7 @@
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-""" Test Box Class -*- PanCakesORM -*- """
+""" Test QueryBox Class -*- PanCakesORM -*- """
 
 # Modulos Propios
 from pancakes.cook.mold import PanCakesORM
