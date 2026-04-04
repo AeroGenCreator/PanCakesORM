@@ -11,6 +11,7 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 # Modulos Originales PanCakesORM
 from ..datatype import sql_datatype
 from ..tool.function import db_connection, logger
+from ..tool.box import QueryBox
 from ..cook.layer import query
 from ..cook.ingredient import update
 from ..cook.clean import delete
@@ -123,6 +124,7 @@ class PanCakesORM:
         se debe iterar la lista y llamara al tributo "_name"
         """
         cls._fields = []
+        cls.comment = [f"{cls._table} Id".capitalize()]
         data = cls.__dict__
 
         column_type = (
@@ -148,6 +150,7 @@ class PanCakesORM:
                     )
                 value._name = clean_name
                 cls._fields.append(value)
+                cls.comment.append(value.comment)
 
     @classmethod  # Inyeccion Segura
     def _init_table(cls):
@@ -388,6 +391,7 @@ class PanCakesORM:
             order_by=order_by,
             limit=limit
         )
+
         return res, col
 
     @classmethod  # Inyeccion Segura
@@ -452,3 +456,7 @@ class PanCakesORM:
             delete_all=delete_all,
             force=force
         )
+
+    @classmethod  # Inyeccion Segura
+    def q(cls):
+        return QueryBox(model=cls)

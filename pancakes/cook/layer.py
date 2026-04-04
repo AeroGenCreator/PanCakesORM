@@ -469,7 +469,7 @@ def query(
         f"{limit_clause};"
     )
 
-    sql = " ".join(sql.split())
+    sql = " ".join(sql.split()).strip()
 
     # Conexion a la base de datos
     with db_connection(db_path=db_path) as (conn, cur):

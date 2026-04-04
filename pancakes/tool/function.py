@@ -1,10 +1,13 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
 """
-Declaracion De Clase Context Manager: Inyeccion De Dependencia
+1. Declaracion De Clase Context Manager: Inyeccion De Dependencia
 (Conexion y Cursor) - Es Utilizada Por La Clase ORM Principal.
+
+2. Funcion de Limpieza de strings
 """
 
 # Modulos Python
@@ -21,7 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
+def db_connection(
+    db_path: str,
+    no_foreign: bool = False,
+    timeout:  int = 10
+):
     """
     Funcion De Conexion E Inyeccion de datos
     Para La Clase Principal Del ORM
@@ -52,6 +59,7 @@ def db_connection(db_path: str, no_foreign: bool = False, timeout:  int = 10):
     finally:
         conn.close()
         logger.debug(f"Closed Connection: database {db_path}.")
+
 
 def clean_string(string: str):
     if string == "*":
