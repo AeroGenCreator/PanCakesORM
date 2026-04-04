@@ -30,38 +30,41 @@ class QueryBox:
         self.order = None
         self.limit = None
         self.ids = False
+        self.row = None
+        self.col = None
 
-    def to_dict(self, rows: list, cols: list):
+    def done(self):
+        return
+
+    def to_dict(self):
         """
         Convierte la salida defecto de un query SQLite3:
         listas de tuplas a -> lista de diccionarios.
+        Forzoso para obtner una salida de datos usando QueryBox.
         """
 
         # Se evalua la repeticion de nombres:
-        # Si existen repeditos se agrega "*N"
-        if len(cols) != len(set(cols)):
-            warnings.warn(
-                f"Repeated names for columns in: {cols}. "
-                f"Try passed 'comment' attribute instead. "
-                f"Make sure to add different strings for "
-                f"'comment' argument when creating a table. "
-                f"Special identifier '*N' has been added to "
-                f"your column names.",
-                UserWarning
-            )
+        # Si existen repeditos se agrega " number"
+        if not self.row or not self.col:
+            return []
+
+        if len(self.col) != len(set(self.col)):
             count = 0
             c_col = []
-            for c in cols:
-                c_col.append(c + f"*{count}")
+            for c in self.col:
+                c_col.append(c + f" {count}")
                 count += 1
 
-            dicc = [dict(zip(c_col, r)) for r in rows]
+            dicc = [dict(zip(c_col, r)) for r in self.row]
 
+            self.reset()
             return dicc
 
         # Si no hay nombres repetidos creamos la lista
         # de diccionarios
-        dicc = [dict(zip(cols, r)) for r in rows]
+        dicc = [dict(zip(self.col, r)) for r in self.row]
+
+        self.reset()
         return dicc
 
     def filter(self, **kwargs):
@@ -458,7 +461,7 @@ class QueryBox:
         self.order = res
         return self
 
-    def lim(self, limit):
+    def lim(self, limit: int):
         """
         Asigna un valor int para limitar el output
         del query.
@@ -510,6 +513,65 @@ class QueryBox:
         if ids != "*":
             row = list(zip(*row))[0]
 
-        self.reset()
+        self.row = row
+        self.col = col
 
-        return row, col
+        return self
+
+    def link(self, *relation):
+
+        # Si no hay datos, salir
+        if not relation:
+            return self
+
+        # Obtener las relaciones en una lista de diccionarios
+        # Imitan el **kwargs de .add()
+        # tipo de union + __ + tabla extra = [id referencia, tabla]
+        
+        kwargs = {}
+
+        # Iteracion sobre los nombre de tablas dadas
+        for rel in relation:
+
+            if not isinstance(rel, str):
+                msg = (
+                    f"Passed table name {rel} "
+                    f"must be a string."
+                )
+                logger.critical(msg)
+                raise TypeError(type(rel))
+
+            field = None
+
+            # Iteramos los "objetos" tipo "campos" <- o sea columnas
+            # "_fields"
+            for f in self.model._fields:
+                
+                # Evaluamos que el campo tenga el atributo:
+                # "second_table".
+                # Que el nombre dado y que el nombre del campo
+                # sean iguales
+                # 
+                # Se guarda y salimos de bucle
+                if (
+                    hasattr(f, "second_table") and
+                    rel == f.second_table
+                ):
+                
+                    field = f
+                    break
+
+            if not field:
+                raise ValueError(
+                    f"Relation to table '{rel}' not found. "
+                    f"You must declare it in table '{self.model._table}'."
+                )
+
+            # Agregamos la relacion al dicc "kwargs"
+            kwargs[f"in__{rel}"] = [field._name ,self.model._table]
+
+        # Ejecutamos la union
+        # Desempaquetamos el diccionario:
+        self.add(**kwargs)
+        
+        return self

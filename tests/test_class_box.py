@@ -10,7 +10,6 @@
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 from pancakes.cook.furnace import insert
-from pancakes.cook.layer import query
 from pancakes.tool.box import QueryBox
 
 # Modulos Python
@@ -101,45 +100,28 @@ insert(
     ]
 )
 
-# De la funcion query a manera global, al API
-def test_box_to_dict():
-    row, col = query(db_path=file,select="*",_from="client")
-    lab = Client.comment
-    api = Client.q().to_dict(row, lab)
-
-    assert api == [
-        {'Client id': 1, 'Client Name': 'Andres', 'Country Rel': 1},
-        {'Client id': 2, 'Client Name': 'Lupita', 'Country Rel': 1},
-        {'Client id': 3, 'Client Name': 'Peke', 'Country Rel': 2},
-        {'Client id': 4, 'Client Name': 'Polar', 'Country Rel': 1},
-        {'Client id': 5, 'Client Name': 'Malteada', 'Country Rel': 2}
-    ]
-
 # API directo (PanCakesORM)(query())(QueryBox) <- Todo en conjunto
 def test_box_meth_all():
-    row, col = Client.q().all()
-    lab = Client.comment
-    api = QueryBox().to_dict(row, lab)
+    api = Client.all().to_dict()
 
-    assert api == [
-        {'Client id': 1, 'Client Name': 'Andres', 'Country Rel': 1},
-        {'Client id': 2, 'Client Name': 'Lupita', 'Country Rel': 1},
-        {'Client id': 3, 'Client Name': 'Peke', 'Country Rel': 2},
-        {'Client id': 4, 'Client Name': 'Polar', 'Country Rel': 1},
-        {'Client id': 5, 'Client Name': 'Malteada', 'Country Rel': 2}
+    api == [
+        {'client_id': 1, 'name': 'Andres', 'country_id': 1},
+        {'client_id': 2, 'name': 'Lupita', 'country_id': 1},
+        {'client_id': 3, 'name': 'Peke', 'country_id': 2},
+        {'client_id': 4, 'name': 'Polar', 'country_id': 1},
+        {'client_id': 5, 'name': 'Malteada', 'country_id': 2}
     ]
 
 
 def test_box_meth_limit_all():
-    row, col = Client.q().lim(2).all()
-    lab = Client.comment
-    api = QueryBox().to_dict(row, lab)
+    api = Client.lim(2).all().to_dict()
     
-    assert api == [
-        {'Client id': 1, 'Client Name': 'Andres', 'Country Rel': 1},
-        {'Client id': 2, 'Client Name': 'Lupita', 'Country Rel': 1}
+    api = [
+        {'client_id': 1, 'name': 'Andres', 'country_id': 1},
+        {'client_id': 2, 'name': 'Lupita', 'country_id': 1}
     ]
 
+"""
 def test_box_meth_join_all():
     row, col = Client.q().add(
         rg__country=['country_id','client'],
@@ -324,3 +306,57 @@ def test_order_add_all():
     {'Client id': 1, 'Client Name': 'Andres', 'Country Rel': 1, 'Country id': 1, 'Country': 'Mexico', 'Sale id': 1, 'Sale Code': 'F1', 'Cliente Rel': 1},
     {'Client id': 1, 'Client Name': 'Andres', 'Country Rel': 1, 'Country id': 1, 'Country': 'Mexico', 'Sale id': 4, 'Sale Code': 'F4', 'Cliente Rel': 1}
     ]
+
+# TEST DE HELPERS DIRECTOS:
+def test_direct_filter():
+    row, col = Client.filter(
+        client__name__in__or=["Andres","Polar"],
+        client__client_id__gtsm=5).all()
+
+    api = Client.q().to_dict(row, col)
+
+    assert api == [
+        {'client_id': 1, 'name': 'Andres', 'country_id': 1},
+        {'client_id': 4, 'name': 'Polar', 'country_id': 1},
+        {'client_id': 5, 'name': 'Malteada', 'country_id': 2}
+    ]
+
+def test_direct_link():
+    row, col = Client.link('country').all()
+
+    api = Client.q().to_dict(row, col)
+
+    assert api == [
+        {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
+        {'client_id 0': 2, 'name 1': 'Lupita', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
+        {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil'},
+        {'client_id 0': 4, 'name 1': 'Polar', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
+        {'client_id 0': 5, 'name 1': 'Malteada', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil'}
+    ]
+
+def test_direct_all():
+    row, col = Country.all()
+
+    api = Client.q().to_dict(row, col)
+
+    assert api == [
+        {'country_id': 1, 'name': 'Mexico'},
+        {'country_id': 2, 'name': 'Brasil'}
+    ]
+
+def test_direct_link_filter():
+    row, col = Sale.link("client").all() # <- Ya no estoy mandando q()
+
+    api = Sale.q().to_dict(row, col)
+
+    assert api == [
+        {'sale_id 0': 1, 'name 1': 'F1', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
+        {'sale_id 0': 2, 'name 1': 'F2', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
+        {'sale_id 0': 3, 'name 1': 'F3', 'client_id 2': 4, 'client_id 3': 4, 'name 4': 'Polar', 'country_id 5': 1},
+        {'sale_id 0': 4, 'name 1': 'F4', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
+        {'sale_id 0': 5, 'name 1': 'F5', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
+        {'sale_id 0': 6, 'name 1': 'F6', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
+        {'sale_id 0': 7, 'name 1': 'F7', 'client_id 2': 5, 'client_id 3': 5, 'name 4': 'Malteada', 'country_id 5': 2},
+        {'sale_id 0': 8, 'name 1': 'F8', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
+        {'sale_id 0': 9, 'name 1': 'F9', 'client_id 2': 2, 'client_id 3': 2, 'name 4': 'Lupita', 'country_id 5': 1}
+    ]"""
