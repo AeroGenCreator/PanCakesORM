@@ -412,7 +412,7 @@ class QueryBox:
         self.group = res
         return self
 
-    def sorts(self, **kwargs):
+    def sort(self, **kwargs):
         """
         """
         DIRECTION = {'DESC', 'ASC', ''}
@@ -509,9 +509,6 @@ class QueryBox:
             order_by=order,
             limit=limit
         )
-
-        if ids != "*":
-            row = list(zip(*row))[0]
 
         self.row = row
         self.col = col

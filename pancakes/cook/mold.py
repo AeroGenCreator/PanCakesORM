@@ -461,6 +461,10 @@ class PanCakesORM:
     def q(cls):
         return QueryBox(model=cls)
 
+    @classmethod
+    def add(cls, **kwargs):
+        return cls.q().add(**kwargs)
+
     @classmethod  # Inyeccion Segura
     def link(cls, *relation):
         return cls.q().link(*relation)
@@ -468,6 +472,14 @@ class PanCakesORM:
     @classmethod  # Inyeccion Segura
     def filter(cls, **kwargs):
         return cls.q().filter(**kwargs)
+
+    @classmethod  # Inyeccion Segura
+    def gp(cls, **kwargs):
+        return cls.q().gp(**kwargs)
+
+    @classmethod  # Inyeccion Segura
+    def sort(cls, **kwargs):
+        return cls.q().sort(**kwargs)
 
     @classmethod
     def lim(cls, num:int = None):
