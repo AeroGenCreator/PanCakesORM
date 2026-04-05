@@ -107,7 +107,7 @@ def query(
 
     J_MIN = {'join', 'tab1', 'id1', 'tab2', 'id2'}
 
-    C_MIN = {'table','column','operator','value'}
+    C_MIN = {'table', 'column', 'operator', 'value'}
     C_PLUS = C_MIN | {'logic'}
 
     G_MIN = {'table', 'name'}
@@ -158,15 +158,13 @@ def query(
                 raise KeyError(s_info)
 
             s_all = s_info.get('all', '')
-            s_agg = s_info.get('agg', '').upper()
-            s_name = s_info.get('name', '')
-
-            if s_name:
-                s_name = clean_string(s_name)
-
             if isinstance(s_all, bool) and s_all is True:
                 s_all_confirm = True
                 break
+
+            s_agg = s_info.get('agg', '').upper()
+            s_name = clean_string(s_info.get('name', ''))
+            s_alias = f"{_from}__{s_name}"
 
             if s_agg != "" and s_agg not in AGGREGS:
                 msg = f"Invalid agregation: {s_agg}."
@@ -174,11 +172,17 @@ def query(
                 raise ValueError(s_agg)
 
             if s_agg:
-                s_line.append(f"{s_agg}([{_from}].[{s_name}])")
+                s_line.append(
+                    f"{s_agg}([{_from}].[{s_name}]) "
+                    f"AS [{s_alias}]"
+                )
                 continue
 
             if s_name and not s_agg:
-                s_line.append(f"[{_from}].[{s_name}]")
+                s_line.append(
+                    f"[{_from}].[{s_name}] "
+                    f"AS [{s_alias}]"
+                )
 
     # Contruccion lista del "SELECT" especial.
     sp_line = []
@@ -207,11 +211,13 @@ def query(
             sp_agg = sp_info.get('agg', '').upper()
             sp_table = clean_string(sp_info.get('table', ''))
             sp_name = clean_string(sp_info.get('name', ''))
+            sp_alias = f"{sp_table}__{sp_name}"
 
             if (
                 not isinstance(sp_agg, str) or
                 not isinstance(sp_table, str) or
-                not isinstance(sp_name, str)
+                not isinstance(sp_name, str) or
+                not isinstance(sp_alias, str)
             ):
                 msg = (
                     f"Invalid datatype: {sp_agg}, "
@@ -228,11 +234,17 @@ def query(
                     raise ValueError(sp_agg)
 
                 if sp_agg:
-                    sp_pre = f"{sp_agg}([{sp_table}].[{sp_name}])"
+                    sp_pre = (
+                        f"{sp_agg}([{sp_table}].[{sp_name}]) "
+                        f"AS [{sp_alias}]"
+                    )
                     sp_line.append(sp_pre)
                     continue
 
-                sp_line.append(f"[{sp_table}].[{sp_name}]")
+                sp_line.append(
+                    f"[{sp_table}].[{sp_name}] "
+                    f"AS [{sp_alias}]"
+                )
 
             else:
                 sp_line.append(f"[{sp_table}].*")
@@ -276,10 +288,10 @@ def query(
                 raise KeyError(j_info)
 
             j_rel = j_info.get('join', '').upper()
-            j_tab1 =clean_string(j_info.get('tab1', ''))
-            j_id1 =clean_string(j_info.get('id1', ''))
-            j_tab2 =clean_string(j_info.get('tab2', ''))
-            j_id2 =clean_string(j_info.get('id2', ''))
+            j_tab1 = clean_string(j_info.get('tab1', ''))
+            j_id1 = clean_string(j_info.get('id1', ''))
+            j_tab2 = clean_string(j_info.get('tab2', ''))
+            j_id2 = clean_string(j_info.get('id2', ''))
 
             if j_rel not in RELATION:
                 msg = f"Invalid relation: {j_rel}."
@@ -291,7 +303,7 @@ def query(
                 f"ON [{j_tab1}].[{j_id1}] = [{j_tab2}].[{j_id2}] "
             )
             j_line.append(j_sub_line)
-        
+
         join_clause = " ".join(j_line)
 
     # Construccion de condiciones "WHERE"
@@ -448,7 +460,7 @@ def query(
 
     # Construccion de "LIMIT"
     limit_clause = ""
-    
+
     if limit:
 
         if not isinstance(limit, int):

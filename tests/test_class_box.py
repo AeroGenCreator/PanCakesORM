@@ -203,9 +203,9 @@ def test_box_meth_id():
         client__name__in=['Polar','Malteada','Peke']).id().all().to_dict()
 
     assert api == [
-    {'client_id': 3},
-    {'client_id': 4},
-    {'client_id': 5}
+    {'client__client_id': 3},
+    {'client__client_id': 4},
+    {'client__client_id': 5}
     ]
 
 def test_box_tuple_of_ids():
@@ -295,3 +295,4 @@ def test_direct_link_filter():
     ]
 
     # hacer to_dict() funcion global en tool.function
+    # helper select()

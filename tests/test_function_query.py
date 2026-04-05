@@ -131,7 +131,7 @@ def test_select_star():
     # -----------------------------------------------
     # (select = *, uniones = 1, condiciones = 1)
 
-    result, cols = query(
+    row, col = query(
         db_path = global_path,
         select = "*",
         _from = 'country',
@@ -155,13 +155,13 @@ def test_select_star():
     )
 
     # Salida:
-    assert result == [(1,'Mexico',1,'Chanchito',5,1,7,1)]
+    assert row == [(1, 'Mexico', 1, 'Chanchito', 5, 1, 7, 1)]
 
 def test_select_str():
     # -----------------------------------------------
     # (select = columns, uniones = 1, condiciones = 1)
 
-    result, cols = query(
+    row, col = query(
         db_path = global_path,
         select = [
             {
@@ -190,12 +190,11 @@ def test_select_str():
     )
 
     # Salida:
-    # 'Mexico'
-    assert result == [('Mexico',)]
+    assert row == [('Mexico',)]
 
 def test_select_list():
     # (select = list, uniones = 1, condiciones = 1)
-    result, cols = query(
+    row, col = query(
         db_path = global_path,
         select = [
             {
@@ -236,7 +235,7 @@ def test_select_list():
     )
 
     # Salida:
-    assert result == [
+    assert row == [
             ('Chanchito', 5, 1),
             ('Chanchito', 5, 1),
             ('Feliz', 10, 0),
@@ -247,7 +246,7 @@ def test_select_list():
 def test_sp_select_str():
     # (sp_select = str, special = str, uniones = 1, condiciones = 1)
 
-    result, cols = query(
+    row, col = query(
         db_path = global_path,
         select = [
             {
@@ -295,7 +294,7 @@ def test_sp_select_str():
     )
 
     # Salida:
-    assert result == [
+    assert row == [
     ('Chanchito', 5, 1, 'Matematicas'),
     ('Chanchito', 5, 1, 'Ciencias'),
     ('Feliz', 10, 0, 'Ciencias'),
