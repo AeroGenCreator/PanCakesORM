@@ -174,7 +174,7 @@ def query(
             if s_agg:
                 s_line.append(
                     f"{s_agg}([{_from}].[{s_name}]) "
-                    f"AS [{s_alias}]"
+                    f"AS [{s_alias}__{s_agg.lower()}]"
                 )
                 continue
 
@@ -236,7 +236,7 @@ def query(
                 if sp_agg:
                     sp_pre = (
                         f"{sp_agg}([{sp_table}].[{sp_name}]) "
-                        f"AS [{sp_alias}]"
+                        f"AS [{sp_alias}__{sp_agg.lower()}]"
                     )
                     sp_line.append(sp_pre)
                     continue

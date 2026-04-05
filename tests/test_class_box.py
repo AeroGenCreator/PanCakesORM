@@ -103,20 +103,20 @@ insert(
 def test_box_meth_all():
     api = Client.all().to_dict()
 
-    api == [
-        {'client_id': 1, 'name': 'Andres', 'country_id': 1},
-        {'client_id': 2, 'name': 'Lupita', 'country_id': 1},
-        {'client_id': 3, 'name': 'Peke', 'country_id': 2},
-        {'client_id': 4, 'name': 'Polar', 'country_id': 1},
-        {'client_id': 5, 'name': 'Malteada', 'country_id': 2}
+    assert api == [
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2}
     ]
 
 def test_box_meth_limit_all():
     api = Client.lim(2).all().to_dict()
     
-    api = [
-        {'client_id': 1, 'name': 'Andres', 'country_id': 1},
-        {'client_id': 2, 'name': 'Lupita', 'country_id': 1}
+    assert api == [
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1}
     ]
 
 def test_box_meth_join_all():
@@ -125,24 +125,25 @@ def test_box_meth_join_all():
         rg__sale=['client_id','client']).all().to_dict()
 
     assert api == [
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 1, 'name 6': 'F1', 'client_id 7': 1},
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 4, 'name 6': 'F4', 'client_id 7': 1},
-    {'client_id 0': 2, 'name 1': 'Lupita', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 9, 'name 6': 'F9', 'client_id 7': 2},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 2, 'name 6': 'F2', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 5, 'name 6': 'F5', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 6, 'name 6': 'F6', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 8, 'name 6': 'F8', 'client_id 7': 3},
-    {'client_id 0': 4, 'name 1': 'Polar', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 3, 'name 6': 'F3', 'client_id 7': 4},
-    {'client_id 0': 5, 'name 1': 'Malteada', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 7, 'name 6': 'F7', 'client_id 7': 5}
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1},
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1},
+    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 9, 'sale__name': 'F9', 'sale__client_id': 2},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 2, 'sale__name': 'F2', 'sale__client_id': 3},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 8, 'sale__name': 'F8', 'sale__client_id': 3},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5}
     ]
- 
+
+
 def test_box_meth_join_lim_all():
     api = Client.q().add(
         rg__country=['country_id','client'],
         rg__sale=['client_id','client']).lim(1).all().to_dict()
 
     assert api == [
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 1, 'name 6': 'F1', 'client_id 7': 1}
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1}
     ]
 
 def test_box_meth_filter_between_all():
@@ -150,31 +151,31 @@ def test_box_meth_filter_between_all():
     api = Sale.q().filter(sale__sale_id__btwn=[3,6]).all().to_dict()
 
     assert api == [
-    {'sale_id': 3, 'name': 'F3', 'client_id': 4},
-    {'sale_id': 4, 'name': 'F4', 'client_id': 1},
-    {'sale_id': 5, 'name': 'F5', 'client_id': 3},
-    {'sale_id': 6, 'name': 'F6', 'client_id': 3}
+    {'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4},
+    {'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1},
+    {'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3},
+    {'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3}
     ]
 
 def test_box_meth_filter_in_all():
     api = Sale.filter(sale__sale_id__in=[3, 4]).all().to_dict()
 
     assert api == [
-    {'sale_id': 3, 'name': 'F3', 'client_id': 4},
-    {'sale_id': 4, 'name': 'F4', 'client_id': 1}
+    {'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4},
+    {'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1}
     ]
 
 def test_box_meth_filter_ind_all():
     api = Sale.filter(sale__name__same="F1").all().to_dict()
 
-    assert api == [{'sale_id': 1, 'name': 'F1', 'client_id': 1}]
+    assert api == [{'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1}]
 
 def test_box_meth_filter_logic_all():
     api = Sale.filter(sale__sale_id__btwn__and=[1,3],
         sale__client_id__same=1
         ).all().to_dict()
 
-    assert api == [{'sale_id': 1, 'name': 'F1', 'client_id': 1}]
+    assert api == [{'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1}]
 
 def test_box_meth_filter_logic_join_all():
     api = Sale.filter(
@@ -183,19 +184,19 @@ def test_box_meth_filter_logic_join_all():
         ).link('client').all().to_dict()
 
     assert api == [
-    {'sale_id 0': 1, 'name 1': 'F1', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
-    {'sale_id 0': 7, 'name 1': 'F7', 'client_id 2': 5, 'client_id 3': 5, 'name 4': 'Malteada', 'country_id 5': 2}
+    {'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1, 'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5, 'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2}
     ]
 
 def test_box_meth_filter_numeric():
     api = Sale.filter(sale__sale_id__gt=4).all().to_dict()
 
     assert api == [
-    {'sale_id': 5, 'name': 'F5', 'client_id': 3},
-    {'sale_id': 6, 'name': 'F6', 'client_id': 3},
-    {'sale_id': 7, 'name': 'F7', 'client_id': 5},
-    {'sale_id': 8, 'name': 'F8', 'client_id': 3},
-    {'sale_id': 9, 'name': 'F9', 'client_id': 2}
+    {'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3},
+    {'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3},
+    {'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5},
+    {'sale__sale_id': 8, 'sale__name': 'F8', 'sale__client_id': 3},
+    {'sale__sale_id': 9, 'sale__name': 'F9', 'sale__client_id': 2}
     ]
 
 def test_box_meth_id():
@@ -212,9 +213,9 @@ def test_box_tuple_of_ids():
     api = Client.filter(client__client_id__in=(3, 4, 5)).all().to_dict()
 
     assert api == [
-    {'client_id': 3, 'name': 'Peke', 'country_id': 2},
-    {'client_id': 4, 'name': 'Polar', 'country_id': 1},
-    {'client_id': 5, 'name': 'Malteada', 'country_id': 2}
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2}
     ]
 
 def test_box_meth_gp_all():
@@ -222,10 +223,9 @@ def test_box_meth_gp_all():
         client='country_id').link('client').all().to_dict()
 
     assert api == [
-    {'sale_id 0': 1, 'name 1': 'F1', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
-    {'sale_id 0': 2, 'name 1': 'F2', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2}
+    {'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1, 'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'sale__sale_id': 2, 'sale__name': 'F2', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2}
     ]
-
 
 def test_order_add_all():
     # En este caso ocupo el metodo verboso de add()
@@ -237,15 +237,15 @@ def test_order_add_all():
         rg__sale=['client_id','client']).all().to_dict()
 
     assert api == [
-    {'client_id 0': 4, 'name 1': 'Polar', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 3, 'name 6': 'F3', 'client_id 7': 4},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 2, 'name 6': 'F2', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 5, 'name 6': 'F5', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 6, 'name 6': 'F6', 'client_id 7': 3},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 8, 'name 6': 'F8', 'client_id 7': 3},
-    {'client_id 0': 5, 'name 1': 'Malteada', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil', 'sale_id 5': 7, 'name 6': 'F7', 'client_id 7': 5},
-    {'client_id 0': 2, 'name 1': 'Lupita', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 9, 'name 6': 'F9', 'client_id 7': 2},
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 1, 'name 6': 'F1', 'client_id 7': 1},
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico', 'sale_id 5': 4, 'name 6': 'F4', 'client_id 7': 1}
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1, 'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'sale__sale_id': 2, 'sale__name': 'F2', 'sale__client_id': 3, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'sale__sale_id': 8, 'sale__name': 'F8', 'sale__client_id': 3, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2, 'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1, 'sale__sale_id': 9, 'sale__name': 'F9', 'sale__client_id': 2, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1, 'country__country_id': 1, 'country__name': 'Mexico'}
     ]
 
 # TEST DE HELPERS DIRECTOS:
@@ -255,44 +255,94 @@ def test_direct_filter():
         client__client_id__gtsm=5).all().to_dict()
 
     assert api == [
-    {'client_id': 1, 'name': 'Andres', 'country_id': 1},
-    {'client_id': 4, 'name': 'Polar', 'country_id': 1},
-    {'client_id': 5, 'name': 'Malteada', 'country_id': 2}
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2}
     ]
 
 def test_direct_link():
     api = Client.link('country').all().to_dict()
 
     assert api == [
-    {'client_id 0': 1, 'name 1': 'Andres', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
-    {'client_id 0': 2, 'name 1': 'Lupita', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
-    {'client_id 0': 3, 'name 1': 'Peke', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil'},
-    {'client_id 0': 4, 'name 1': 'Polar', 'country_id 2': 1, 'country_id 3': 1, 'name 4': 'Mexico'},
-    {'client_id 0': 5, 'name 1': 'Malteada', 'country_id 2': 2, 'country_id 3': 2, 'name 4': 'Brasil'}
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico'},
+    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil'}
     ]
 
 def test_direct_all():
     api = Country.all().to_dict()
 
     assert api == [
-        {'country_id': 1, 'name': 'Mexico'},
-        {'country_id': 2, 'name': 'Brasil'}
+        {'country__country_id': 1, 'country__name': 'Mexico'},
+        {'country__country_id': 2, 'country__name': 'Brasil'}
     ]
 
 def test_direct_link_filter():
     api = Sale.link("client").all().to_dict()
 
     assert api == [
-        {'sale_id 0': 1, 'name 1': 'F1', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
-        {'sale_id 0': 2, 'name 1': 'F2', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
-        {'sale_id 0': 3, 'name 1': 'F3', 'client_id 2': 4, 'client_id 3': 4, 'name 4': 'Polar', 'country_id 5': 1},
-        {'sale_id 0': 4, 'name 1': 'F4', 'client_id 2': 1, 'client_id 3': 1, 'name 4': 'Andres', 'country_id 5': 1},
-        {'sale_id 0': 5, 'name 1': 'F5', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
-        {'sale_id 0': 6, 'name 1': 'F6', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
-        {'sale_id 0': 7, 'name 1': 'F7', 'client_id 2': 5, 'client_id 3': 5, 'name 4': 'Malteada', 'country_id 5': 2},
-        {'sale_id 0': 8, 'name 1': 'F8', 'client_id 2': 3, 'client_id 3': 3, 'name 4': 'Peke', 'country_id 5': 2},
-        {'sale_id 0': 9, 'name 1': 'F9', 'client_id 2': 2, 'client_id 3': 2, 'name 4': 'Lupita', 'country_id 5': 1}
+    {'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1, 'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'sale__sale_id': 2, 'sale__name': 'F2', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4, 'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1},
+    {'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1, 'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1},
+    {'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5, 'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2},
+    {'sale__sale_id': 8, 'sale__name': 'F8', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'sale__sale_id': 9, 'sale__name': 'F9', 'sale__client_id': 2, 'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1}
     ]
 
     # hacer to_dict() funcion global en tool.function
     # helper select()
+
+def test_direct_select():
+    api = Client.select('client__name').all().to_dict()
+
+    assert api == [
+    {'client__name': 'Andres'},
+    {'client__name': 'Lupita'},
+    {'client__name': 'Peke'},
+    {'client__name': 'Polar'},
+    {'client__name': 'Malteada'}
+    ]
+
+def test_direct_select_agg():
+    api = Client.select("client__client_id__sum").all().to_dict()
+
+    assert api == [{'client__client_id__sum': 15}]
+
+def test_direct_select_avg():
+    api = Client.select("client__country_id__avg").all().to_dict()
+
+    assert api == [{'client__country_id__avg': 1.4}]
+
+def test_direct_select_link():
+    api = Sale.select(
+        "sale__name","client__name").link("client").all().to_dict()
+
+    assert api == [
+    {'sale__name': 'F1', 'client__name': 'Andres'},
+    {'sale__name': 'F2', 'client__name': 'Peke'},
+    {'sale__name': 'F3', 'client__name': 'Polar'},
+    {'sale__name': 'F4', 'client__name': 'Andres'},
+    {'sale__name': 'F5', 'client__name': 'Peke'},
+    {'sale__name': 'F6', 'client__name': 'Peke'},
+    {'sale__name': 'F7', 'client__name': 'Malteada'},
+    {'sale__name': 'F8', 'client__name': 'Peke'},
+    {'sale__name': 'F9', 'client__name': 'Lupita'}
+    ]
+
+def test_insert_select_link_count():
+    api = Sale.select(
+        "client__name", "sale__name__count").link(
+        "client").gp(client="name").all().to_dict()
+
+    assert api == [
+    {'sale__name__count': 2, 'client__name': 'Andres'},
+    {'sale__name__count': 1, 'client__name': 'Lupita'},
+    {'sale__name__count': 1, 'client__name': 'Malteada'},
+    {'sale__name__count': 4, 'client__name': 'Peke'},
+    {'sale__name__count': 1, 'client__name': 'Polar'}
+    ]

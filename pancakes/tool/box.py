@@ -8,7 +8,6 @@
 Declaracion De Clase QueryBox() Queries declarativos a traves
 de **kwargs y encadenamiento de metodes.
 """
-
 # Modulos Propios
 from ..cook.layer import query
 from .function import logger
@@ -24,6 +23,8 @@ class QueryBox:
         self.reset()
 
     def reset(self):
+        self.s_select = []
+        self.sp_select = []
         self.join = None
         self.condition = None
         self.group = None
@@ -34,7 +35,7 @@ class QueryBox:
         self.col = None
 
     def done(self):
-        return
+        pass
 
     def to_dict(self):
         """
@@ -66,6 +67,148 @@ class QueryBox:
 
         self.reset()
         return dicc
+
+    def _if_no_select(self) -> None:
+
+        s_res = []
+        sp_res = None
+        
+        # Siempre: select simple
+        for col in self.model._fields:
+            dicc = {
+                "name": col._name
+            }
+            s_res.append(dicc)
+        s_res = [{"name": f"{self.model._table}_id"}] + s_res
+
+        # Nombres compuestos de la tabla main:
+        names = []
+        for dicc in s_res:
+            line = f"{self.model._table}__{dicc["name"]}"
+            names.append(line)
+
+        # 1. Evaluar si hay data en join
+        # 2. Si hay: Select complejo
+        if self.join:
+
+            e_tabs = []  # Tablas con join
+            for e in self.join:
+                t1 = e.get("tab1", "")
+                t2 = e.get("tab2", "")
+                e_tabs.extend([t1, t2])
+
+            # Validar que las tablas existan en las tablas de la
+            # base de datos.
+            e_tabs = set(e_tabs)
+            t_tabs = set(self.model._family.keys())
+
+            if e_tabs.issubset(t_tabs):
+
+                sp_res = []
+                for e in e_tabs:
+                    sp_cache = []
+
+                    # Clase completa de PanCakesORM identificada por su
+                    # nombre de tabla.
+                    obj = self.model._family[e]
+
+                    for col in obj._fields:
+
+                        if f"{e}__{col._name}" in names:
+                            continue
+
+                        dicc = {
+                            "table": e,
+                            "name": col._name,
+                        }
+                        sp_cache.append(dicc)
+                        names.append(f"{e}__{col._name}")
+                        if f"{e}__{e}_id" not in names:
+                            sp_cache = (
+                                [{"table": e, "name": f"{e}_id"}] + sp_cache
+                            )
+                            names.append(f"{e}__{e}_id")
+                    sp_res.extend(sp_cache)
+
+        self.s_select = s_res
+        self.sp_select = sp_res
+
+        return
+
+    def select(self, *columns):
+        AGGS = {
+            "min": 'MIN',
+            "max": 'MAX',
+            "sum": 'SUM',
+            "count": 'COUNT',
+            "avg": 'AVG',
+            "": ""
+        }
+
+        for c in columns:
+
+            if not isinstance(c, str):
+                msg = (
+                    f"Invalid datatype: {c}. "
+                    "Column names must be strings; sintax: "
+                    "table__column__aggregation"
+                )
+                logger.critical(msg)
+                raise TypeError(type(c))
+
+            if "__" not in c:
+                msg = (
+                    f"Invalid sintax; {c}. "
+                    "Valid separator es '__'."
+                )
+                logger.critical(msg)
+                raise ValueError(c)
+
+            arg = c.split("__")
+
+            if len(arg) not in (2, 3):
+                msg = (
+                    f"Invalid quantity of arguments passed in {c}. "
+                    "At least you must specify table + __ + column. "
+                    "Or table + __ + column + __ + aggregation."
+                )
+                logger.critical(msg)
+                raise ValueError(len(arg))
+
+            agg = ""  # <- Por defecto no agregacion.
+            if len(arg) != 2:
+                agg = arg[2]  # <- Se extrae agregacion.
+                if agg not in AGGS.keys():
+                    msg = (
+                        f"Invalid aggregation {agg}. "
+                        f"Valid ones are {AGGS}."
+                    )
+                    logger.critical(msg)
+                    raise ValueError(agg)
+
+                agg = AGGS[agg]  # Indexacion por la agregacion valida.
+
+            tab = arg[0]  # <- Se extrae tabla.
+            col = arg[1]  # <- Se extrae columna.
+
+            m_tab = self.model._table  # <- tabla main.
+
+            if tab != m_tab:
+                dicc = {
+                        "table": tab,
+                        "name": col,
+                        "agg": agg,
+                    }
+                self.sp_select.append(dicc)
+                continue
+
+            dicc = {
+                "name": col,
+                "agg": agg
+            }
+            self.s_select.append(dicc)
+
+        return self
 
     def filter(self, **kwargs):
         """
@@ -491,18 +634,47 @@ class QueryBox:
         if _from is None:
             _from = self.model._table
 
+        ids = f"{_from}_id" if self.ids else None
+        s_select = self.s_select if self.s_select else None
+        sp_select = self.sp_select if self.sp_select else None
         join = self.join if self.join else None
         condition = self.condition if self.condition else None
         group = self.group if self.group else None
         order = self.order if self.order else None
         limit = self.limit if self.limit else None
-        ids = [{"name": f"{_from}_id"}] if self.ids else "*"
+
+        ambiguous = (
+            ids and s_select,
+            ids and sp_select,
+            ids and sp_select and s_select)
+        if any(ambiguous):
+            msg = (
+                "Ambiguous structure. "
+                "requested; 'id' but specific columns "
+                f"were passed: {s_select} : {sp_select}. "
+                "Your query will continue; return 'ids' only. "
+                "otherwise do not use .id() method."
+            )
+            logger.warnings(msg)
+            s_select = [{"name":f"{_from}_id"}]
+            sp_select = None
+
+        if ids and not sp_select and not s_select:
+            s_select = [{"name":f"{_from}_id"}]
+            sp_select = None
+
+        # Evaluar cuando .all() no contiene select():
+
+        if not s_select:
+            self._if_no_select()
+            self.all()
+            return self
 
         row, col = query(
             db_path=db_path,
-            select=ids,
+            select=s_select,
             _from=_from,
-            sp_select=None,
+            sp_select=sp_select,
             join=join,
             condition=condition,
             group_by=group,
@@ -524,7 +696,7 @@ class QueryBox:
         # Obtener las relaciones en una lista de diccionarios
         # Imitan el **kwargs de .add()
         # tipo de union + __ + tabla extra = [id referencia, tabla]
-        
+
         kwargs = {}
 
         # Iteracion sobre los nombre de tablas dadas
@@ -543,18 +715,18 @@ class QueryBox:
             # Iteramos los "objetos" tipo "campos" <- o sea columnas
             # "_fields"
             for f in self.model._fields:
-                
+
                 # Evaluamos que el campo tenga el atributo:
                 # "second_table".
                 # Que el nombre dado y que el nombre del campo
                 # sean iguales
-                # 
+                #
                 # Se guarda y salimos de bucle
                 if (
                     hasattr(f, "second_table") and
                     rel == f.second_table
                 ):
-                
+
                     field = f
                     break
 
@@ -565,10 +737,10 @@ class QueryBox:
                 )
 
             # Agregamos la relacion al dicc "kwargs"
-            kwargs[f"in__{rel}"] = [field._name ,self.model._table]
+            kwargs[f"in__{rel}"] = [field._name, self.model._table]
 
         # Ejecutamos la union
         # Desempaquetamos el diccionario:
         self.add(**kwargs)
-        
+
         return self

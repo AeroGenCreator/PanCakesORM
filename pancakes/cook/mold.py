@@ -39,34 +39,46 @@ class PanCakesORM:
     Valida que la el atributo '_table' exista (dato: str).
     Sanitiza el string.
 
-    2. _init_database:
+    2. _backup:
+    Acumula en un diccionario {tabla: Clase} permitiendo el accesos
+    a la metadata (comunicacion) de todas las tablas hermanas creadas
+    con PanCakesORM.
+
+    3. _init_database:
     Valida ruta a la base de datos. Si no existe la genera por defecto.
 
-    3. _get_fields:
+    4. _get_fields:
     Valida los "objetos" de tipo "sql_datatype". Se genern los
     nombre de columna. Se asignan a su propio objeto. Se guardan los
     objetos como una lista en el atributo de clase: "_fields".
 
-    4. _init_table:
+    5. _init_table:
     Genera la tabla en la base de datos.
     Los nombres de columna son sanitizados a traves de "[]".
 
     SIEMPRE AL CARGAR:
 
-    5. Revisar el esto del loop.
+    6. Revisar el esto del loop.
     Si Es la primera carga del fichero '.py', se actualiza el esquema
     en la base de datos, de lo contrario. Se salta la sincronizacion
     del esquema.
     """
 
-    # -> _db_dir
-    # -> _db_file
+    # -> _db_dir: Ruta directorio para la base de datos
+    # -> _db_file: Ruta fichero para la base de datos
+    # -> _family: Comunicacion entre clases hermanas
+    # -> _loop_validation: Bandera: primera ejecucion = False,
+    # sincroniza esquemas. Despues = True.
+
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
+    _family = {}
     _loop_validation = False
 
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         cls._clean_table_name()
+        cls._backup()
         cls._init_database()
         cls._get_fields()
         cls._init_table()
@@ -100,6 +112,16 @@ class PanCakesORM:
 
         logger.info(f"New table named as {c_table}")
         cls._table = c_table
+
+    @classmethod
+    def _backup(cls):
+        """
+        Almacena cada clase en un diccionario,
+        de esta manera cualquier clase hija que herede de
+        PanCakesORM puede acceder a cualquier metadata de las
+        clases hermanas a traves de su llave.
+        """
+        cls._family[cls._table] = cls
 
     @classmethod  # Test seguro
     def _init_database(cls):
@@ -462,6 +484,10 @@ class PanCakesORM:
         return QueryBox(model=cls)
 
     @classmethod
+    def select(cls, *columns):
+        return cls.q().select(*columns)
+
+    @classmethod
     def add(cls, **kwargs):
         return cls.q().add(**kwargs)
 
@@ -481,10 +507,10 @@ class PanCakesORM:
     def sort(cls, **kwargs):
         return cls.q().sort(**kwargs)
 
-    @classmethod
-    def lim(cls, num:int = None):
+    @classmethod  # Iyeccion Segura
+    def lim(cls, num: int = None):
         return cls.q().lim(num)
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def all(cls):
         return cls.q().all()
