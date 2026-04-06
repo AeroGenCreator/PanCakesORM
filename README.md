@@ -8,100 +8,70 @@
 
 ![image](assets/banner.png)
 
-**PanCakesORM: Gestión Evolutiva para SQLite3**
+# PanCakesORM 🥞
+**Simplify Your Data Layer**
 
-Con PanCakesORM, el desarrollador se enfoca en la lógica de negocio y el frontend, mientras el motor se encarga del esquema:
+PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLite3 que prioriza la legibilidad y la velocidad de desarrollo. Si buscas la potencia de SQL con la elegancia de una sintaxis declarativa y moderna, PanCakesORM es para ti.
 
-    Sincronización Automática: Gracias a __init_subclass__, 
-    las tablas y esquemas se crean o migran en tiempo real al heredar de la clase padre.
+---
 
-    Seguridad Integrada: Implementa una sanitización estricta de nombres 
-    de tablas y columnas, además de usar ? (query parameters) para prevenir ataques de inyección SQL.
+## 🚀 Inicio Rápido
 
-    Migraciones Inteligentes: El método _table_on_change gestiona cambios en el número de columnas 
-    (añadir/eliminar) moviendo los datos automáticamente a tablas temporales para preservar la integridad.
-
-    Consultas Avanzadas: La función pancakes permite realizar JOINs (INNER, LEFT), 
-    agrupaciones y filtrado complejo mediante una interfaz de diccionarios intuitiva.
-
-    Cero Configuración: Maneja rutas por defecto, creación de directorios 
-    y archivos .sqlite de forma transparente para el desarrollador.
-
-    Preparado para Producción: Incluye logging profesional y está optimizado 
-    para evitar validaciones redundantes tras la primera compilación.
-
-[Link a PyPI](https://pypi.org/project/pancakes-orm/)
-
-[Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-32b8851a844d80bd8299f040210ee165)
-
-## 🚀 Instalación
-
-Instálalo directamente desde PyPI:
+Obtener PanCakesORM es tan sencillo como un comando. Disponible directamente en **PyPI**:
 
 ```bash
 pip install pancakes-orm
 ```
 
-## 🛠️ Uso Básico
-
-### Definir un Modelo
-Crea tus tablas definiendo clases que hereden de `PanCakesORM`. Atributo `_table` obligatorio.
+**Tu primera tabla en segundos**
 
 ```python
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 
 class User(PanCakesORM):
-    _table = 'users'
-    
-    name = sql_datatype.Char(comment='User Name')
-    age = sql_datatype.Integer(comment='User Age')
+    _table = 'user'
+    name = sql_datatype.Char(comment="User Name")
+    age = sql_datatype.Integer(comment="User Age")
+
+# ¡Listo para consultar!
+users = User.filter(user__age__gt=18).all().to_dict()
 ```
 
-### Insertar Datos con `insert()`
-```python
-from pancakes.cook.furnace import insert
-insert(
-    db_path="data/my_app_database.sqlite",
-    params=[
-        {
-        'table':'users',
-        'data':[
-                (None, 'Andres', 25),
-                (None, 'Polar', 10),
-            ]
-        }
-    ]
-)
-```
+## [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-32b8851a844d80bd8299f040210ee165)
 
-### Consultas con `query()`
-```python
-from pancakes.cook.layer import query
+💪 Fortalezas y Robustez
 
-results, columns = query(
-    db_path="data/my_app_database.sqlite",
-    select='*',
-    _from='users',
-    condition=[
-        {'table': 'users', 'column': 'age', 'operator': '>', 'value': 18}
-    ]
-)
-```
-## PanCakesORM a Fondo:
+PanCakesORM no es solo una cara bonita; está construido para ser el motor confiable de tus aplicaciones:
 
-1. Clase Padre PanCakesORM: Permite la creación automática de tablas en bases de datos mediante herencia de clase `pancakes/cook/mold.py`.
+    Sintaxis Declarativa Fluida: Olvídate de concatenar strings de SQL. 
+    Usa métodos encadenados (.filter(), .link(), .sort()) que se leen como lenguaje natural.
 
-2. Seguridad y Robustez: * Capa de Sanitización: Implementa métodos avanzados de limpieza y seguridad para prevenir ataques de Inyección SQL.
+    Escalabilidad: Gracias a su gestión eficiente de esquemas y su sistema de inyección segura,
+    puede crecer desde un pequeño script hasta aplicaciones empresariales complejas.
 
-3. Gestión de Transacciones: Configuración optimizada para múltiples lecturas, con soporte nativo para Rollbacks y Commits que aseguran la integridad de los datos.
+    Integración Moderna: Diseñado para brillar en ecosistemas de alto rendimiento:
 
-4. Operaciones CRUD Optimizadas: Métodos de Escritura (`.insert()`), Actualización (`.update()`), Eliminación (`.delete()`) y Lectura (`.query()`) testeados para alto rendimiento.
+        FastAPI: Tipado compatible para respuestas JSON rápidas.
 
-5. Conexión Multihilo: Configuración de base de datos preparada para gestionar múltiples lecturas concurrentes de forma estable.
+        Streamlit: Ideal para aplicaciones de datos donde la velocidad de desarrollo es clave.
 
-6. Declaración de Tipos: Clases que operan en conjunto con el ORM para definir tipos de datos de forma estructurada `pancakes/datatype/sql_datatype`.
+    Calidad Garantizada: La robustez de la librería está respaldada por una batería
+    de más de 70 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
-7. SQLite3 ForeignKey(): Clase para relacionar tablas; el ORM gestiona automáticamente los constraints de llaves foráneas sin escribir una sola línea de SQL `pancakes/datatype/sql_datatype`.
+🏗️ Arquitectura de Consultas (QueryBox)
 
-8. Método de Consulta Avanzada: Uso del método .sql() para sentencias SQL puras. Se recomienda su uso exclusivo para lógica de desarrollo y no para interacción directa con el usuario `pancakes/cook/mold.py`.
+El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones complejas de forma visual y estructurada:
+
+    Joins Automáticos: Usa .link('tabla') y deja que el ORM gestione las llaves foráneas por ti.
+
+    Agregaciones: Calcula SUM, AVG, COUNT directamente en el select con sufijos como __avg.
+
+    Lógica Booleana: Encadena condiciones con __and y __or de forma nativa en los argumentos.
+
+🛠️ Requisitos
+
+    Python 3.10+
+
+    SQLite3
+
