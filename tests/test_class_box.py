@@ -346,3 +346,17 @@ def test_insert_select_link_count():
     {'sale__name__count': 4, 'client__name': 'Peke'},
     {'sale__name__count': 1, 'client__name': 'Polar'}
     ]
+
+def test_ids_select_warning():
+    api = Sale.id().select("sale__name").all().to_dict()
+
+    assert api == [
+    {'sale__sale_id': 1},
+    {'sale__sale_id': 2},
+    {'sale__sale_id': 3},
+    {'sale__sale_id': 4},
+    {'sale__sale_id': 5},
+    {'sale__sale_id': 6},
+    {'sale__sale_id': 7},
+    {'sale__sale_id': 8},
+    {'sale__sale_id': 9}]

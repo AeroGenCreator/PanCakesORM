@@ -488,6 +488,10 @@ class PanCakesORM:
         return cls.q().select(*columns)
 
     @classmethod
+    def id(cls):
+        return cls.q().id()
+
+    @classmethod
     def add(cls, **kwargs):
         return cls.q().add(**kwargs)
 

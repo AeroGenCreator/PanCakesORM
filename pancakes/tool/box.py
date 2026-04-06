@@ -648,14 +648,13 @@ class QueryBox:
             ids and sp_select,
             ids and sp_select and s_select)
         if any(ambiguous):
-            msg = (
+            warnings.warn(
                 "Ambiguous structure. "
                 "requested; 'id' but specific columns "
                 f"were passed: {s_select} : {sp_select}. "
                 "Your query will continue; return 'ids' only. "
-                "otherwise do not use .id() method."
+                "otherwise do not use .id() method.",UserWarning
             )
-            logger.warnings(msg)
             s_select = [{"name":f"{_from}_id"}]
             sp_select = None
 
@@ -733,7 +732,9 @@ class QueryBox:
             if not field:
                 raise ValueError(
                     f"Relation to table '{rel}' not found. "
-                    f"You must declare it in table '{self.model._table}'."
+                    f"You must declare it in table '{self.model._table}'. "
+                    "If relation exists, try '.add()' method "
+                    "to connect from parent table to children table."
                 )
 
             # Agregamos la relacion al dicc "kwargs"
