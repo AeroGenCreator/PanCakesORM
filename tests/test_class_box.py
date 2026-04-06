@@ -371,3 +371,21 @@ def test_output_raw():
 
     assert row == [(9,)]
     assert col == ['sale__sale_id__count']
+
+def test_output_json():
+    api = Sale.link("client").all().to_json()
+
+    assert api == {
+    'sale':
+        {
+            'sale_id': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'name': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
+            'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2]
+        },
+    'client': 
+        {
+            'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            'name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'],
+            'country_id': [1, 2, 1, 1, 2, 2, 2, 2, 1]
+        }
+    }

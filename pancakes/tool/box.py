@@ -43,6 +43,44 @@ class QueryBox:
         self.reset()
         return row, col
 
+    def to_json(self):
+
+        if not self.row or not self.col:
+            return {}
+        row = self.row
+        col = self.col
+
+        if len(row[0]) != len(col):
+            msg = (
+                f"Length mismatch for query output {row}, {col}"
+            )
+            logger.critical(msg)
+            raise ValueError
+
+        if len(set(col)) != len(col):
+            cache = []
+            count = 0
+            for c in col:
+                line =(
+                    f"{c.split('__', 1)[0]}"
+                    f"__{c.split('__', 1)[1]}__{count}"
+                )
+                cache.append(line)
+                count += 1
+            col = cache
+
+        trans = list(zip(*row))
+        tabls = [c.split("__", 1)[0] for c in col]
+        heads = [c.split("__", 1)[1] for c in col]
+
+        res = {}
+        count = 0
+        for count, (t, h) in enumerate(zip(tabls, heads)):
+            tab_dicc = res.setdefault(t, {})
+            tab_dicc[h] = list(trans[count])
+
+        return res
+
     def to_dict(self):
         """
         Convierte la salida defecto de un query SQLite3:
