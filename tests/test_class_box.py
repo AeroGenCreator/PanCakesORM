@@ -360,3 +360,14 @@ def test_ids_select_warning():
     {'sale__sale_id': 7},
     {'sale__sale_id': 8},
     {'sale__sale_id': 9}]
+
+def test_helper_count():
+    api = Sale.count().to_dict()
+
+    assert api == [{'sale__sale_id__count': 9}]
+
+def test_output_raw():
+    row, col = Sale.count().raw()
+
+    assert row == [(9,)]
+    assert col == ['sale__sale_id__count']

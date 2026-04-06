@@ -518,3 +518,7 @@ class PanCakesORM:
     @classmethod  # Inyeccion Segura
     def all(cls):
         return cls.q().all()
+
+    @classmethod
+    def count(cls):
+        return cls.q().count()

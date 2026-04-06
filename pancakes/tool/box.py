@@ -37,6 +37,12 @@ class QueryBox:
     def done(self):
         pass
 
+    def raw(self):
+        row = self.row
+        col = self.col
+        self.reset()
+        return row, col
+
     def to_dict(self):
         """
         Convierte la salida defecto de un query SQLite3:
@@ -744,4 +750,10 @@ class QueryBox:
         # Desempaquetamos el diccionario:
         self.add(**kwargs)
 
+        return self
+
+    def count(self):
+        self.select(
+            f"{self.model._table}__{self.model._table}_id__count").all()
+        
         return self
