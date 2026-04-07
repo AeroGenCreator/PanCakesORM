@@ -133,8 +133,8 @@ class ForeignKey(DataTypeSQL):
     second_table = 'client',
     column_id = 'client_id',
     comment:str = 'Client Relation',
-    on_del = 'no action',
-    on_upd = 'no action')
+    on_del = 'set null',
+    on_upd = 'cascade')
 
     -> Notar como ambos compartiran el nombre "client_id"
     """
@@ -149,14 +149,14 @@ class ForeignKey(DataTypeSQL):
         second_table: str,
         column_id: str,
         comment: str = '',
-        on_del: str = 'no action',
-        on_upd: str = 'no action'
+        on_del: str = 'set null',
+        on_upd: str = 'cascade'
     ):
         super().__init__(comment=comment, nls=ForeignKey._not_null)
         self.second_table = second_table
         self.column_id = column_id
-        self.on_del = on_del.upper() if on_del in self.ACTIONS else ''
-        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else '' 
+        self.on_del = on_del.upper() if on_del in self.ACTIONS else 'SET NULL'
+        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE' 
         self._construct()
 
     def _construct(self):

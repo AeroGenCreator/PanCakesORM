@@ -745,6 +745,7 @@ class QueryBox:
         # Iteracion sobre los nombre de tablas dadas
         for rel in relation:
 
+            # validar que se hayan pasado strings
             if not isinstance(rel, str):
                 msg = (
                     f"Passed table name {rel} "
@@ -753,6 +754,7 @@ class QueryBox:
                 logger.critical(msg)
                 raise TypeError(type(rel))
 
+            # Obtenecion de campo relacional
             field = None
 
             # Iteramos los "objetos" tipo "campos" <- o sea columnas
@@ -770,19 +772,39 @@ class QueryBox:
                     rel == f.second_table
                 ):
 
-                    field = f
+                    field = f._name
                     break
 
+            # Validamos que la operacion directa no encontro campos
+            # Pasamos a la operacion inversa (de tabla padre a hija).
             if not field:
-                raise ValueError(
-                    f"Relation to table '{rel}' not found. "
-                    f"You must declare it in table '{self.model._table}'. "
-                    "If relation exists, try '.add()' method "
-                    "to connect from parent table to children table."
-                )
+                
+                # Buscamos relacion del PRIMARY KEY de la tabla
+                # A la FOREIGN KEY de la tabla hija
+                c_id = f"{self.model._table}_id"
+                # Buscamos que la tabla exista en la base de datos
+                if rel not in self.model._family:
+                    msg = (
+                        f"Passed {rel} tables does not exists. "
+                        "Make sure of the spelling and "
+                        "make sure of relation before "
+                        "trying again."
+                    )
+                    logger.critical(msg)
+                    raise KeyError(rel)
+                
+                # Si existe accedemos a la tabla entera
+                # e iteramos sus campos
+                tab2 = self.model._family[rel]
+
+                for f in tab2._fields:
+                    if c_id == f._name:
+                        field = f._name
+                        break
 
             # Agregamos la relacion al dicc "kwargs"
-            kwargs[f"in__{rel}"] = [field._name, self.model._table]
+            # Por defecto INNER JOIN
+            kwargs[f"in__{rel}"] = [field, self.model._table]
 
         # Ejecutamos la union
         # Desempaquetamos el diccionario:

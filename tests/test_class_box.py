@@ -389,3 +389,43 @@ def test_output_json():
             'country_id': [1, 2, 1, 1, 2, 2, 2, 2, 1]
         }
     }
+
+def test_reverse_link():
+    api = Client.link("sale").all().to_json()
+
+    assert api == {
+        'client': 
+            {
+                'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                'name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'],
+                'country_id': [1, 2, 1, 1, 2, 2, 2, 2, 1]
+            },
+        'sale': 
+            {
+                'sale_id': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                'name': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'], 
+                'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2]
+            }
+        }
+
+def test_reverse_link_filter():
+    api = Client.link("sale").filter(
+        sale__name__same="F4"
+    ).all().to_dict()
+
+    assert api == [
+    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1}
+    ]
+
+def test_multi_link_agg_gp():
+    api = Client.select(
+        "client__name","client__name__count").link("sale", "country").gp(
+        client="name").all().to_dict()
+
+    assert api == [
+    {'client__name': 'Andres', 'client__name__count': 2},
+    {'client__name': 'Lupita', 'client__name__count': 1},
+    {'client__name': 'Malteada', 'client__name__count': 1},
+    {'client__name': 'Peke', 'client__name__count': 4},
+    {'client__name': 'Polar', 'client__name__count': 1}
+    ]
