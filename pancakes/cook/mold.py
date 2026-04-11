@@ -12,6 +12,7 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 from ..datatype import sql_datatype
 from ..tool.function import db_connection, logger
 from ..tool.box import QueryBox
+from ..tool.idu import CoffeeShop
 from ..cook.layer import query
 from ..cook.ingredient import update
 from ..cook.clean import delete
@@ -479,19 +480,20 @@ class PanCakesORM:
             force=force
         )
 
+    # Queries declarativos:
     @classmethod  # Inyeccion Segura
     def q(cls):
         return QueryBox(model=cls)
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def select(cls, *columns):
         return cls.q().select(*columns)
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def id(cls):
         return cls.q().id()
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def add(cls, **kwargs):
         return cls.q().add(**kwargs)
 
@@ -519,6 +521,20 @@ class PanCakesORM:
     def all(cls):
         return cls.q().all()
 
-    @classmethod
+    @classmethod  # Inyeccion Segura
     def count(cls):
         return cls.q().count()
+
+    # Insert declarativo
+    @classmethod
+    def manager(cls):
+        return CoffeeShop(model=cls)
+
+    @classmethod  # Inyeccion Segura
+    def i(cls, **kwargs):
+        return cls.manager().i(**kwargs)
+
+    # Update declarativo
+    @classmethod  # Inyeccion Segura
+    def u(cls, update_all=False, **kwargs):
+        return cls.manager().u(update_all=update_all, **kwargs,)
