@@ -429,3 +429,18 @@ def test_multi_link_agg_gp():
     {'client__name': 'Peke', 'client__name__count': 4},
     {'client__name': 'Polar', 'client__name__count': 1}
     ]
+
+def test_output_raw_line_up_ids():
+    row, col = Client.id().all().raw(line_up=True)
+
+    assert row == [(1, 2, 3, 4, 5)]
+    assert col == ['client__client_id']
+
+def test_output_raw_line_up_():
+    row, col = Client.all().raw(line_up=True)
+
+    assert row == [(1, 2, 3, 4, 5), ('Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'), (1, 1, 2, 1, 2)]
+    assert col == ['client__client_id', 'client__name', 'client__country_id']
+
+
+

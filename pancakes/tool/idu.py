@@ -19,6 +19,22 @@ from .function import logger
 # Modulos Python
 import warnings
 
+OPERATOR = {
+    "same": "=",
+    "lt": "<",
+    "ltsm": "<=",
+    "gt": ">",
+    "gtsm": ">=",
+    "diff": "<>",
+    "in": "IN",
+    "notin": "NOT IN",
+    "btwn": "BETWEEN",
+    "is": "IS",
+    "isnot": "IS NOT",
+    "like": "LIKE",
+    "notlike": "NOT LIKE"
+}
+
 
 class CoffeeShop:
     """
@@ -71,9 +87,12 @@ class CoffeeShop:
         **kwargs
     ) -> None:
         """
-        La actualizacion de datos en una tabla se da a traves de un
+        1. La actualizacion de datos en una tabla se da a traves de un
         diccionario en la funcion update(). Para poder usar este metodo
         declarativo se convierten las llaves del diccionario en variables:
+        
+        2. La actualización permite una condición; la idea es condicionar
+        por indices.
 
         user__name__user_id__same = (Raul, 10)
         user__name__user_id__same = (data, valor_de_condicion)
@@ -93,7 +112,7 @@ class CoffeeShop:
         }]
 
         NOTA: Este helper no permite actulizar por multiples condiciones
-        esta pensado para ser usado por ids. Si se necesita una
+        (AND, OR) esta pensado para ser usado por ids. Si se necesita una
         actualizacion por multiples condiciones usar metodo .update()
 
         Comparadores Validos:
@@ -112,25 +131,7 @@ class CoffeeShop:
         like: "LIKE",
         notlike: "NOT LIKE"
         }
-
-        LOGICS = {'AND', 'OR', ''}
         """
-
-        OPERATOR = {
-            "same": "=",
-            "lt": "<",
-            "ltsm": "<=",
-            "gt": ">",
-            "gtsm": ">=",
-            "diff": "<>",
-            "in": "IN",
-            "notin": "NOT IN",
-            "btwn": "BETWEEN",
-            "is": "IS",
-            "isnot": "IS NOT",
-            "like": "LIKE",
-            "notlike": "NOT LIKE"
-        }
 
         argument = []
         if not update_all:
@@ -178,7 +179,7 @@ class CoffeeShop:
                     if op not in OPERATOR.keys():
                         msg = "Invalid operator passed - method .u()."
                         logger.critical(msg)
-                        raise ValueError(op)
+                        raise KeyError(op)
 
                     dicc['table'] = tab
                     dicc['name'] = col
@@ -187,7 +188,7 @@ class CoffeeShop:
                         {
                             'column': con,
                             'operator': OPERATOR[op],
-                            'value': val,
+                            'value': val
                         }
                     ]
                     argument.append(dicc)
@@ -251,5 +252,131 @@ class CoffeeShop:
 
         return
 
-    def d():
-        pass
+    def d(
+        self,
+        db_path=None,
+        delete_all=False,
+        **kwargs
+    ) -> None:
+        """
+        1 . La eliminación de datos en una tabla se da a traves de un
+        diccionario en la funcion delete(). Para poder usar este metodo
+        declarativo se convierten las llaves del diccionario en variables:
+
+        2. Se admite una condicion; la idea es condicionar por indices.
+
+        3. Este metodo no permite delete sobre SQLconstraints. Por tanto
+        su seguridad de persistencia de datos esta al maximo; Si existen
+        problemas con la eliminacion de datos 1. Revisar que tus tablas
+        con llaves foraneas tengan on_del="cascade" o usar función 
+        .delete(force=True) para ignorar las restricciones.
+
+        4. Este metodo no borra todas las filas de una tabla. Si se quiere
+        limpieza completa usar metodo .delete(delete_all=True)
+
+        user__user_id__same = (Raul, 10)
+        user__user_id__same = (data, valor_de_condicion)
+
+        Equivale a:
+
+        params = [
+            {
+            'table':'user',     <- Tabla
+            'condition':[       <- Lista de condiciones
+                    {
+                    'column',   <- Columna de condicion
+                    'operator', <- Operador de comparacion
+                    'value',    <- Valor de comparacion
+                    }
+                ]
+            }
+        ]
+
+        NOTA: Este helper no permite eliminar por multiples condiciones
+        (AND, OR) esta pensado para ser usado por ids. Si se necesita una
+        eliminación por multiples condiciones usar metodo .delete()
+
+        Comparadores Validos:
+        OPERATOR = {
+        same: "=",
+        lt: "<",
+        ltsm: "<=",
+        gt: ">",
+        gtsm: ">=",
+        diff:"<>",
+        in: "IN",
+        notin: "NOT IN",
+        btwn: "BETWEEN",
+        is: "IS",
+        isnot: "IS NOT",
+        like: "LIKE",
+        notlike: "NOT LIKE"
+        }
+        """
+
+        argument = []
+        if not delete_all:
+
+            for k, v in kwargs.items():
+                dicc = {}
+
+                # Validar separador
+                if "__" not in k:
+                    msg = (
+                        "Invalid sintax - argument. "
+                        "You must specify table__column__operator."
+                    )
+                    logger.critical(msg)
+                    raise ValueError(k)
+
+                line = k.split("__")
+
+                # Validar num. de argumentos
+                if len(line) != 3:
+                    msg = (
+                        "Invalid length - argument. "
+                        "You must specify 3 elements: "
+                        "table__column__operator"
+                    )
+                    logger.critical(msg)
+                    raise ValueError(k)
+
+                tab = line[0]
+                col = line[1]
+                opr = line[2]
+                dat = v
+
+                # Validar operador
+                if opr not in OPERATOR.keys():
+                    msg = (
+                        f"Invalid operator {opr}. "
+                        f"Valid ones are: {OPERATOR}."
+                    )
+                    logger.critical(msg)
+                    raise KeyError(opr)
+
+                dicc["table"] = tab
+                dicc["condition"] = [{
+                    "column": col,
+                    "operator": OPERATOR[opr],
+                    "value": dat                 
+                }]
+                argument.append(dicc)
+
+        path = db_path if db_path else self.model._db_file
+
+        delete(
+            db_path=path,
+            params=argument,
+            delete_all=False,
+            force=False
+        )
+
+        return        
+
+
+
+
+
+
+

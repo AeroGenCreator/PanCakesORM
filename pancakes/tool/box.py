@@ -34,13 +34,14 @@ class QueryBox:
         self.row = None
         self.col = None
 
-    def done(self):
-        pass
-
-    def raw(self):
+    def raw(self, line_up: bool = False):
         row = self.row
         col = self.col
         self.reset()
+
+        if line_up:
+            row = list(zip(*row))
+
         return row, col
 
     def to_json(self):

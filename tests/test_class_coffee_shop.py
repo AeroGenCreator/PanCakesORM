@@ -124,3 +124,31 @@ def test_method_u_multiple_tables():
     ]
     assert res2 == [{'product__product_id': 1, 'product__name': 'Apple Ipad'}]
 
+# --*-- DELETE --*--
+def test_method_d_one_table():
+    coffee = CoffeeShop()
+    row, col = User.filter(user__name__in=["Andres", "Guadalupe"]).id().all().raw(line_up=True)
+    ids = row[0]
+    coffee.d(db_path=file, user__user_id__in=ids)
+    api = User.all().to_dict()
+
+    assert api == [{'user__user_id': 1, 'user__name': 'Malteada'}]
+
+def test_method_d_multi_table():
+    coffee = CoffeeShop()
+    coffee.d(
+        db_path=file,
+        user__user_id__same=1,
+        product__product_id__same=1
+    )
+    res1 = User.all().to_dict()
+    res2 = Product.all().to_dict()
+
+    assert res1 == []
+    assert res2 == []
+
+
+
+
+
+
