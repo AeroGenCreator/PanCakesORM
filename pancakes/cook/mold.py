@@ -525,6 +525,8 @@ class PanCakesORM:
     def count(cls):
         return cls.q().count()
 
+    # --*-- HELPERS CRUD --*--
+
     # Insert declarativo
     @classmethod
     def manager(cls):
@@ -537,4 +539,9 @@ class PanCakesORM:
     # Update declarativo
     @classmethod  # Inyeccion Segura
     def u(cls, update_all=False, **kwargs):
-        return cls.manager().u(update_all=update_all, **kwargs,)
+        return cls.manager().u(update_all=update_all, **kwargs)
+
+    # Delete declarativo
+    @classmethod
+    def d(cls, **kwargs):
+        return cls.manager().d(**kwargs)

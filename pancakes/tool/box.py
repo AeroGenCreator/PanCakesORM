@@ -23,6 +23,8 @@ class QueryBox:
         self.reset()
 
     def reset(self):
+        self.s_label = []
+        self.sp_label = []
         self.s_select = []
         self.sp_select = []
         self.join = None
@@ -34,22 +36,49 @@ class QueryBox:
         self.row = None
         self.col = None
 
-    def raw(self, line_up: bool = False):
+    def raw(self, line_up: bool = False, label=False):
+        
+        if not self.row or not self.col:
+            return []
+
         row = self.row
         col = self.col
-        self.reset()
+
+        comments = self.s_label + self.sp_label
+
+        if label and len(comments) == len(col):
+            col = comments
+
+        if len(set(col)) != len(col):
+            cache = []
+            count = 0
+            for c in col:
+                line =(
+                    f"{c.split('__', 1)[0]}"
+                    f"__{c.split('__', 1)[1]}__{count}"
+                )
+                cache.append(line)
+                count += 1
+            col = cache
 
         if line_up:
             row = list(zip(*row))
 
+        self.reset()
         return row, col
 
-    def to_json(self):
+    def to_json(self, label=False):
 
         if not self.row or not self.col:
             return {}
+
         row = self.row
         col = self.col
+
+        comments = self.s_label + self.sp_label
+
+        if label and len(comments) == len(col):
+            col = comments
 
         if len(row[0]) != len(col):
             msg = (
@@ -80,9 +109,10 @@ class QueryBox:
             tab_dicc = res.setdefault(t, {})
             tab_dicc[h] = list(trans[count])
 
+        self.reset()
         return res
 
-    def to_dict(self):
+    def to_dict(self, label=False):
         """
         Convierte la salida defecto de un query SQLite3:
         listas de tuplas a -> lista de diccionarios.
@@ -93,6 +123,11 @@ class QueryBox:
         # Si existen repeditos se agrega " number"
         if not self.row or not self.col:
             return []
+
+        comments = self.s_label + self.sp_label
+
+        if label and len(comments) == len(col):
+            col = comments
 
         if len(self.col) != len(set(self.col)):
             count = 0
@@ -120,6 +155,14 @@ class QueryBox:
         
         # Siempre: select simple
         for col in self.model._fields:
+
+            # Obtenemos todas las etiquetas de tabla main:
+            if f"{self.model._table.title()} ID" not in self.s_label:
+                self.s_label.append(f"{self.model._table.title()} ID")
+            lab = col.comment
+            self.s_label.append(lab)
+
+            # Insertamos dicc de query simple (todas las columnas):
             dicc = {
                 "name": col._name
             }
@@ -159,9 +202,22 @@ class QueryBox:
 
                     for col in obj._fields:
 
+                        # Etiquetas de comment
+                        exp = f"{e.title()} ID"
+                        if (
+                            exp not in self.sp_label and
+                            exp not in (self.s_label)
+                        ):
+                            self.sp_label.append(exp)
+                        lab = col.comment
+                        if lab not in self.s_label:
+                            self.sp_label.append(lab)
+
+                        # Si la tabla es main, skip
                         if f"{e}__{col._name}" in names:
                             continue
 
+                        # Nombre compuesto de tablas "join"
                         dicc = {
                             "table": e,
                             "name": col._name,
@@ -204,7 +260,7 @@ class QueryBox:
             if "__" not in c:
                 msg = (
                     f"Invalid sintax; {c}. "
-                    "Valid separator es '__'."
+                    "Valid separator: '__'."
                 )
                 logger.critical(msg)
                 raise ValueError(c)
@@ -238,7 +294,15 @@ class QueryBox:
 
             m_tab = self.model._table  # <- tabla main.
 
-            if tab != m_tab:
+            if tab != m_tab:  # <- Si estamos seleccionando de union
+                
+                obj = self.model._family[tab]  # <- Buscamos la Tabla
+                # Obtenemos el comment:
+                if f"{tab.title()} ID" not in self.sp_label:
+                    self.sp_label.append(f"{tab.title()} ID")
+                lab = [c.comment for c in obj._fields if c._name == col]
+                self.sp_label.extend(lab)
+
                 dicc = {
                         "table": tab,
                         "name": col,
@@ -246,6 +310,12 @@ class QueryBox:
                     }
                 self.sp_select.append(dicc)
                 continue
+
+            # Obtenemos el comment desde la tabla main
+            if f"{m_tab.title()} ID" not in self.s_label:
+                self.s_label.append(f"{m_tab.title()} ID")
+            lab = [c.comment for c in self.model._fields if c._name == col]
+            self.s_label.extend(lab)
 
             dicc = {
                 "name": col,

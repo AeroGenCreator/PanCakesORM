@@ -442,5 +442,21 @@ def test_output_raw_line_up_():
     assert row == [(1, 2, 3, 4, 5), ('Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'), (1, 1, 2, 1, 2)]
     assert col == ['client__client_id', 'client__name', 'client__country_id']
 
+# --*-- QUERYBOX - ETIQUETAS DE FRONTEND --*--
+def test_raw_labels():
+    row, col = Client.all().raw(label=True)
 
+    assert row == [(1, 'Andres', 1), (2, 'Lupita', 1), (3, 'Peke', 2), (4, 'Polar', 1), (5, 'Malteada', 2)]
+    assert col == ['Client ID', 'Client Name', 'Country Rel']
 
+def test_raw_labels_join():
+    row, col = Client.link('sale').all().raw(label=True)
+
+    assert row == [
+    (1, 'Andres', 1, 1, 'F1', 1), (3, 'Peke', 2, 2, 'F2', 3),
+    (4, 'Polar', 1, 3, 'F3', 4), (1, 'Andres', 1, 4, 'F4', 1),
+    (3, 'Peke', 2, 5, 'F5', 3), (3, 'Peke', 2, 6, 'F6', 3),
+    (5, 'Malteada', 2, 7, 'F7', 5), (3, 'Peke', 2, 8, 'F8', 3),
+    (2, 'Lupita', 1, 9, 'F9', 2)]
+
+    assert col == ['Client ID', 'Client Name', 'Country Rel', 'Sale ID', 'Sale Code', 'Cliente Rel']

@@ -147,8 +147,27 @@ def test_method_d_multi_table():
     assert res1 == []
     assert res2 == []
 
+# --*-- HELPERS COMO METODO() --*--
+def test_classmethod_i():
+    User.i(
+        user=[(None, "Andres")],
+        product=[(None, "MacBook")])
 
+    res1 = User.all().to_dict()
+    res2 = Product.all().to_dict()
 
+    assert res1 == [{'user__user_id': 1, 'user__name': 'Andres'}]
+    assert res2 == [{'product__product_id': 1, 'product__name': 'MacBook'}]
 
+def test_classmethod_u():
+    User.u(user__name__user_id__same=["Polar", 1])
+    api = User.all().to_dict()
 
+    assert api == [{'user__user_id': 1, 'user__name': 'Polar'}]
 
+def test_classmethod_d():
+    User.d(user__name__like="%olar")
+
+    api = User.all().to_dict()
+
+    assert api == []

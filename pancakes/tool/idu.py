@@ -248,14 +248,17 @@ class CoffeeShop:
 
         path = db_path if db_path else self.model._db_file
 
-        update(db_path=path, params=argument, update_all=update_all)
+        update(
+            db_path=path,
+            params=argument,
+            update_all=update_all
+        )
 
         return
 
     def d(
         self,
         db_path=None,
-        delete_all=False,
         **kwargs
     ) -> None:
         """
@@ -315,53 +318,52 @@ class CoffeeShop:
         """
 
         argument = []
-        if not delete_all:
 
-            for k, v in kwargs.items():
-                dicc = {}
+        for k, v in kwargs.items():
+            dicc = {}
 
-                # Validar separador
-                if "__" not in k:
-                    msg = (
-                        "Invalid sintax - argument. "
-                        "You must specify table__column__operator."
-                    )
-                    logger.critical(msg)
-                    raise ValueError(k)
+            # Validar separador
+            if "__" not in k:
+                msg = (
+                    "Invalid sintax - argument. "
+                    "You must specify table__column__operator."
+                )
+                logger.critical(msg)
+                raise ValueError(k)
 
-                line = k.split("__")
+            line = k.split("__")
 
-                # Validar num. de argumentos
-                if len(line) != 3:
-                    msg = (
-                        "Invalid length - argument. "
-                        "You must specify 3 elements: "
-                        "table__column__operator"
-                    )
-                    logger.critical(msg)
-                    raise ValueError(k)
+            # Validar num. de argumentos
+            if len(line) != 3:
+                msg = (
+                    "Invalid length - argument. "
+                    "You must specify 3 elements: "
+                    "table__column__operator"
+                )
+                logger.critical(msg)
+                raise ValueError(k)
 
-                tab = line[0]
-                col = line[1]
-                opr = line[2]
-                dat = v
+            tab = line[0]
+            col = line[1]
+            opr = line[2]
+            dat = v
 
-                # Validar operador
-                if opr not in OPERATOR.keys():
-                    msg = (
-                        f"Invalid operator {opr}. "
-                        f"Valid ones are: {OPERATOR}."
-                    )
-                    logger.critical(msg)
-                    raise KeyError(opr)
+            # Validar operador
+            if opr not in OPERATOR.keys():
+                msg = (
+                    f"Invalid operator {opr}. "
+                    f"Valid ones are: {OPERATOR}."
+                )
+                logger.critical(msg)
+                raise KeyError(opr)
 
-                dicc["table"] = tab
-                dicc["condition"] = [{
-                    "column": col,
-                    "operator": OPERATOR[opr],
-                    "value": dat                 
-                }]
-                argument.append(dicc)
+            dicc["table"] = tab
+            dicc["condition"] = [{
+                "column": col,
+                "operator": OPERATOR[opr],
+                "value": dat                 
+            }]
+            argument.append(dicc)
 
         path = db_path if db_path else self.model._db_file
 
