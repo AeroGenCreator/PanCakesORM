@@ -32,10 +32,19 @@ class User(PanCakesORM):
 
     name = sql_datatype.Char(comment='Usuario')
 
+class Product(PanCakesORM):
+    _db_dir = dir_
+    _db_file = file
+
+    _table = 'product'
+
+    name = sql_datatype.Char(comment='Producto')
+
 # --*-- INSERT --*--
 def test_method_i():
     coffee = CoffeeShop()
-    box = QueryBox()
+
+    box = QueryBox() # Esta manera de hacer query no funciona (debemos corregirla)
 
     coffee.i(db_path=file, user=[(None, "Andres")])
     api = User.all().to_dict()
@@ -71,3 +80,47 @@ def test_method_u_one_table_multiple_rows():
     {'user__user_id': 1, 'user__name': 'Andres'},
     {'user__user_id': 2, 'user__name': 'Andres'}
     ]
+
+def test_method_u_one_table_one_row():
+    coffee = CoffeeShop()
+    coffee.u(db_path=file, user__name__user_id__same=("Malteada", 1))
+    api = User.all().to_dict()
+
+    assert api == [
+    {'user__user_id': 1, 'user__name': 'Malteada'},
+    {'user__user_id': 2, 'user__name': 'Andres'}
+    ]
+
+# --*-- INSERT MULTIPLES TABLAS --*--
+def test_method_i_multiple_tables():
+    coffee = CoffeeShop()
+    coffee.i(db_path=file, user=[(None, "Lupita")], product=[(None, "IPad")])
+
+    res1 = User.all().to_dict()
+    res2 = Product.all().to_dict()
+
+    assert res1 == [
+    {'user__user_id': 1, 'user__name': 'Malteada'},
+    {'user__user_id': 2, 'user__name': 'Andres'},
+    {'user__user_id': 3, 'user__name': 'Lupita'}
+    ]
+    assert res2 == [{'product__product_id': 1, 'product__name': 'IPad'}]
+
+# --*-- UPDATE MULTIPLES TABLAS --*--
+def test_method_u_multiple_tables():
+    coffee = CoffeeShop()
+    coffee.u(
+        db_path=file,
+        user__name__user_id__gtsm=("Guadalupe", 3),
+        product__name__product_id__same=("Apple Ipad", 1))
+
+    res1 = User.all().to_dict()
+    res2 = Product.all().to_dict()
+
+    assert res1 == [
+    {'user__user_id': 1, 'user__name': 'Malteada'},
+    {'user__user_id': 2, 'user__name': 'Andres'},
+    {'user__user_id': 3, 'user__name': 'Guadalupe'}
+    ]
+    assert res2 == [{'product__product_id': 1, 'product__name': 'Apple Ipad'}]
+

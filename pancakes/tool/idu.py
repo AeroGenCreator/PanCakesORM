@@ -186,7 +186,7 @@ class CoffeeShop:
                     dicc['condition'] = [
                         {
                             'column': con,
-                            'operator': op,
+                            'operator': OPERATOR[op],
                             'value': val,
                         }
                     ]
