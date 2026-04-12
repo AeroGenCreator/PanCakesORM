@@ -248,36 +248,37 @@ class QueryBox:
             line = f"{self.model._table}__{dicc["name"]}"
             names.append(line)
 
-        # 1. Evaluar si hay data en join
-        # 2. Si hay: Select complejo
+        # Validar uniones; selección de columnas 'join'.
         if self.join:
-
-            e_tabs = []  # Tablas con join
+            # Obtencion de tablas 'join'.
+            e_tabs = []
             for e in self.join:
                 t1 = e.get("tab1", "")
                 t2 = e.get("tab2", "")
-                e_tabs.extend([t1, t2])
+                # Limpiamos manual repetidos.
+                if t1 not in e_tabs and t1 != self.model._table:
+                    e_tabs.append(t1)
+                if t2 not in e_tabs and t2 != self.model._table:
+                    e_tabs.append(t2)
 
-            # Validar que las tablas existan en las tablas de la
-            # base de datos.
-            e_tabs = set(e_tabs)
+            # Forzamos orden constante de aparición
+            e_tabs.sort(reverse=False)
+
+            # Validar existencia de tablas en la base de datos.
+            s_tabs = set(e_tabs)
             t_tabs = set(self.model._family.keys())
 
-            if e_tabs.issubset(t_tabs):
+            if s_tabs.issubset(t_tabs):
 
                 sp_res = []
                 for e in e_tabs:
+                    # Cache fuerza a que columna 'id' siempre sea 1ra.
                     sp_cache = []
-
-                    # Validar la existencia de la tabla en la database:
-                    if e not in self.model._family.keys():
-                        msg = "Passed 'table name' not in database."
-                        logger.critical(msg)
-                        raise KeyError(e)
 
                     # Objeto PanCakesORM identificada por 'nombre tabla'
                     obj = self.model._family[e]
 
+                    # Itera cada objeto columna de la tabla 'e'
                     for col in obj._fields:
 
                         # Etiquetas de comment mapeadas
@@ -289,22 +290,22 @@ class QueryBox:
                         if sp_lab_key not in self.label_dicc.keys():
                             self.label_dicc[sp_lab_key] = lab
 
-                        # Si la tabla es main, skip
+                        # Usamos 'names' para validar únicos
                         if f"{e}__{col._name}" in names:
                             continue
 
                         # Nombre compuesto de tablas "join"
+                        if f"{e}__{e}_id" not in names:
+                            sp_cache = (
+                                [{"table": e, "name": f"{e}_id"}] + sp_cache
+                            )
+                            names.append(f"{e}__{e}_id")
                         dicc = {
                             "table": e,
                             "name": col._name,
                         }
                         sp_cache.append(dicc)
                         names.append(f"{e}__{col._name}")
-                        if f"{e}__{e}_id" not in names:
-                            sp_cache = (
-                                [{"table": e, "name": f"{e}_id"}] + sp_cache
-                            )
-                            names.append(f"{e}__{e}_id")
                     sp_res.extend(sp_cache)
 
         self.s_select = s_res
