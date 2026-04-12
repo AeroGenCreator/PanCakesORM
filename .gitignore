@@ -14,9 +14,6 @@ tests/__pycache__/
 pancakes/data/
 data/
 
-# DEV-REQUIREMENTS
-requirements-dev.txt
-
 # PROJECT CONF FOR PYPI
 dist/
 *.egg-info

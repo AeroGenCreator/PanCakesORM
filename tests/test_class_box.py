@@ -533,9 +533,9 @@ def test_raw_labels_select_full_agg():
 # --*-- QUERYBOX - ETIQUETAS DE FRONTEND TO_DICT() --*--
 
 def test_dict_label():
-    api = Client.all().to_dict(label=True)
+    dicc = Client.all().to_dict(label=True)
 
-    assert api == [
+    assert dicc == [
     {'CLIENT ID': 1, 'Client Name': 'Andres', 'Country Rel': 1},
     {'CLIENT ID': 2, 'Client Name': 'Lupita', 'Country Rel': 1},
     {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2},
@@ -543,3 +543,180 @@ def test_dict_label():
     {'CLIENT ID': 5, 'Client Name': 'Malteada', 'Country Rel': 2}
     ]
 
+def test_dict_label_join():
+    dicc = Client.link('country').all().to_dict(label=True)
+
+    assert dicc == [
+    {'CLIENT ID': 1, 'Client Name': 'Andres', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico'},
+    {'CLIENT ID': 2, 'Client Name': 'Lupita', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico'},
+    {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil'},
+    {'CLIENT ID': 4, 'Client Name': 'Polar', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico'},
+    {'CLIENT ID': 5, 'Client Name': 'Malteada', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil'}
+    ]
+
+def test_dict_label_full_join():
+    dicc = Client.link('sale','country').all().to_dict(label=True)
+
+    assert dicc == [
+    {'CLIENT ID': 1, 'Client Name': 'Andres', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico', 'SALE ID': 1, 'Sale Code': 'F1', 'Cliente Rel': 1},
+    {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil', 'SALE ID': 2, 'Sale Code': 'F2', 'Cliente Rel': 3},
+    {'CLIENT ID': 4, 'Client Name': 'Polar', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico', 'SALE ID': 3, 'Sale Code': 'F3', 'Cliente Rel': 4},
+    {'CLIENT ID': 1, 'Client Name': 'Andres', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico', 'SALE ID': 4, 'Sale Code': 'F4', 'Cliente Rel': 1},
+    {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil', 'SALE ID': 5, 'Sale Code': 'F5', 'Cliente Rel': 3},
+    {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil', 'SALE ID': 6, 'Sale Code': 'F6', 'Cliente Rel': 3},
+    {'CLIENT ID': 5, 'Client Name': 'Malteada', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil', 'SALE ID': 7, 'Sale Code': 'F7', 'Cliente Rel': 5},
+    {'CLIENT ID': 3, 'Client Name': 'Peke', 'Country Rel': 2, 'COUNTRY ID': 2, 'Country': 'Brasil', 'SALE ID': 8, 'Sale Code': 'F8', 'Cliente Rel': 3},
+    {'CLIENT ID': 2, 'Client Name': 'Lupita', 'Country Rel': 1, 'COUNTRY ID': 1, 'Country': 'Mexico', 'SALE ID': 9, 'Sale Code': 'F9', 'Cliente Rel': 2}
+    ]
+
+def test_dict_label_select():
+    dicc = Client.select("client__name").all().to_dict()
+
+    assert dicc == [
+        {'client__name': 'Andres'},
+        {'client__name': 'Lupita'},
+        {'client__name': 'Peke'},
+        {'client__name': 'Polar'},
+        {'client__name': 'Malteada'}
+    ]
+
+def test_dict_label_select_multi():
+    dicc = Client().select(
+        "client__name", "sale__name"
+    ).link("sale").all().to_dict(label=True)
+
+    assert dicc == [
+        {'Client Name': 'Andres', 'Sale Code': 'F1'},
+        {'Client Name': 'Peke', 'Sale Code': 'F2'},
+        {'Client Name': 'Polar', 'Sale Code': 'F3'},
+        {'Client Name': 'Andres', 'Sale Code': 'F4'},
+        {'Client Name': 'Peke', 'Sale Code': 'F5'},
+        {'Client Name': 'Peke', 'Sale Code': 'F6'},
+        {'Client Name': 'Malteada', 'Sale Code': 'F7'},
+        {'Client Name': 'Peke', 'Sale Code': 'F8'},
+        {'Client Name': 'Lupita', 'Sale Code': 'F9'}
+    ]
+
+def test_dict_label_select_multi_agg():
+    dicc = Client.select(
+        "client__name","sale__name__count"
+    ).link("sale").gp(client="name").all().to_dict(label=True)
+
+    assert dicc == [
+        {'Client Name': 'Andres', 'Sale Code COUNT': 2},
+        {'Client Name': 'Lupita', 'Sale Code COUNT': 1},
+        {'Client Name': 'Malteada', 'Sale Code COUNT': 1},
+        {'Client Name': 'Peke', 'Sale Code COUNT': 4},
+        {'Client Name': 'Polar', 'Sale Code COUNT': 1}
+    ]
+
+def test_dict_label_select_full_agg():
+    dicc = Client.select(
+        "client__name","sale__name__count", "country__name"
+    ).link("sale", "country").gp(client="name").all().to_dict(label=True)
+
+    assert dicc == [
+        {'Client Name': 'Andres', 'Sale Code COUNT': 2, 'Country': 'Mexico'},
+        {'Client Name': 'Lupita', 'Sale Code COUNT': 1, 'Country': 'Mexico'},
+        {'Client Name': 'Malteada', 'Sale Code COUNT': 1, 'Country': 'Brasil'},
+        {'Client Name': 'Peke', 'Sale Code COUNT': 4, 'Country': 'Brasil'},
+        {'Client Name': 'Polar', 'Sale Code COUNT': 1, 'Country': 'Mexico'}
+    ]
+
+# --*-- QUERYBOX - ETIQUETAS DE FRONTEND JSON() --*--
+
+def test_to_json_label():
+    api = Client.all().to_json(label=True)
+    
+    assert api == {
+        'client': {
+            'CLIENT ID': [1, 2, 3, 4, 5],
+            'Client Name': ['Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'],
+            'Country Rel': [1, 1, 2, 1, 2]
+        }
+    }
+
+def test_to_json_label_join():
+    api = Client.link('country').all().to_json(label=True)
+    
+    assert api == {
+        'client': {
+            'CLIENT ID': [1, 2, 3, 4, 5],
+            'Client Name': ['Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'],
+            'Country Rel': [1, 1, 2, 1, 2]
+        },
+        'country': {
+            'COUNTRY ID': [1, 1, 2, 1, 2],
+            'Country': ['Mexico', 'Mexico', 'Brasil', 'Mexico', 'Brasil']
+        }
+    }
+
+def test_to_json_label_full_join():
+    api = Client.link('sale','country').all().to_json(label=True)
+    
+    assert api == {
+        'client': {
+            'CLIENT ID': [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            'Client Name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'],
+            'Country Rel': [1, 2, 1, 1, 2, 2, 2, 2, 1]
+        },
+        'country': {
+            'COUNTRY ID': [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            'Country': ['Mexico', 'Brasil', 'Mexico', 'Mexico', 'Brasil', 'Brasil', 'Brasil', 'Brasil', 'Mexico']
+        },
+        'sale': {
+            'SALE ID': [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            'Sale Code': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
+            'Cliente Rel': [1, 3, 4, 1, 3, 3, 5, 3, 2]
+        }
+    }
+
+def test_to_json_label_select():
+    api = Client.select("client__name").all().to_json()
+    
+    assert api == {'client': {'name': ['Andres', 'Lupita', 'Peke', 'Polar', 'Malteada']}}
+
+def test_to_json_label_select_multi():
+    api = Client().select(
+        "client__name", "sale__name"
+    ).link("sale").all().to_json(label=True)
+
+    assert api == {
+    'client': {
+        'Client Name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita']
+        },
+    'sale': {
+        'Sale Code': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9']
+        }
+    }
+
+def test_to_json_label_select_multi_agg():
+    api = Client.select(
+        "client__name","sale__name__count"
+    ).link("sale").gp(client="name").all().to_json(label=True)
+
+    assert api == {
+        'client': {
+            'Client Name': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar']
+        },
+        'sale': {
+            'Sale Code COUNT': [2, 1, 1, 4, 1]
+        }
+    }
+
+def test_to_json_label_select_full_agg():
+    api = Client.select(
+        "client__name","sale__name__count", "country__name"
+    ).link("sale", "country").gp(client="name").all().to_json(label=True)
+    
+    assert api == {
+        'client': {
+            'Client Name': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar']
+        },
+        'sale': {
+            'Sale Code COUNT': [2, 1, 1, 4, 1]
+        },
+        'country': {
+            'Country': ['Mexico', 'Mexico', 'Brasil', 'Brasil', 'Mexico']
+        }
+    }

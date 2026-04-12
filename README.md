@@ -57,7 +57,7 @@ PanCakesORM no es solo una cara bonita; está construido para ser el motor confi
         Streamlit: Ideal para aplicaciones de datos donde la velocidad de desarrollo es clave.
 
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
-    de más de 70 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
+    de más de 110 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
 🏗️ Arquitectura de Consultas (QueryBox)
 
@@ -71,7 +71,7 @@ El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones comp
 
 🛠️ Requisitos
 
-    Python 3.10+
+    Python 3.12+
 
     SQLite3
 

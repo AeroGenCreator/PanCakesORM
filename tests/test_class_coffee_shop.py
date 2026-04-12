@@ -19,6 +19,7 @@ from datetime import date
 # Modulos Desarrollo
 import ipdb
 import pandas as pd
+import pytest
 
 # GLOBAL PATH para pruebas
 dir_ = Path.cwd() / 'data' / 'test_env'
@@ -39,6 +40,27 @@ class Product(PanCakesORM):
     _table = 'product'
 
     name = sql_datatype.Char(comment='Producto')
+
+class UserDos(PanCakesORM):
+    _db_dir = dir_
+    _db_file = file
+
+    _table = 'user_dos'
+
+    name = sql_datatype.Char(comment='Usuario')
+    user_id = sql_datatype.ForeignKey(
+        second_table='user',
+        column_id='user_id',
+        comment="User User Dos Rel"
+    )
+
+class Category(PanCakesORM):
+    _db_dir = dir_
+    _db_file = file
+
+    _table = 'category'
+
+    name = sql_datatype.Char(comment='Unique Category')
 
 # --*-- INSERT --*--
 def test_method_i():
@@ -171,3 +193,45 @@ def test_classmethod_d():
     api = User.all().to_dict()
 
     assert api == []
+
+# --*-- TEST NOMBRES REPETIDOS --*--
+
+def test_duplicated_name_when_output():
+    User.i(user=[(None, "Tabla1")])
+    UserDos.i(user_dos=[(None, "Tabla1", 1)])
+
+    row1, col1 = User.link('user_dos').all().raw()
+    row2, col2 = User.link('user_dos').all().raw(label=True)
+    dicc1 = User.link('user_dos').all().to_dict()
+    dicc2 = User.link('user_dos').all().to_dict(label=True)
+    api1 = User.link('user_dos').all().to_json()
+    api2 = User.link('user_dos').all().to_json(label=True)
+    
+    assert col1 == ['user__user_id', 'user__name', 'user_dos__user_dos_id', 'user_dos__name', 'user_dos__user_id']
+    assert col2 == ['USER ID 0', 'Usuario 1', 'USER_DOS ID 2', 'Usuario 3', 'User User Dos Rel 4']
+    assert dicc1 == [{'user__user_id': 1, 'user__name': 'Tabla1', 'user_dos__user_dos_id': 1, 'user_dos__name': 'Tabla1', 'user_dos__user_id': 1}]
+    assert dicc2 == [{'USER ID 0': 1, 'Usuario 1': 'Tabla1', 'USER_DOS ID 2': 1, 'Usuario 3': 'Tabla1', 'User User Dos Rel 4': 1}]
+    assert api1 == {'user': {'user_id': [1], 'name': ['Tabla1']}, 'user_dos': {'user_dos_id': [1], 'name': ['Tabla1'], 'user_id': [1]}}
+    assert api2 == {'user': {'USER ID 0': [1], 'Usuario 1': ['Tabla1']}, 'user_dos': {'USER_DOS ID 2': [1], 'Usuario 3': ['Tabla1'], 'User User Dos Rel 4': [1]}}
+
+def test_error_queries_relaciones():
+    """
+    mensaje:
+    f"Invalid 'id reference' datatype: {udid}. "
+    "No relationship found. "
+    "Ensure you have related your tables "
+    "before using methods like .link(), .add(), "
+    "or the .query() function."
+    """
+    with pytest.raises(TypeError):
+        dicc = Category.link('user').all().to_dict()
+
+def test_vacios():
+    row, col = Category.all().raw()
+    dicc = Category.all().to_dict()
+    api = Category.all().to_json()
+
+    assert row == []
+    assert col == ['category__category_id', 'category__name']
+    assert dicc == []
+    assert api == {}

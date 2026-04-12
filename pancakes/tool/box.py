@@ -40,31 +40,32 @@ class QueryBox:
     def raw(self, line_up: bool = False, label=False):
         """
         Devuelve una tupla de dos elementos; la data en crudo de un query:
-        
+
         row, col = ...raw()
-        
+
         Forzoso para obtner una salida de datos usando QueryBox.
-        
+
         Paramestros:
 
         line_up: bool = False -> Alinea la salida de las filas;
-        
+
         en lugar de una lista de filas:
-        [(fila), (fila), (fila)] 
-        
-        devuelve una lista de data de columna: 
+        [(fila), (fila), (fila)]
+
+        devuelve una lista de data de columna:
         [(columna), (columna), (columna)]
 
         label: bool = False -> Si es True; se devuelven las columnas
         con las etiquetas de frontend.
         """
-        
+
         if not self.row or not self.col:
-            return []
+            return self.row, self.col
 
         row = self.row
         col = self.col
 
+        # Obtencion de etiquetas frontend
         if label:
             comments = self.s_label + self.sp_label
             if comments:
@@ -77,15 +78,29 @@ class QueryBox:
                 chart = [lab.get(c) for c in col]
                 col = chart
 
+        # Validar nombres únicos, sino; numerar.
         if len(set(col)) != len(col):
+            warnings.warn(
+                f"Possible duplicate column names. {col}"
+                "If you are using label=True, "
+                "ensure you are not repeating "
+                "the same name for the 'comment' argument "
+                "when declaring table.",
+                UserWarning
+            )
             cache = []
             count = 0
-            for c in col:
-                line =(
-                    f"{c.split('__', 1)[0]}"
-                    f"__{c.split('__', 1)[1]}__{count}"
-                )
-                cache.append(line)
+            if not label:
+                for c in col:
+                    line = (
+                        f"{c.split('__', 1)[0]}"
+                        f"__{c.split('__', 1)[1]}__{count}"
+                    )
+                    cache.append(line)
+                    count += 1
+                col = cache
+            for et in col:
+                cache.append(f"{et} {count}")
                 count += 1
             col = cache
 
@@ -101,20 +116,23 @@ class QueryBox:
 
         listas de tuplas a -> JSON
         dict 'query': dict 'tabla': dict 'column': list[any]
-        
+
         Forzoso para obtner una salida de datos usando QueryBox.
-        
+
         Paramestros:
 
         label: bool = False -> Si es True; se devuelve el JSON
-        con las etiquetas de frontend. 
+        con las etiquetas de frontend.
         """
 
+        # Validacion de data
         if not self.row or not self.col:
             return {}
 
+        # Extraccion de data, extraccion de respaldo 'columnas'
         row = self.row
         col = self.col
+        backup = self.col
 
         # Obtencion de etiquetas frontend
         if label:
@@ -139,21 +157,38 @@ class QueryBox:
 
         # Validar nombres únicos, sino; numerar.
         if len(set(col)) != len(col):
+            warnings.warn(
+                f"Possible duplicate column names. {col}"
+                "If you are using label=True, "
+                "ensure you are not repeating "
+                "the same name for the 'comment' argument "
+                "when declaring table.",
+                UserWarning
+            )
             cache = []
             count = 0
-            for c in col:
-                line =(
-                    f"{c.split('__', 1)[0]}"
-                    f"__{c.split('__', 1)[1]}__{count}"
-                )
-                cache.append(line)
+            if not label:
+                for c in col:
+                    line = (
+                        f"{c.split('__', 1)[0]}"
+                        f"__{c.split('__', 1)[1]}__{count}"
+                    )
+                    cache.append(line)
+                    count += 1
+                col = cache
+            for et in col:
+                cache.append(f"{et} {count}")
                 count += 1
             col = cache
 
-        # Transposción; obtener (tabla, columna) 
+        # Transposción; obtener (tabla, columna)
         trans = list(zip(*row))
-        tabls = [c.split("__", 1)[0] for c in col]
-        heads = [c.split("__", 1)[1] for c in col]
+        tabls = [b.split("__", 1)[0] for b in backup]
+        if label:
+            heads = col
+        # Sino etiquetas frontend; iterar sobre el respaldo
+        else:
+            heads = [b.split("__", 1)[1] for b in backup]
 
         # Fabricación de diccionario
         res = {}
@@ -171,13 +206,13 @@ class QueryBox:
 
         listas de tuplas a -> llave: valor; para cada celda de la tabla.
         list 'query': dict 'fila': llave 'columna': valor 'celda'
-        
+
         Forzoso para obtner una salida de datos usando QueryBox.
-        
+
         Paramestros:
 
         label: bool = False -> Si es True; se devuelve el JSON
-        con las etiquetas de frontend. 
+        con las etiquetas de frontend.
         """
 
         if not self.row or not self.col:
@@ -200,14 +235,32 @@ class QueryBox:
                 col = chart
 
         # Validar nombres únicos, sino; numerar.
-        if len(col) != len(set(col)):
+        if len(set(col)) != len(col):
+            warnings.warn(
+                f"Possible duplicate column names. {col}"
+                "If you are using label=True, "
+                "ensure you are not repeating "
+                "the same name for the 'comment' argument "
+                "when declaring table.",
+                UserWarning
+            )
+            cache = []
             count = 0
-            c_col = []
-            for c in col:
-                c_col.append(c + f" {count}")
+            if not label:
+                for c in col:
+                    line = (
+                        f"{c.split('__', 1)[0]}"
+                        f"__{c.split('__', 1)[1]}__{count}"
+                    )
+                    cache.append(line)
+                    count += 1
+                col = cache
+            for et in col:
+                cache.append(f"{et} {count}")
                 count += 1
+            col = cache
 
-            dicc = [dict(zip(c_col, r)) for r in row]
+            dicc = [dict(zip(col, r)) for r in row]
 
             self.reset()
             return dicc
@@ -223,7 +276,7 @@ class QueryBox:
         # Lista de kwargs para 'seleccion' y 'seleccion especial'
         s_res = []
         sp_res = None
-        
+
         # Siempre: select simple
         for col in self.model._fields:
 
@@ -372,7 +425,7 @@ class QueryBox:
             m_tab = self.model._table  # <- tabla main.
 
             if tab != m_tab:  # <- Si estamos seleccionando de union
-                
+
                 obj = self.model._family[tab]  # <- Buscamos la Tabla
                 # Obtenemos el comment:
                 lab = [c.comment for c in obj._fields if c._name == col]
@@ -665,7 +718,13 @@ class QueryBox:
             utab = kwargs[k][1]
 
             if not isinstance(udid, str):
-                msg = f"Invalid 'id reference' datatype: {udid}. "
+                msg = (
+                    f"Invalid 'id reference' datatype: {udid}. "
+                    "No relationship found. "
+                    "Ensure you have related your tables "
+                    "before using methods like .link(), .add(), "
+                    "or the .query() function."
+                )
                 logger.critical(msg)
                 raise TypeError(type(udid))
 
@@ -845,13 +904,13 @@ class QueryBox:
                 "requested; 'id' but specific columns "
                 f"were passed: {s_select} : {sp_select}. "
                 "Your query will continue; return 'ids' only. "
-                "otherwise do not use .id() method.",UserWarning
+                "otherwise do not use .id() method.", UserWarning
             )
-            s_select = [{"name":f"{_from}_id"}]
+            s_select = [{"name": f"{_from}_id"}]
             sp_select = None
 
         if ids and not sp_select and not s_select:
-            s_select = [{"name":f"{_from}_id"}]
+            s_select = [{"name": f"{_from}_id"}]
             sp_select = None
 
         # Evaluar cuando .all() no contiene select():
@@ -926,7 +985,7 @@ class QueryBox:
             # Validamos que la operacion directa no encontro campos
             # Pasamos a la operacion inversa (de tabla padre a hija).
             if not field:
-                
+
                 # Buscamos relacion del PRIMARY KEY de la tabla
                 # A la FOREIGN KEY de la tabla hija
                 c_id = f"{self.model._table}_id"
@@ -940,7 +999,7 @@ class QueryBox:
                     )
                     logger.critical(msg)
                     raise KeyError(rel)
-                
+
                 # Si existe accedemos a la tabla entera
                 # e iteramos sus campos
                 tab2 = self.model._family[rel]
@@ -963,5 +1022,5 @@ class QueryBox:
     def count(self):
         self.select(
             f"{self.model._table}__{self.model._table}_id__count").all()
-        
+
         return self

@@ -1,0 +1,7 @@
+ipdb
+pandas
+pytest
+wheel
+setuptools
+twine
+build
