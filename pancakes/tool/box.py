@@ -23,6 +23,7 @@ class QueryBox:
         self.reset()
 
     def reset(self):
+        self.label_dicc = {}
         self.s_label = []
         self.sp_label = []
         self.s_select = []
@@ -37,6 +38,26 @@ class QueryBox:
         self.col = None
 
     def raw(self, line_up: bool = False, label=False):
+        """
+        Devuelve una tupla de dos elementos; la data en crudo de un query:
+        
+        row, col = ...raw()
+        
+        Forzoso para obtner una salida de datos usando QueryBox.
+        
+        Paramestros:
+
+        line_up: bool = False -> Alinea la salida de las filas;
+        
+        en lugar de una lista de filas:
+        [(fila), (fila), (fila)] 
+        
+        devuelve una lista de data de columna: 
+        [(columna), (columna), (columna)]
+
+        label: bool = False -> Si es True; se devuelven las columnas
+        con las etiquetas de frontend.
+        """
         
         if not self.row or not self.col:
             return []
@@ -44,10 +65,17 @@ class QueryBox:
         row = self.row
         col = self.col
 
-        comments = self.s_label + self.sp_label
-
-        if label and len(comments) == len(col):
-            col = comments
+        if label:
+            comments = self.s_label + self.sp_label
+            if comments:
+                lab = comments
+            if self.label_dicc:
+                lab = self.label_dicc
+            if isinstance(lab, list):
+                col = comments
+            if isinstance(lab, dict):
+                chart = [lab.get(c) for c in col]
+                col = chart
 
         if len(set(col)) != len(col):
             cache = []
@@ -68,6 +96,19 @@ class QueryBox:
         return row, col
 
     def to_json(self, label=False):
+        """
+        Convierte la salida defecto de un query SQLite3:
+
+        listas de tuplas a -> JSON
+        dict 'query': dict 'tabla': dict 'column': list[any]
+        
+        Forzoso para obtner una salida de datos usando QueryBox.
+        
+        Paramestros:
+
+        label: bool = False -> Si es True; se devuelve el JSON
+        con las etiquetas de frontend. 
+        """
 
         if not self.row or not self.col:
             return {}
@@ -75,11 +116,20 @@ class QueryBox:
         row = self.row
         col = self.col
 
-        comments = self.s_label + self.sp_label
+        # Obtencion de etiquetas frontend
+        if label:
+            comments = self.s_label + self.sp_label
+            if comments:
+                lab = comments
+            if self.label_dicc:
+                lab = self.label_dicc
+            if isinstance(lab, list):
+                col = comments
+            if isinstance(lab, dict):
+                chart = [lab.get(c) for c in col]
+                col = chart
 
-        if label and len(comments) == len(col):
-            col = comments
-
+        # Validar alineación antes de la transpocisión:
         if len(row[0]) != len(col):
             msg = (
                 f"Length mismatch for query output {row}, {col}"
@@ -87,6 +137,7 @@ class QueryBox:
             logger.critical(msg)
             raise ValueError
 
+        # Validar nombres únicos, sino; numerar.
         if len(set(col)) != len(col):
             cache = []
             count = 0
@@ -99,10 +150,12 @@ class QueryBox:
                 count += 1
             col = cache
 
+        # Transposción; obtener (tabla, columna) 
         trans = list(zip(*row))
         tabls = [c.split("__", 1)[0] for c in col]
         heads = [c.split("__", 1)[1] for c in col]
 
+        # Fabricación de diccionario
         res = {}
         count = 0
         for count, (t, h) in enumerate(zip(tabls, heads)):
@@ -115,52 +168,72 @@ class QueryBox:
     def to_dict(self, label=False):
         """
         Convierte la salida defecto de un query SQLite3:
-        listas de tuplas a -> lista de diccionarios.
+
+        listas de tuplas a -> llave: valor; para cada celda de la tabla.
+        list 'query': dict 'fila': llave 'columna': valor 'celda'
+        
         Forzoso para obtner una salida de datos usando QueryBox.
+        
+        Paramestros:
+
+        label: bool = False -> Si es True; se devuelve el JSON
+        con las etiquetas de frontend. 
         """
 
-        # Se evalua la repeticion de nombres:
-        # Si existen repeditos se agrega " number"
         if not self.row or not self.col:
             return []
 
-        comments = self.s_label + self.sp_label
+        col = self.col
+        row = self.row
 
-        if label and len(comments) == len(col):
-            col = comments
+        # Obtencion de etiquetas frontend
+        if label:
+            comments = self.s_label + self.sp_label
+            if comments:
+                lab = comments
+            if self.label_dicc:
+                lab = self.label_dicc
+            if isinstance(lab, list):
+                col = comments
+            if isinstance(lab, dict):
+                chart = [lab.get(c) for c in col]
+                col = chart
 
-        if len(self.col) != len(set(self.col)):
+        # Validar nombres únicos, sino; numerar.
+        if len(col) != len(set(col)):
             count = 0
             c_col = []
-            for c in self.col:
+            for c in col:
                 c_col.append(c + f" {count}")
                 count += 1
 
-            dicc = [dict(zip(c_col, r)) for r in self.row]
+            dicc = [dict(zip(c_col, r)) for r in row]
 
             self.reset()
             return dicc
 
-        # Si no hay nombres repetidos creamos la lista
-        # de diccionarios
-        dicc = [dict(zip(self.col, r)) for r in self.row]
+        # Lista diccionarios si nombres únicos
+        dicc = [dict(zip(col, r)) for r in row]
 
         self.reset()
         return dicc
 
     def _if_no_select(self) -> None:
 
+        # Lista de kwargs para 'seleccion' y 'seleccion especial'
         s_res = []
         sp_res = None
         
         # Siempre: select simple
         for col in self.model._fields:
 
-            # Obtenemos todas las etiquetas de tabla main:
-            if f"{self.model._table.title()} ID" not in self.s_label:
-                self.s_label.append(f"{self.model._table.title()} ID")
+            # Mapeamos todas las etiquetas de tabla 'main' e 'id'
+            id_key = f"{self.model._table}__{self.model._table}_id"
+            if id_key not in self.label_dicc.keys():
+                self.label_dicc[id_key] = f"{self.model._table.upper()} ID"
             lab = col.comment
-            self.s_label.append(lab)
+            s_lab_key = f"{self.model._table}__{col._name}"
+            self.label_dicc[s_lab_key] = lab
 
             # Insertamos dicc de query simple (todas las columnas):
             dicc = {
@@ -196,22 +269,25 @@ class QueryBox:
                 for e in e_tabs:
                     sp_cache = []
 
-                    # Clase completa de PanCakesORM identificada por su
-                    # nombre de tabla.
+                    # Validar la existencia de la tabla en la database:
+                    if e not in self.model._family.keys():
+                        msg = "Passed 'table name' not in database."
+                        logger.critical(msg)
+                        raise KeyError(e)
+
+                    # Objeto PanCakesORM identificada por 'nombre tabla'
                     obj = self.model._family[e]
 
                     for col in obj._fields:
 
-                        # Etiquetas de comment
-                        exp = f"{e.title()} ID"
-                        if (
-                            exp not in self.sp_label and
-                            exp not in (self.s_label)
-                        ):
-                            self.sp_label.append(exp)
+                        # Etiquetas de comment mapeadas
+                        sp_id_key = f"{e}__{e}_id"
+                        if sp_id_key not in self.label_dicc.keys():
+                            self.label_dicc[sp_id_key] = f"{e.upper()} ID"
                         lab = col.comment
-                        if lab not in self.s_label:
-                            self.sp_label.append(lab)
+                        sp_lab_key = f"{e}__{col._name}"
+                        if sp_lab_key not in self.label_dicc.keys():
+                            self.label_dicc[sp_lab_key] = lab
 
                         # Si la tabla es main, skip
                         if f"{e}__{col._name}" in names:
@@ -298,10 +374,10 @@ class QueryBox:
                 
                 obj = self.model._family[tab]  # <- Buscamos la Tabla
                 # Obtenemos el comment:
-                if f"{tab.title()} ID" not in self.sp_label:
-                    self.sp_label.append(f"{tab.title()} ID")
                 lab = [c.comment for c in obj._fields if c._name == col]
-                self.sp_label.extend(lab)
+                lab = f"{"".join(lab)} {agg.upper()}"
+                lab = " ".join(lab.split(" ")).strip()
+                self.sp_label.append(lab)
 
                 dicc = {
                         "table": tab,
@@ -312,10 +388,10 @@ class QueryBox:
                 continue
 
             # Obtenemos el comment desde la tabla main
-            if f"{m_tab.title()} ID" not in self.s_label:
-                self.s_label.append(f"{m_tab.title()} ID")
             lab = [c.comment for c in self.model._fields if c._name == col]
-            self.s_label.extend(lab)
+            lab = f"{"".join(lab)} {agg.upper()}"
+            lab = " ".join(lab.split(" ")).strip()
+            self.s_label.append(lab)
 
             dicc = {
                 "name": col,
