@@ -38,7 +38,7 @@ class User(PanCakesORM):
 users = User.filter(user__age__gt=18).all().to_dict()
 ```
 
-## [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-32b8851a844d80bd8299f040210ee165)
+## [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
 
 💪 Fortalezas y Robustez
 
