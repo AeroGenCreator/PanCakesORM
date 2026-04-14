@@ -65,16 +65,23 @@ class PanCakesORM:
     del esquema.
     """
 
+    # -> _family: Comunicacion entre clases hermanas
     # -> _db_dir: Ruta directorio para la base de datos
     # -> _db_file: Ruta fichero para la base de datos
-    # -> _family: Comunicacion entre clases hermanas
     # -> _loop_validation: Bandera: primera ejecucion = False,
     # sincroniza esquemas. Despues = True.
+    # -> _group_constraint: Conjunto de columnas unicas en las tabla.
+    # -> _depends: Obliga especificar si la tabla depende de otra u otras.
+    # -> _metadata: Lista de diccionarios: Cada diccionario es
+    # un backup de tabla: metadata
 
+    _family = {}
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
-    _family = {}
     _loop_validation = False
+    _group_constraint = False
+    _depends = "self"
+    _metadata = []
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -135,6 +142,51 @@ class PanCakesORM:
         cls._db_file.touch(exist_ok=True)
         msg = (f'Structure of directories evaluated at {cls._db_file}.')
         logger.debug(msg)
+
+    @classmethod
+    def _check_dependencies(cls) -> None:
+        """
+        Evalua el atributo de clase cls.depends:
+        1. Valida el tipo de dato
+        2. Valida: O string valido o iterable valido.
+        3. Se guardan las dependencias en una lista de diccionarios.
+        4. Cada diccionario es tabla -> dependencias
+        """
+
+        externals = []
+
+        # Validar tipo de dato
+        if not isinstance(cls._depends, (str, list, tuple)):
+            msg = (
+                f"Invalid datatype for attribute _depends. "
+                f"If table does not depend on others set it to 'self'. "
+                f"If depends on others, listem: [user, client...]. "
+            )
+            logger.critical(msg)
+            raise TypeError(type(cls._depends))
+
+        # Validar string "self"
+        if isinstance(cls._depends, str) and cls._depends != "self":
+            msg = (
+                f"Class attribute _depends only accepts the "
+                f"following string when there is no dependencies "
+                f"on other tables: 'self'. Any other string will "
+                f"raise this message."
+            )
+            logger.critical(msg)
+            raise ValueError(cls._depends)
+
+        # Si no hay dependencia, tabla: [self]
+        if isinstance(cls._depends, str):
+            externals.append(cls._depends)
+            cls._metadata.append({cls._table: {'depends': externals}})
+            return
+
+        # Si hay dependencias, table: [tab1, tab2, etc]
+        if isinstance(cls._depends, (list, tuple)):
+            externals.extend(cls._depends)
+            cls._metadata.append({cls._table: {'depends': externals}})
+            return
 
     @classmethod  # Inyeccion Segura | Test seguro
     def _get_fields(cls):
