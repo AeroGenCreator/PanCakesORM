@@ -27,19 +27,22 @@ class Product(PanCakesORM):
     _table = 'product'
     _db_dir = DIR
     _db_file = FILE
+    _depends = ["category"]
 
     date = sql_datatype.Text(comment='Date', nls=False)
+    category_id = sql_datatype.ForeignKey(
+        second_table="category",
+        column_id="category_id",
+        on_del="cascade"
+    )
 
-# Funcion de test
-def test_dynamic_schema():
-    res, cols = pancakes(
-        db_path=FILE,
-        select='*',
-        from_='product',
-        )
+class Category(PanCakesORM):
+    _table = "category"
+    _db_dir = DIR
+    _db_file = FILE
 
-    print(res, cols)
+    name = sql_datatype.Char(comment="Category Name")
 
-# asser dinamico:
-    # assert res == [(1, '')]
-    # assert cols == ['product_id', 'date']
+def test_dependenncies():
+    
+    assert Product.table_exists() == True

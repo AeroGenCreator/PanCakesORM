@@ -10,7 +10,7 @@ Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
 
 # Modulos Originales PanCakesORM
 from ..datatype import sql_datatype
-from ..tool.function import db_connection, logger
+from ..tool.function import db_connection
 from ..tool.box import QueryBox
 from ..tool.idu import CoffeeShop
 from ..cook.layer import query
@@ -21,6 +21,14 @@ from ..cook.furnace import insert
 # Modulos de Python
 import warnings
 from pathlib import Path
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,  # Captura todo desde INFO hacia arriba
+    format='%(asctime)s [%(levelname)s] '
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Ruta Por Defecto Para Cualquier Proyecto:
 # data/mi_app_database.sqlite
@@ -72,8 +80,10 @@ class PanCakesORM:
     # sincroniza esquemas. Despues = True.
     # -> _group_constraint: Conjunto de columnas unicas en las tabla.
     # -> _depends: Obliga especificar si la tabla depende de otra u otras.
-    # -> _metadata: Lista de diccionarios: Cada diccionario es
+    # -> _metadata: Ddiccionario de diccionarios: Cada diccionario es
     # un backup de tabla: metadata
+    # -> _order: Guarda el orden de creación de tablas segun
+    # las dependencias.
 
     _family = {}
     _db_dir = DEFAULT_DIR
@@ -81,16 +91,20 @@ class PanCakesORM:
     _loop_validation = False
     _group_constraint = False
     _depends = "self"
-    _metadata = []
+    _metadata = {}
+    _order = []
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls._clean_table_name()
         cls._backup()
         cls._init_database()
+        cls._check_dependencies()
+        cls._check_group_constraint()
         cls._get_fields()
+        cls._sort_dependencies()
         cls._init_table()
-        cls._which_loop()
+        #cls._which_loop()
 
     @classmethod  # Inyeccion Segura | Test Seguro
     def _clean_table_name(cls):
@@ -179,17 +193,44 @@ class PanCakesORM:
         # Si no hay dependencia, tabla: [self]
         if isinstance(cls._depends, str):
             externals.append(cls._depends)
-            cls._metadata.append({cls._table: {'depends': externals}})
+            cls._metadata[cls._table] = {'depends': externals}
             return
 
         # Si hay dependencias, table: [tab1, tab2, etc]
         if isinstance(cls._depends, (list, tuple)):
             externals.extend(cls._depends)
-            cls._metadata.append({cls._table: {'depends': externals}})
+            cls._metadata[cls._table] = {'depends': externals}
             return
 
+    @classmethod
+    def _check_group_constraint(cls) -> None:
+        """
+        1. Se busca la existencia del atributo cls._group_constraint
+        2. Se agrega a cls._metadata[cls.table]["group_constraint"]
+        """
+
+        # Validar un valor en cls._group_constraint
+        if cls._group_constraint:
+
+            # Validar que sea una lista o tupla
+            if not isinstance(cls._group_constraint, (list, tuple)):
+                msg = (
+                    f"Invalid datatype class attribute "
+                    f"'_group_constraint'. Valid datatype 'list', 'tuple'."
+                )
+                logger.critical(msg)
+                raise TypeError(type(cls._group_constraint))
+
+            # Agregamos el constraint a su respectiva tabla: metadata
+            constraint = cls._group_constraint
+            cls._metadata[cls._table]['group_constraint'] = constraint
+            return
+
+        cls._metadata[cls._table]['group_constraint'] = ()
+        return
+
     @classmethod  # Inyeccion Segura | Test seguro
-    def _get_fields(cls):
+    def _get_fields(cls) -> None:
         """
         Se extraen los "obtejos" columnas.
         Se sanitizan los "nombres" y se guardan como atributo.
@@ -198,10 +239,15 @@ class PanCakesORM:
         el atributo "_name". Para acceder a los nombres
         se debe iterar la lista y llamara al tributo "_name"
         """
+
+        # Atributos nuevos de clase; _fields, comment
         cls._fields = []
         cls.comment = [f"{cls._table} Id".capitalize()]
+
+        # Metadata de PanCakesORM 
         data = cls.__dict__
 
+        # Tipo de datos validos
         column_type = (
             sql_datatype.Char,
             sql_datatype.Int,
@@ -211,8 +257,11 @@ class PanCakesORM:
             sql_datatype.Bool
             )
 
+        # Iteramos PanCakesORM
         for key, value in data.items():
+        # Validamos que unicamente se seleccionen tipo de dato "columna sql"
             if isinstance(value, column_type):
+                # Limpiamos los nombres de columnas
                 clean_name = []
                 for char in key:
                     if char.isalnum() or char == '_':
@@ -223,26 +272,147 @@ class PanCakesORM:
                         f"""The Column Name "{key}" In
                         {cls.__name__} Is Not Valid."""
                     )
+                # Agregar 'nombre', 'obj. columna', 'comentario frontend'
                 value._name = clean_name
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
 
-    @classmethod  # Inyeccion Segura
-    def _init_table(cls):
+        cls._metadata[cls._table]['fields'] = cls._fields
+        cls._metadata[cls._table]['comments'] = cls.comment
+        columns = [f._name for f in cls._fields]
+        cls._metadata[cls._table]['columns'] = columns
+        return
+
+    @classmethod
+    def _sort_dependencies(cls):
         """
-        Inicializa la tabla de cualquier clase hija declarada.
-        Los nombre de columnas son sanitizados usando "[]".
+        Función vital para la creación de tablas referenciales.
+        Se genera un atributo global cls._order el cual
+        almacena el orden de creación de tablas para mantener
+        coherenecia en las referencia. Ademas permite validar
+        conexion entre tablas y referencias circulares.
         """
-        extraction = []
-        for data in cls._fields:
-            extraction.append(["[" + data._name + "]", data._dtype])
-        sql = ", ".join([" ".join(field) for field in extraction])
-        with db_connection(db_path=cls._db_file) as (conn, cur):
-            cur.execute(f"""
-                CREATE TABLE IF NOT EXISTS [{cls._table}](
-                [{cls._table}_id] INTEGER PRIMARY KEY,
-                {sql});
-            """)
+        # Copia que podemos modificar; forzoso usar []:
+        llaves = list(cls._metadata.keys())
+
+        while len(llaves) != 0:
+            
+            # Iteramos cada llave, freno; largo de llaves antes de 'for':
+            freno = len(llaves)
+            # Cache de llaves pendientes
+            cache = []
+            for k in llaves:
+                
+                # Guardo la dependecia en la variable dep
+                dep = cls._metadata[k]["depends"]
+
+                # Sin dependencias
+                if dep == ["self"]:
+                    if k in cls._order:
+                        continue
+                    cls._order.append(k)
+                
+                # Ya hemos encontrado su dependencia
+                elif set(dep).issubset(cls._order):
+                    if k in cls._order:
+                        continue
+                    cls._order.append(k)
+
+                # En este loop: no referencia; se guarda para el sig.
+                else:
+                    cache.append(k)
+
+            # Se actualiza la lista de diccs con los faltantes.
+            llaves = cache
+            
+            # Detener si encontramos referencia cicular o error de nombre.
+            if freno == len(llaves):
+                valids = list(cls._order)
+                msg = (
+                    f"Invalid declaration of dependencies. "
+                    f"Posible circular dependency called. "
+                    f"Check names listed for argument '_depends' "
+                    f"make sure model exist before include it "
+                    f"in '_depends'."
+                )
+                logger.info(msg)
+                break
+
+    @classmethod
+    def _init_table(cls):  #Inyeccion Segura
+        """
+        Esta función contruye los esquemas de tablas en tiempo real.
+        Importante:
+        1. Construye esquemas segun la dependencia de tablas.
+        2. Mantiene los datos siempre y cuando no se borren columnas.
+        3. Se ejecuta para todas las tablas, por tanto la primera
+        ejecución puede tardar. Pero a cambio se obtiene un esquema bien
+        definido y conectado.
+        4. Esto parcha el error de tablas no creadas por no encontrar
+        referencia de tabla 'padre'.
+        """
+
+        # Guarda: sentencias SQL y el orden de dependencias.
+        lines = []
+        order = list(cls._order)
+
+        # Iteramos por orden
+        for t in order:
+            fields = dict(cls._metadata)[t]["fields"]
+            constn = dict(cls._metadata)[t]["group_constraint"]
+            unique = ""
+            if constn:
+                unique = "UNIQUE " + f"({", ".join(constn)})"
+            extraction = []
+            for f in fields:
+                extraction.append([f"[{f._name}]", f._dtype])
+            union = ", ".join([" ".join(f) for f in extraction])
+            line = (
+                f"CREATE TABLE IF NOT EXISTS [{t}]("
+                f"[{t}_id] INTEGER PRIMARY KEY, "
+                f"{union} "
+                f"{unique});"
+            ).strip()
+            lines.append(line)
+
+        with db_connection(
+            db_path=cls._db_file,
+            no_foreign=True
+        ) as (conn, cur):
+            for ln, t in zip(lines, order):
+                column_in_model = list(cls._metadata[t]["columns"])
+                cur.execute(
+                    f"SELECT name "
+                    f"FROM sqlite_master "
+                    f"WHERE type='table' AND name='{t}'"
+                )
+                if cur.fetchone():
+                    cur.execute(
+                        f"SELECT * FROM [{t}] LIMIT 1;"
+                    )
+                    db_column = [c[0] for c in cur.description]
+
+                    common = [c for c in column_in_model if c in db_column]
+                    columns_str = ", ".join([f"[{c}]" for c in common])
+
+                    cur.execute(
+                        f"ALTER TABLE [{t}] "
+                        f"RENAME TO [{t}_old];"
+                    )
+                    cur.execute(ln)  # Recreación de tabla.
+                    cur.execute(
+                        f"INSERT INTO [{t}]({columns_str}) "
+                        f"SELECT {columns_str} "
+                        f"FROM [{t}_old];"
+                    )
+                    cur.execute(
+                        f"DROP TABLE IF EXISTS [{t}_old];"
+                    )
+                    continue
+                else:
+                    cur.execute(ln)
+
+        logger.info(f"TABLES: [{order}] SUCCESSFULLY CREATED.")
 
     @classmethod  # Inyeccion Segura
     def _columns_table_validation(cls):

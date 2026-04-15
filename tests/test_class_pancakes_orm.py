@@ -33,6 +33,7 @@ class Product(PanCakesORM):
     _table = 'product'
     _db_dir = dir_
     _db_file = file
+    _depends = ["category"]
 
     name = sql_datatype.Char(comment='Producto', nls=False)
     price = sql_datatype.Float(comment='Precio', nls=False)
@@ -62,6 +63,7 @@ class SaleLine(PanCakesORM):
     _table = 'sale_line'
     _db_dir = dir_
     _db_file = file
+    _depends = ["client", "sale", "product"]
 
     client_id = sql_datatype.ForeignKey(
             second_table='client',
