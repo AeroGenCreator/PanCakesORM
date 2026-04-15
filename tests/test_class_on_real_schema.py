@@ -19,17 +19,22 @@ from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 from pathlib import Path
 
+import sqlite3
+import pytest
+
+import pandas as pd
+
 DIR = Path.cwd() / 'data'
 FILE = DIR / 'dynamic.sqlite'
 
-# Tabla:
+# Creacion de tablas basado en dependencias.
 class Product(PanCakesORM):
     _table = 'product'
     _db_dir = DIR
     _db_file = FILE
     _depends = ["category"]
 
-    date = sql_datatype.Text(comment='Date', nls=False)
+    name = sql_datatype.Char(comment="Product Name")
     category_id = sql_datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
@@ -43,6 +48,115 @@ class Category(PanCakesORM):
 
     name = sql_datatype.Char(comment="Category Name")
 
+class SaleLine(PanCakesORM):
+    _table = "sale_line"
+    _db_dir = DIR
+    _db_file = FILE
+    _depends = ['product', 'category', 'client', 'sale']
+    _group_constraint = ('product_id', 'category_id')
+
+    product_id = sql_datatype.ForeignKey(
+        second_table="product",
+        column_id="product_id",
+        on_del="cascade"
+    )
+    category_id = sql_datatype.ForeignKey(
+        second_table="category",
+        column_id="category_id",
+        on_del="cascade"
+    )
+    client_id = sql_datatype.ForeignKey(
+        second_table="client",
+        column_id="client_id",
+        on_del="cascade"
+    )
+    sale_id = sql_datatype.ForeignKey(
+        second_table="sale",
+        column_id="sale_id",
+        on_del="cascade"
+    )
+    quantity = sql_datatype.Float(comment="Quantity")
+
+class Client(PanCakesORM):
+    _table = "client"
+    _db_dir = DIR
+    _db_file = FILE
+
+    name = sql_datatype.Char(comment="Client Name")
+
+class Sale(PanCakesORM):
+    _table = "sale"
+    _db_dir = DIR
+    _db_file = FILE
+
+    name = sql_datatype.Char(comment="Sale Code")
+
+Product.i(product=[(None, "Pan", None)])
+Category.i(category=[(None, "Panaderia")])
+
 def test_dependenncies():
     
     assert Product.table_exists() == True
+    assert Category.table_exists() == True
+    assert SaleLine.table_exists() == True
+    assert Client.table_exists() == True
+    assert Sale.table_exists() == True
+
+def test_group_constraint():
+    SaleLine.i(sale_line=[(None, 1, 1, None, None, None)])
+    with pytest.raises(sqlite3.IntegrityError):
+        SaleLine.i(sale_line=[(None, 1, 1, None, None, None)])
+
+def test_sinchronized_schema():
+
+    class Product2(Product):
+        _table = 'product'
+        _db_dir = DIR
+        _db_file = FILE
+        _depends = ["category"]
+
+        name = sql_datatype.Char(comment="Product Name")
+
+    api = Product2.all().to_dict()
+    
+    # OJO: Ya no existe la columna category_id (La sincronizacion funciona)
+    assert api == [{'product__product_id': 1, 'product__name': 'Pan'}]
+
+def test_quitar_group_constraint():
+    
+    class SaleLine2(SaleLine):
+        _table = "sale_line"
+        _db_dir = DIR
+        _db_file = FILE
+        _depends = ['product', 'category', 'client', 'sale']
+
+        product_id = sql_datatype.ForeignKey(
+            second_table="product",
+            column_id="product_id",
+            on_del="cascade"
+        )
+        category_id = sql_datatype.ForeignKey(
+            second_table="category",
+            column_id="category_id",
+            on_del="cascade"
+        )
+        client_id = sql_datatype.ForeignKey(
+            second_table="client",
+            column_id="client_id",
+            on_del="cascade"
+        )
+        sale_id = sql_datatype.ForeignKey(
+            second_table="sale",
+            column_id="sale_id",
+            on_del="cascade"
+        )
+        quantity = sql_datatype.Float(comment="Quantity")
+
+    SaleLine2.i(sale_line=[(None, 1, 1, None, None, None)])
+
+    api = SaleLine2.all().to_dict()
+
+    # Quito el constraint de manera dinamica, la base de datos sola lo interpreta
+    assert api == [
+    {'sale_line__sale_line_id': 1, 'sale_line__product_id': 1, 'sale_line__category_id': 1, 'sale_line__client_id': None, 'sale_line__sale_id': None, 'sale_line__quantity': None},
+    {'sale_line__sale_line_id': 2, 'sale_line__product_id': 1, 'sale_line__category_id': 1, 'sale_line__client_id': None, 'sale_line__sale_id': None, 'sale_line__quantity': None}]

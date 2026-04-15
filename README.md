@@ -34,6 +34,10 @@ class User(PanCakesORM):
     name = sql_datatype.Char(comment="User Name")
     age = sql_datatype.Integer(comment="User Age")
 
+# ¡Insertar!
+User.i(user=[(None, "Omar", 30)])  # <- El primer elemento de tupla es el "id"
+# ¡Sqlit3 Lo maneja por ti!
+
 # ¡Listo para consultar!
 users = User.filter(user__age__gt=18).all().to_dict()
 ```
@@ -57,7 +61,7 @@ PanCakesORM no es solo una cara bonita; está construido para ser el motor confi
         Streamlit: Ideal para aplicaciones de datos donde la velocidad de desarrollo es clave.
 
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
-    de más de 110 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
+    de más de 115 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
 🏗️ Arquitectura de Consultas (QueryBox)
 

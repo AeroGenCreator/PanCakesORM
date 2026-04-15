@@ -38,6 +38,8 @@ DEFAULT_DB_FILE = DEFAULT_DIR / 'my_app_database.sqlite'
 
 class PanCakesORM:
     """
+    SIEMPRE AL LLAMAR AL CONSTRUCTOR
+
     PanCakesORM:
     Clase dependiente de herencia. Opera despues de ser heredada en
     una clase hija.
@@ -53,30 +55,40 @@ class PanCakesORM:
     a la metadata (comunicacion) de todas las tablas hermanas creadas
     con PanCakesORM.
 
-    3. _init_database:
-    Valida ruta a la base de datos. Si no existe la genera por defecto.
+    3. _check_dependencies:
+    Se valida el atributo de clase _depends. Por defecto ["self"].
+    En caso contrario se deben especificar como una lista o tupla.
+    Se almacena en -> cls._metadata
 
-    4. _get_fields:
+    4. _check_group_constraint:
+    Se valida el atributo y tipo de dato de 'group constraints'
+    Se almacene con su tabla en -> cls._metadata
+
+    5. _get_fields:
     Valida los "objetos" de tipo "sql_datatype". Se genern los
     nombre de columna. Se asignan a su propio objeto. Se guardan los
     objetos como una lista en el atributo de clase: "_fields".
+    Se guardan los comments de frontend en cls.comment.
+    Tanto 'objeto columna', 'nombres columna', 'etiquetas frontend' son
+    almacenados en -> cls._metadate
 
-    5. _init_table:
-    Genera la tabla en la base de datos.
-    Los nombres de columna son sanitizados a traves de "[]".
+    6. _sort_dependencies:
+    Mediante un algoritmo de validacion se genera una lista ordenada
+    de nombres de tablas. Se almacena en cls._order.
+    Si no se encuentra relacion se lanza un INFO, se pasa a la siguiente
+    tabla y se intenta nuevamente.
 
-    SIEMPRE AL CARGAR:
-
-    6. Revisar el esto del loop.
-    Si Es la primera carga del fichero '.py', se actualiza el esquema
-    en la base de datos, de lo contrario. Se salta la sincronizacion
-    del esquema.
+    7. _init_table:
+    Se generan tablas segun su orden en cls._order
+    Cuando una tabla ya existe se:
+    renombre -> se crea nueva -> se insertan datos -> se borra antigua.
+    Este loop mantiene el codigo declarado en los .py sincronizado con
+    lo que existe en la base de datos.
     """
 
     # -> _family: Comunicacion entre clases hermanas
     # -> _db_dir: Ruta directorio para la base de datos
     # -> _db_file: Ruta fichero para la base de datos
-    # -> _loop_validation: Bandera: primera ejecucion = False,
     # sincroniza esquemas. Despues = True.
     # -> _group_constraint: Conjunto de columnas unicas en las tabla.
     # -> _depends: Obliga especificar si la tabla depende de otra u otras.
@@ -88,8 +100,7 @@ class PanCakesORM:
     _family = {}
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
-    _loop_validation = False
-    _group_constraint = False
+    #_group_constraint = False
     _depends = "self"
     _metadata = {}
     _order = []
@@ -104,7 +115,6 @@ class PanCakesORM:
         cls._get_fields()
         cls._sort_dependencies()
         cls._init_table()
-        #cls._which_loop()
 
     @classmethod  # Inyeccion Segura | Test Seguro
     def _clean_table_name(cls):
@@ -209,25 +219,26 @@ class PanCakesORM:
         2. Se agrega a cls._metadata[cls.table]["group_constraint"]
         """
 
-        # Validar un valor en cls._group_constraint
-        if cls._group_constraint:
+        # Validar un valor constraint en las llaves de la clase.
+        if "_group_constraint" not in cls.__dict__.keys():
+            cls._metadata[cls._table]['group_constraint'] = False
+            return
+
+        constraint = cls.__dict__.get("_group_constraint")
+        if constraint:
 
             # Validar que sea una lista o tupla
-            if not isinstance(cls._group_constraint, (list, tuple)):
+            if not isinstance(constraint, (list, tuple)):
                 msg = (
                     f"Invalid datatype class attribute "
                     f"'_group_constraint'. Valid datatype 'list', 'tuple'."
                 )
                 logger.critical(msg)
-                raise TypeError(type(cls._group_constraint))
+                raise TypeError(type(constraint))
 
             # Agregamos el constraint a su respectiva tabla: metadata
-            constraint = cls._group_constraint
             cls._metadata[cls._table]['group_constraint'] = constraint
             return
-
-        cls._metadata[cls._table]['group_constraint'] = ()
-        return
 
     @classmethod  # Inyeccion Segura | Test seguro
     def _get_fields(cls) -> None:
@@ -244,7 +255,7 @@ class PanCakesORM:
         cls._fields = []
         cls.comment = [f"{cls._table} Id".capitalize()]
 
-        # Metadata de PanCakesORM 
+        # Metadata de PanCakesORM
         data = cls.__dict__
 
         # Tipo de datos validos
@@ -259,7 +270,7 @@ class PanCakesORM:
 
         # Iteramos PanCakesORM
         for key, value in data.items():
-        # Validamos que unicamente se seleccionen tipo de dato "columna sql"
+            # Valida unica seleccion tipo de dato "columna sql"
             if isinstance(value, column_type):
                 # Limpiamos los nombres de columnas
                 clean_name = []
@@ -296,13 +307,13 @@ class PanCakesORM:
         llaves = list(cls._metadata.keys())
 
         while len(llaves) != 0:
-            
+
             # Iteramos cada llave, freno; largo de llaves antes de 'for':
             freno = len(llaves)
             # Cache de llaves pendientes
             cache = []
             for k in llaves:
-                
+
                 # Guardo la dependecia en la variable dep
                 dep = cls._metadata[k]["depends"]
 
@@ -311,7 +322,7 @@ class PanCakesORM:
                     if k in cls._order:
                         continue
                     cls._order.append(k)
-                
+
                 # Ya hemos encontrado su dependencia
                 elif set(dep).issubset(cls._order):
                     if k in cls._order:
@@ -324,22 +335,19 @@ class PanCakesORM:
 
             # Se actualiza la lista de diccs con los faltantes.
             llaves = cache
-            
+
             # Detener si encontramos referencia cicular o error de nombre.
             if freno == len(llaves):
                 valids = list(cls._order)
                 msg = (
-                    f"Invalid declaration of dependencies. "
-                    f"Posible circular dependency called. "
-                    f"Check names listed for argument '_depends' "
-                    f"make sure model exist before include it "
-                    f"in '_depends'."
+                    f"No relation found for this iteration. "
+                    f"Moving to next one..."
                 )
                 logger.info(msg)
                 break
 
     @classmethod
-    def _init_table(cls):  #Inyeccion Segura
+    def _init_table(cls):  # Inyeccion Segura
         """
         Esta función contruye los esquemas de tablas en tiempo real.
         Importante:
@@ -362,7 +370,7 @@ class PanCakesORM:
             constn = dict(cls._metadata)[t]["group_constraint"]
             unique = ""
             if constn:
-                unique = "UNIQUE " + f"({", ".join(constn)})"
+                unique = ", UNIQUE" + f"({", ".join(constn)})"
             extraction = []
             for f in fields:
                 extraction.append([f"[{f._name}]", f._dtype])
@@ -374,7 +382,6 @@ class PanCakesORM:
                 f"{unique});"
             ).strip()
             lines.append(line)
-
         with db_connection(
             db_path=cls._db_file,
             no_foreign=True
@@ -411,137 +418,8 @@ class PanCakesORM:
                     continue
                 else:
                     cur.execute(ln)
-
-        logger.info(f"TABLES: [{order}] SUCCESSFULLY CREATED.")
-
-    @classmethod  # Inyeccion Segura
-    def _columns_table_validation(cls):
-        """
-        Se obtienen los nombres de columnas en tiempo real desde
-        la clase y los nombres de columna en la base de datos.
-        Se regresan ambos como (new_columns)(old_columns)
-        """
-        cls._get_fields()
-        cls._clean_table_name()
-        # Obtengo Las Columnas En La Clase Y Las Que Existen En Tiempo Real
-        with db_connection(db_path=cls._db_file) as (conn, cur):
-            cur.execute(f"""SELECT * FROM [{cls._table}] LIMIT 1;""")
-            old_columns = ['[' + col[0] + ']' for col in cur.description]
-            new_columns = ['[' + col._name + ']' for col in cls._fields]
-            new_columns.insert(0, f'[{cls._table}_id]')
-        return new_columns, old_columns
-
-    @classmethod  # Inyeccion Segura
-    def _extraction(cls):
-        """
-        Este Metodo Se Llama Despues De La Limpieza de
-        _columns_table_validation()
-        Devuelve el string SQL de columnas extraido desde las
-        columnas en tiempo real desde la clase.
-        * La intencion es usarlo como el string de declaracion de:
-        "Creacion de tabla". (nombre)(tipo de dato)
-        """
-        extraction = []
-        # Se Extraen Las Nuevas Columnas Como Objetos Completos
-        for data in cls._fields:
-            if isinstance(data, sql_datatype.ForeignKey):
-                extraction.append(["[" + data._name + "]", data._dtype])
-                if data._name != data.column_id:
-                    warnings.warn(
-                        f"""
-                        Warning: Local Column Name '{data._name}'
-                        Does Not Match External Column Name {data.column_id}
-                        For Second Table: '{data.second_table}'.""",
-                        UserWarning
-                    )
-            else:
-                extraction.append(["[" + data._name + "]", data._dtype])
-        union = [" ".join(data) for data in extraction]
-        sql = ", ".join(union)
-        # Las Cadenas De Texto que Devuelve Estan Limpias De Inyeccion
-        # Maliciosa
-        return sql
-
-    @classmethod  # Inyeccion Segura
-    def _table_on_change(
-        cls,
-        marks=None,
-        new_data=None,
-        less_columns=None
-    ):
-        """
-        Este metodo edita el esquema basado en la declaracion de clase
-        en tiempo real. (renombra  -> crea -> copia data -> elimina).
-        Si se pasan (new_data y marks) se inserta data nueva tambien.
-        """
-        sql = cls._extraction()
-        less_columns = ", ".join(less_columns)
-        # Inyeccion Segura
-        with db_connection(db_path=cls._db_file) as (conn, cur):
-            cur.execute(
-                f"ALTER TABLE [{cls._table}] "
-                f"RENAME TO [{cls._table + '_old'}];"
-            )
-            cur.execute(
-                f"CREATE TABLE IF NOT EXISTS [{cls._table}]("
-                f"[{cls._table}_id] INTEGER PRIMARY KEY, "
-                f"{sql});"
-            )
-            cur.execute(
-                f"INSERT INTO [{cls._table}]({less_columns}) "
-                f"SELECT {less_columns} "
-                f"FROM [{cls._table + '_old'}];"
-            )
-            if marks and new_data:
-                cur.executemany(
-                    f"INSERT INTO [{cls._table}] VALUES({marks})",
-                    new_data
-                )
-        with db_connection(
-            db_path=cls._db_file,
-            no_foreign=True
-        ) as (conn, cur):
-            cur.execute(f"DROP TABLE [{cls._table + '_old'}];")
-
-    @classmethod
-    def _synchronize_table(cls):
-        """
-        Evalua el esquema en tiempo real y aquel que esta en la base de
-        datos.
-        La evaluacion depende de cambios en la cantidad de columnas.
-        """
-        new_columns, old_columns = cls._columns_table_validation()
-        diference = len(new_columns) - len(old_columns)
-        if diference > 0:
-            cls._table_on_change(less_columns=old_columns)
-        elif diference < 0:
-            cls._table_on_change(less_columns=new_columns)
-        return new_columns, old_columns
-
-    @classmethod
-    def _which_loop(cls):
-        """
-        Valida que la sincronizacion de esquema se ejecute unicamente
-        en la primera ejecucion de cualquier aplicacion que haga
-        herencia de la clase PanCakesORM.
-
-        Funcion: Optimiza PanCakesORM haciendo que la sincrinizacion de
-        esquema suceda unicamente en la primera compilacion.
-        """
-        if not cls._loop_validation:
-            logger.debug(
-                f"Starting first-time schema "
-                f"synchronization for {cls.__name__}."
-            )
-            cls._synchronize_table()
-            cls._loop_validation = True
-            msg = ('Current schema synchronized.')
-            logger.info(msg)
-        else:
-            logger.debug(
-                f"Skipping synchronization: "
-                f"{cls.__name__} already validated."
-            )
+        logger.info(f"PASSED TABLES: [{list(cls._metadata.keys())}].")
+        logger.info(f"SUCCESSFUL ONES: [{order}].")
 
     @classmethod  # Inyeccion Segura
     def table_exists(cls):
@@ -572,7 +450,6 @@ class PanCakesORM:
         evitando usar el metodo "pancakes" el cual requiere de
         argumento especificos para funcionar.
         """
-        cls._which_loop()
         with db_connection(db_path=cls._db_file) as (conn, cur):
             cur.execute(f"SELECT * FROM [{cls._table}];")
             data = cur.fetchall()
@@ -587,7 +464,6 @@ class PanCakesORM:
         Evitar Que Un input de usuario termine en
         un query como este.
         """
-        cls._which_loop()
         try:
             with db_connection(db_path=cls._db_file) as (conn, cur):
                 cur.execute(command)
@@ -614,7 +490,6 @@ class PanCakesORM:
         Llama a la funcion de consulta global.
         Documentacion: cook/flavor
         """
-        cls._which_loop()
         db_path = cls._db_file if db_path is None else db_path
         select = "*" if select is None else select
         _from = cls._table if _from is None else _from
@@ -649,7 +524,6 @@ class PanCakesORM:
         Invoca a la funcion insert()
         Documentacion de los parametros en /cook/furnace.py
         """
-        cls._which_loop()
         db_path = db_path if db_path else cls._db_file
 
         insert(
@@ -668,7 +542,6 @@ class PanCakesORM:
         Invoca a la funcion update()
         Documentacion de los parametros en /cook/ingredient.py
         """
-        cls._which_loop()
         db_path = cls._db_file if db_path is None else db_path
         update_all = False if update_all is None else update_all
 
@@ -690,7 +563,6 @@ class PanCakesORM:
         Invoca a la funcion delete()
         Documentacion de los parametros en /cook/clean.py
         """
-        cls._which_loop()
         db_path = db_path if db_path else cls._db_file
         delete_all = delete_all if delete_all else False
         force = force if force else False
