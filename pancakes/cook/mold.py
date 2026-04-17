@@ -43,8 +43,15 @@ logger = logging.getLogger(__name__)
 path_dir = os.getenv("DB_DIR", "data")
 path_file = os.getenv("DB_FILE", "database.sqlite")
 # Ruta: ("data/database.sqlite")
+dot_valid = {".sqlite", "sqlite3", "db"}
 DEFAULT_DIR = Path.cwd() / path_dir
 DEFAULT_DB_FILE = DEFAULT_DIR / path_file
+if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
+    logger.critical(
+        f"Invalid extension {DEFAULT_DB_FILE}. "
+        f"Expected exyensions are {dot_valid}."
+    )
+    raise ValueError
 
 class PanCakesORM:
     """
@@ -171,10 +178,14 @@ class PanCakesORM:
         Para Cualquiero Proyecto.
         Si El Directorio Y El Fichero No Existen Se Crean.
         """
-        cls._db_dir.mkdir(exist_ok=True, parents=True)
-        cls._db_file.touch(exist_ok=True)
-        msg = (f'Structure of directories evaluated at {cls._db_file}.')
-        logger.debug(msg)
+        try:
+            cls._db_dir.mkdir(exist_ok=True, parents=True)
+            cls._db_file.touch(exist_ok=True)
+            msg = (f'Structure of directories evaluated at {cls._db_file}.')
+            logger.debug(msg)
+        except FileNotFoundError:
+            logger.critical(f"Invalid paths ({cls._db_dir}) ({cls._db_file})")
+            raise ValueError
 
     @classmethod
     def _check_dependencies(cls) -> None:

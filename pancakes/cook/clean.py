@@ -31,10 +31,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Configuracion de rutas; variables de entorno
+path_dir = os.getenv("DB_DIR", "data")
+path_file = os.getenv("DB_FILE", "database.sqlite")
+# Ruta: ("data/database.sqlite")
+dot_valid = {".sqlite", "sqlite3", "db"}
+DEFAULT_DIR = Path.cwd() / path_dir
+DEFAULT_DB_FILE = DEFAULT_DIR / path_file
+if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
+    logger.critical(
+        f"Invalid extension {DEFAULT_DB_FILE}. "
+        f"Expected exyensions are {dot_valid}."
+    )
+    raise ValueError
+
 
 def delete(
-    db_path: str,
     params: list,
+    db_path: str = None,
     delete_all: bool = False,
     force: bool = False,
 ):
@@ -89,11 +103,6 @@ def delete(
 
     MIN_CON = {'column', 'operator', 'value'}
     PLUS_CON = MIN_CON | {'logic'}
-
-    if not isinstance(db_path, (str, Path)):
-        msg = f'Argument "db_path" must be a string. {db_path}.'
-        logger.error(msg)
-        raise TypeError(type(db_path))
 
     if not all(isinstance(x, bool) for x in [delete_all, force]):
         msg = (
@@ -244,6 +253,14 @@ def delete(
             a_line = f"DELETE FROM [{a_table}];"
             sentences.append(a_line)
             all_data.append(None)
+
+    # Validar ruta de la base de datos
+    db_path = db_path if db_path else DEFAULT_DB_FILE
+
+    if not isinstance(db_path, (str, Path)):
+        msg = f'Argument "db_path" must be a string. {db_path}.'
+        logger.error(msg)
+        raise TypeError(type(db_path))
 
     with db_connection(db_path=db_path, no_foreign=force) as (conn, cur):
         for sql, data in zip(sentences, all_data):

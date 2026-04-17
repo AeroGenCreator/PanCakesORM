@@ -31,10 +31,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Configuracion de rutas; variables de entorno
+path_dir = os.getenv("DB_DIR", "data")
+path_file = os.getenv("DB_FILE", "database.sqlite")
+# Ruta: ("data/database.sqlite")
+dot_valid = {".sqlite", "sqlite3", "db"}
+DEFAULT_DIR = Path.cwd() / path_dir
+DEFAULT_DB_FILE = DEFAULT_DIR / path_file
+if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
+    logger.critical(
+        f"Invalid extension {DEFAULT_DB_FILE}. "
+        f"Expected exyensions are {dot_valid}."
+    )
+    raise ValueError
+
 
 def update(
-    db_path: str,
     params: list,
+    db_path: str = None,
     update_all: bool = False
 ):
     """
@@ -91,11 +105,6 @@ def update(
     BAS_KEYS = MIN_KEYS | {'condition'}
     COMP_KEYS = {'column', 'operator', 'value'}
     LOG_KEYS = COMP_KEYS | {'logic'}
-
-    if not isinstance(db_path, (str, Path)):
-        msg = (f'Invalid datatype {db_path}.')
-        logger.error(msg)
-        raise TypeError(type(db_path))
 
     if not isinstance(params, list):
         msg = (f'Invalid datatype {params}.')
@@ -251,6 +260,14 @@ def update(
             )
             sentences.append(a_line)
             raw_data.append(tuple([a_data]))
+
+    # Validar ruta a la base de datos:
+    db_path = db_path if db_path else DEFAULT_DB_FILE
+
+    if not isinstance(db_path, (str, Path)):
+        msg = (f'Invalid datatype {db_path}.')
+        logger.error(msg)
+        raise TypeError(type(db_path))
 
     with db_connection(db_path=db_path) as (conn, cur):
         for sql, val in zip(sentences, raw_data):

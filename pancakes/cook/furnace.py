@@ -31,10 +31,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Configuracion de rutas; variables de entorno
+path_dir = os.getenv("DB_DIR", "data")
+path_file = os.getenv("DB_FILE", "database.sqlite")
+# Ruta: ("data/database.sqlite")
+dot_valid = {".sqlite", "sqlite3", "db"}
+DEFAULT_DIR = Path.cwd() / path_dir
+DEFAULT_DB_FILE = DEFAULT_DIR / path_file
+if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
+    logger.critical(
+        f"Invalid extension {DEFAULT_DB_FILE}. "
+        f"Expected exyensions are {dot_valid}."
+    )
+    raise ValueError
+
 
 def insert(
-    db_path: str,
-    params: list
+    params: list,
+    db_path: str = None
 ):
     """
     Parametros:
@@ -61,11 +75,6 @@ def insert(
     Sin embargo se puede especificar si es necesario.
     """
     MIN_KEYS = {'table', 'data'}
-
-    if not isinstance(db_path, (str, Path)):
-        msg = f"Invalid datatype for 'db_path': {db_path}."
-        logger.critical(msg)
-        raise TypeError(type(db_path))
 
     if not isinstance(params, list):
         msg = f"Invalid datatype for 'db_path': {params}."
@@ -118,6 +127,14 @@ def insert(
         msg = f"'Command' INSERT contains no data."
         logger.critical(msg)
         raise ValueError(data)
+
+    # Validar ruta de insert
+    db_path = db_path if db_path else DEFAULT_DB_FILE
+
+    if not isinstance(db_path, (str, Path)):
+        msg = f"Invalid datatype for 'db_path': {db_path}."
+        logger.critical(msg)
+        raise TypeError(type(db_path))
 
     with db_connection(db_path=db_path) as (conn, cur):
         for sql, val in zip(sentence, data):

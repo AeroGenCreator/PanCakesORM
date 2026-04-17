@@ -20,7 +20,6 @@ import os
 from dotenv import load_dotenv
 
 # Configuracion de loggings; variables de entorno
-# import ipdb; ipdb.set_trace()
 load_dotenv()
 log = os.getenv("LOG", "WARNING").upper()
 log_level = getattr(logging, log, logging.WARNING)
@@ -32,11 +31,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Configuracion de rutas; variables de entorno
+path_dir = os.getenv("DB_DIR", "data")
+path_file = os.getenv("DB_FILE", "database.sqlite")
+# Ruta: ("data/database.sqlite")
+dot_valid = {".sqlite", "sqlite3", "db"}
+DEFAULT_DIR = Path.cwd() / path_dir
+DEFAULT_DB_FILE = DEFAULT_DIR / path_file
+if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
+    logger.critical(
+        f"Invalid extension {DEFAULT_DB_FILE}. "
+        f"Expected exyensions are {dot_valid}."
+    )
+    raise ValueError
+
 
 def query(
-    db_path: str,
     select: str | list,
     _from: str,
+    db_path: str = None,
     sp_select: list = None,
     join: list = None,
     condition: list = None,
@@ -133,11 +146,6 @@ def query(
     O_MIN = {'table', 'name', 'order'}
 
     # VALIDAR EL TIPO DE DATO PARA LOS ARGUMENTOS
-    if not isinstance(db_path, (str, Path)):
-        msg = f"Invalid datatype: {db_path}."
-        logger.critical(msg)
-        raise TypeError(type(db_path))
-
     if not isinstance(select, (str, list, tuple)):
         msg = f"Invalid datatype: {select}."
         logger.critical(msg)
@@ -500,6 +508,14 @@ def query(
     )
 
     sql = " ".join(sql.split()).strip()
+
+    # Validamos la ruta del query
+    db_path = db_path if db_path else DEFAULT_DB_FILE
+    
+    if not isinstance(db_path, (str, Path)):
+        msg = f"Invalid datatype: {db_path}."
+        logger.critical(msg)
+        raise TypeError(type(db_path))
 
     # Conexion a la base de datos
     with db_connection(db_path=db_path) as (conn, cur):
