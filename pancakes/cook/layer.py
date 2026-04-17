@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 # Configuracion de loggings; variables de entorno
 # import ipdb; ipdb.set_trace()
 load_dotenv()
-log = os.getenv("LOG").upper()
+log = os.getenv("LOG", "WARNING").upper()
 log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
     level=log_level,

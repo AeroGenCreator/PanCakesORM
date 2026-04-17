@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 
 # Configuracion de loggings; variables de entorno
 load_dotenv()
-log = os.getenv("LOG").upper()
+log = os.getenv("LOG", "WARNING").upper()
 log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
     level=log_level,
@@ -39,11 +39,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Ruta Por Defecto Para Cualquier Proyecto:
-# data/mi_app_database.sqlite
-DEFAULT_DIR = Path.cwd() / 'data'
-DEFAULT_DB_FILE = DEFAULT_DIR / 'my_app_database.sqlite'
-
+# Configuracion de rutas; variables de entorno
+path_dir = os.getenv("DB_DIR", "data")
+path_file = os.getenv("DB_FILE", "database.sqlite")
+# Ruta: ("data/database.sqlite")
+DEFAULT_DIR = Path.cwd() / path_dir
+DEFAULT_DB_FILE = DEFAULT_DIR / path_file
 
 class PanCakesORM:
     """
