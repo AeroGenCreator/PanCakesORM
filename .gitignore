@@ -19,4 +19,4 @@ dist/
 *.egg-info
 
 # Configuracion PanCakesORM
-./.env
+.env
