@@ -31,13 +31,13 @@ def environment():
     """
     
     log_valid = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
-    dot_valid = {".sqlite", "sqlite3", "db"}
+    dot_valid = {".sqlite", ".sqlite3", ".db"}
 
     # Obtener log; validar log
     log = os.getenv("LOG", "WARNING").upper()
     if log not in log_valid:
         raise ValueError(
-            f"Invalid Log value: {log}. "
+            f"Invalid Log value: {log} "
             f"Valid ones are: {log}"
         )
 
@@ -51,8 +51,8 @@ def environment():
 
     if db_file.suffix.lower() not in dot_valid:
         raise ValueError(
-            f"Invalid extension {db_file}. "
-            f"Expected exyensions are {dot_valid}."
+            f"Invalid extension {db_file} "
+            f"Expected exyensions are {dot_valid}"
         )
 
     envs = dict([("log", log), ("dir", dir_path), ("db", db_file)])

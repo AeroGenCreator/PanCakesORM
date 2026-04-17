@@ -8,6 +8,7 @@
 
 # Modulos Propios
 from pancakes.cook.mold import PanCakesORM
+from pancakes.tool.idu import CoffeeShop
 from pancakes.datatype import sql_datatype
 from pancakes.cook.layer import query
 from pancakes.cook.furnace import insert
@@ -60,3 +61,30 @@ def test_env_update():
     row, col = query(select="*", _from="user")
 
     assert row == [(1, 'PanCakesORM')]
+
+def test_coffee_insert():
+    CoffeeShop().i(user=[(None, "CoffeeShop")])
+    dicc = User.all().to_dict()
+
+    assert dicc == [
+        {'user__user_id': 1, 'user__name': 'PanCakesORM'}, 
+        {'user__user_id': 2, 'user__name': 'CoffeeShop'}
+    ]
+
+def test_coffee_update():
+    CoffeeShop().u(
+        user__name__user_id__same=("PanCakesORM & CoffeeShop & QueryBox", 2))
+    dicc = User.all().to_dict()
+
+    assert dicc == [
+        {'user__user_id': 1, 'user__name': 'PanCakesORM'}, 
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+    ]
+
+def test_coffee_delete():
+    CoffeeShop().d(user__user_id__same=1)
+    dicc = User.all().to_dict()
+
+    assert dicc == [
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+    ]

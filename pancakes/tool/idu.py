@@ -11,6 +11,7 @@ de **kwargs y encadenamiento de metodes.
 """
 
 # Modulos Propios
+from ..tool.function import environment # Variables de entorno
 from ..cook.furnace import insert  # Funcion insert()
 from ..cook.ingredient import update  # Funcion update()
 from ..cook.clean import delete  # Funcion delete()
@@ -20,13 +21,13 @@ import warnings
 import logging
 import os
 
-# Modulos de Terceros
-from dotenv import load_dotenv
+# .envs; log, dir, db
+envs = environment()
+LOG = envs.get("log", "WARNING")
+DEFAULT_DIR = envs.get("dir")
+DEFAULT_DB_FILE = envs.get("db")
 
-# Configuracion de loggings; variables de entorno
-load_dotenv()
-log = os.getenv("LOG", "WARNING").upper()
-log_level = getattr(logging, log, logging.WARNING)
+log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
     format='%(asctime)s [%(levelname)s] '
@@ -80,7 +81,9 @@ class CoffeeShop:
         """
 
         # Aseguramos la ruta por defecto.
-        path = db_path if db_path else self.model._db_file
+        path = db_path if db_path else DEFAULT_DB_FILE
+        if self.model:
+            path = self.model._db_file
 
         argument = []
         for k, v in kwargs.items():
@@ -262,7 +265,10 @@ class CoffeeShop:
 
                 argument.append(dicc)
 
-        path = db_path if db_path else self.model._db_file
+        # Aseguramos la ruta por defecto.
+        path = db_path if db_path else DEFAULT_DB_FILE
+        if self.model:
+            path = self.model._db_file
 
         update(
             db_path=path,
@@ -381,7 +387,10 @@ class CoffeeShop:
             }]
             argument.append(dicc)
 
-        path = db_path if db_path else self.model._db_file
+        # Aseguramos la ruta por defecto.
+        path = db_path if db_path else DEFAULT_DB_FILE
+        if self.model:
+            path = self.model._db_file
 
         delete(
             db_path=path,
