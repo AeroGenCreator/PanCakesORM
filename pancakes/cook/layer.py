@@ -9,20 +9,19 @@ Este codigo centraliza la funcion de lectura avanzada query()
 """
 
 # Modulos Propios
-from ..tool.function import db_connection, clean_string
+from ..tool.function import db_connection, clean_string, environment
 
 # Modulos Python
 from pathlib import Path
 import logging
 import os
 
-# Modulos de Terceros
-from dotenv import load_dotenv
+envs = environment()
+LOG = envs.get("log", "WARNING")
+DEFAULT_DIR = envs.get("dir")
+DEFAULT_DB_FILE = envs.get("db")
 
-# Configuracion de loggings; variables de entorno
-load_dotenv()
-log = os.getenv("LOG", "WARNING").upper()
-log_level = getattr(logging, log, logging.WARNING)
+log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
     format='%(asctime)s [%(levelname)s] '
@@ -30,20 +29,6 @@ logging.basicConfig(
     force=True
 )
 logger = logging.getLogger(__name__)
-
-# Configuracion de rutas; variables de entorno
-path_dir = os.getenv("DB_DIR", "data")
-path_file = os.getenv("DB_FILE", "database.sqlite")
-# Ruta: ("data/database.sqlite")
-dot_valid = {".sqlite", "sqlite3", "db"}
-DEFAULT_DIR = Path.cwd() / path_dir
-DEFAULT_DB_FILE = DEFAULT_DIR / path_file
-if DEFAULT_DB_FILE.suffix.lower() not in dot_valid:
-    logger.critical(
-        f"Invalid extension {DEFAULT_DB_FILE}. "
-        f"Expected exyensions are {dot_valid}."
-    )
-    raise ValueError
 
 
 def query(

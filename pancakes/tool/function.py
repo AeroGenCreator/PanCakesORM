@@ -15,12 +15,51 @@ import sqlite3
 from contextlib import contextmanager
 import logging
 import os
+from pathlib import Path
 
 # Modulos de Terceros
 from dotenv import load_dotenv
 
-# Configuracion de loggings; variables de entorno
 load_dotenv()
+
+def environment():
+    """
+    Obtiene las variables de entorno
+    -> LOG
+    -> DB_DIR
+    -> DB_FILE
+    """
+    
+    log_valid = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    dot_valid = {".sqlite", "sqlite3", "db"}
+
+    # Obtener log; validar log
+    log = os.getenv("LOG", "WARNING").upper()
+    if log not in log_valid:
+        raise ValueError(
+            f"Invalid Log value: {log}. "
+            f"Valid ones are: {log}"
+        )
+
+    # Obtener rutas; validacion de rutas
+    path_dir = os.getenv("DB_DIR", "data")
+    path_file = os.getenv("DB_FILE", "database.sqlite")
+
+    # Ruta: ("data/database.sqlite")
+    dir_path = Path.cwd() / path_dir
+    db_file = dir_path / path_file
+
+    if db_file.suffix.lower() not in dot_valid:
+        raise ValueError(
+            f"Invalid extension {db_file}. "
+            f"Expected exyensions are {dot_valid}."
+        )
+
+    envs = dict([("log", log), ("dir", dir_path), ("db", db_file)])
+    
+    return envs
+
+# Configuracion de loggings
 log = os.getenv("LOG", "WARNING").upper()
 log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
