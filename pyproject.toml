@@ -9,7 +9,7 @@ description = "Un ORM ligero llamado PanCakes"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
-  { name="Andres Alberto Lopez Mendoza", email="gallo85floyd@gmail.com" },
+  { name="Andres Alberto Lopez Mendoza", email="andres.lopez.full.dev@gmail.com" },
 ]
 license = { text = "Apache-2.0" }
 classifiers = [

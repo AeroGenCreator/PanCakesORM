@@ -22,11 +22,20 @@ from ..cook.furnace import insert
 import warnings
 from pathlib import Path
 import logging
+import os
 
+# Modulo de Terceros
+from dotenv import load_dotenv
+
+# Configuracion de loggings; variables de entorno
+load_dotenv()
+log = os.getenv("LOG").upper()
+log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
-    level=logging.INFO,  # Captura todo desde INFO hacia arriba
+    level=log_level,
     format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
+    force=True
 )
 logger = logging.getLogger(__name__)
 
@@ -100,7 +109,6 @@ class PanCakesORM:
     _family = {}
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
-    #_group_constraint = False
     _depends = "self"
     _metadata = {}
     _order = []

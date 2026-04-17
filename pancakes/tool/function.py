@@ -14,11 +14,20 @@
 import sqlite3
 from contextlib import contextmanager
 import logging
+import os
 
+# Modulos de Terceros
+from dotenv import load_dotenv
+
+# Configuracion de loggings; variables de entorno
+load_dotenv()
+log = os.getenv("LOG").upper()
+log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
-    level=logging.INFO,  # Captura todo desde WARNING hacia arriba
+    level=log_level,
     format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s'
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
+    force=True
 )
 logger = logging.getLogger(__name__)
 

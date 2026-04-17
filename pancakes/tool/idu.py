@@ -14,10 +14,26 @@ de **kwargs y encadenamiento de metodes.
 from ..cook.furnace import insert  # Funcion insert()
 from ..cook.ingredient import update  # Funcion update()
 from ..cook.clean import delete  # Funcion delete()
-from .function import logger
 
 # Modulos Python
 import warnings
+import logging
+import os
+
+# Modulos de Terceros
+from dotenv import load_dotenv
+
+# Configuracion de loggings; variables de entorno
+load_dotenv()
+log = os.getenv("LOG").upper()
+log_level = getattr(logging, log, logging.WARNING)
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s [%(levelname)s] '
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
+    force=True
+)
+logger = logging.getLogger(__name__)
 
 OPERATOR = {
     "same": "=",
@@ -90,7 +106,7 @@ class CoffeeShop:
         1. La actualizacion de datos en una tabla se da a traves de un
         diccionario en la funcion update(). Para poder usar este metodo
         declarativo se convierten las llaves del diccionario en variables:
-        
+
         2. La actualización permite una condición; la idea es condicionar
         por indices.
 
@@ -271,7 +287,7 @@ class CoffeeShop:
         3. Este metodo no permite delete sobre SQLconstraints. Por tanto
         su seguridad de persistencia de datos esta al maximo; Si existen
         problemas con la eliminacion de datos 1. Revisar que tus tablas
-        con llaves foraneas tengan on_del="cascade" o usar función 
+        con llaves foraneas tengan on_del="cascade" o usar función
         .delete(force=True) para ignorar las restricciones.
 
         4. Este metodo no borra todas las filas de una tabla. Si se quiere
@@ -361,7 +377,7 @@ class CoffeeShop:
             dicc["condition"] = [{
                 "column": col,
                 "operator": OPERATOR[opr],
-                "value": dat                 
+                "value": dat
             }]
             argument.append(dicc)
 
@@ -374,11 +390,4 @@ class CoffeeShop:
             force=False
         )
 
-        return        
-
-
-
-
-
-
-
+        return

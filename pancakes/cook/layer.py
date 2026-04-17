@@ -9,10 +9,28 @@ Este codigo centraliza la funcion de lectura avanzada query()
 """
 
 # Modulos Propios
-from ..tool.function import db_connection, clean_string, logger
+from ..tool.function import db_connection, clean_string
 
 # Modulos Python
 from pathlib import Path
+import logging
+import os
+
+# Modulos de Terceros
+from dotenv import load_dotenv
+
+# Configuracion de loggings; variables de entorno
+# import ipdb; ipdb.set_trace()
+load_dotenv()
+log = os.getenv("LOG").upper()
+log_level = getattr(logging, log, logging.WARNING)
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s [%(levelname)s] '
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
+    force=True
+)
+logger = logging.getLogger(__name__)
 
 
 def query(

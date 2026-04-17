@@ -17,3 +17,6 @@ data/
 # PROJECT CONF FOR PYPI
 dist/
 *.egg-info
+
+# Configuracion PanCakesORM
+./.env

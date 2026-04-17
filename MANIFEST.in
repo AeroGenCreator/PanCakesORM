@@ -1,3 +1,4 @@
 recursive-exclude tests *
 recursive-exclude assets *
 exclude tests/*
+exclude .env
