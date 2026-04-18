@@ -459,17 +459,35 @@ class QueryBox:
                 self.sp_select.append(dicc)
                 continue
 
-            # Obtenemos el comment desde la tabla main
-            lab = [c.comment for c in self.model._fields if c._name == col]
-            lab = f"{"".join(lab)} {agg.upper()}"
-            lab = " ".join(lab.split(" ")).strip()
-            self.s_label.append(lab)
+            elif tab == m_tab:
+                # Obtenemos el comment desde la tabla main
+                lab = [c.comment for c in self.model._fields if c._name == col]
+                lab = f"{"".join(lab)} {agg.upper()}"
+                lab = " ".join(lab.split(" ")).strip()
+                self.s_label.append(lab)
 
-            dicc = {
-                "name": col,
-                "agg": agg
-            }
-            self.s_select.append(dicc)
+                dicc = {
+                    "name": col,
+                    "agg": agg
+                }
+                self.s_select.append(dicc)
+                continue
+
+        # Validar; no s_select, si sp_select
+        if not self.s_select:
+            m_tab = self.model._table
+            name = self.model._table
+            if "_" in name:
+                name = name.split("_")
+                name = " ".join(name)
+
+            self.s_label.append(f"{name} id".upper())
+            self.s_select=[
+                {
+                    "name": f"{m_tab}_id",
+                    "agg": ""
+                }
+            ]
 
         return self
 
@@ -934,8 +952,7 @@ class QueryBox:
             sp_select = None
 
         # Evaluar cuando .all() no contiene select():
-
-        if not s_select:
+        if s_select is None and sp_select is None:
             self._if_no_select()
             self.all()
             return self
