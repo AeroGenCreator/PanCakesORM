@@ -40,8 +40,8 @@ class Recipe(PanCakesORM):
 
 class RecipeProductLine(PanCakesORM):
 	_table = "recipe_product_line"
-	_depends = ["recipe", "product"]
-	_group_constraint = ("recipe_id", "product_id")
+	_depends = ["recipe", "product", "category"]
+	_group_constraint = ("recipe_id", "product_id", "category_id")
 	_db_dir = dir_
 	_db_file = file_
 	
@@ -67,20 +67,26 @@ Recipe.i(recipe=[(None, "Sugar"),(None, "Milk"), (None, "Salt")])
 RecipeProductLine.i(
 	recipe_product_line=[(None, 1, 1, 1), (None, 2, 1, 1), (None, 3, 1, 1)])
 
-dicc2 = Category.all().to_dict(label=True)
-dicc3 = Product.select(
+def test_real_1():
+    dicc = Category.all().to_dict(label=True)
+    assert dicc == [{'CATEGORY ID': 1, 'Category': 'Dessert'}]
+def test_real_2():
+    dicc2 = Product.select(
 	"product__product_name", "category__category").link(
 	"category").all().to_dict(label=True)
-dicc4 = Recipe.all().to_dict(label=True)
-dicc5 = RecipeProductLine.link("product", "category", "recipe").select(
+    assert dicc2 == [{'Product Name': 'Concha', 'Category': 'Dessert'}]
+def test_real_3():
+    dicc3 = Recipe.all().to_dict(label=True)
+    assert dicc3 == [
+    {'RECIPE ID': 1, 'Recipe Ingredient': 'Sugar'},
+    {'RECIPE ID': 2, 'Recipe Ingredient': 'Milk'},
+    {'RECIPE ID': 3, 'Recipe Ingredient': 'Salt'}
+    ]
+def test_real_4():
+    dicc4 = RecipeProductLine.link("product", "category", "recipe").select(
 	"category__category", "product__product_name", "recipe__recipe_ingredient").all().to_dict(label=True)
-
-
-print()
-print(pd.DataFrame(dicc2))
-print()
-print(pd.DataFrame(dicc3))
-print()
-print(pd.DataFrame(dicc4))
-print()
-print(pd.DataFrame(dicc5))
+    assert dicc4 == [
+    {'RECIPE PRODUCT LINE ID': 1, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Sugar'},
+    {'RECIPE PRODUCT LINE ID': 2, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Milk'},
+    {'RECIPE PRODUCT LINE ID': 3, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Salt'}
+    ]

@@ -385,6 +385,10 @@ class QueryBox:
         return
 
     def select(self, *columns):
+        
+        if not columns:
+            return self
+
         AGGS = {
             "min": 'MIN',
             "max": 'MAX',
