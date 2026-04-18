@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pancakes-orm"
-version = "2.1.0"
-description = "Un ORM ligero llamado PanCakes"
+version = "3.0.0"
+description = "Un ORM simple, potente y flexible llamado PanCakes"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
   { name="Andres Alberto Lopez Mendoza", email="andres.lopez.full.dev@gmail.com" },
 ]
 license = { text = "Apache-2.0" }
+dependencies = ["python-dotenv"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
