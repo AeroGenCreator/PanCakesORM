@@ -80,10 +80,15 @@ class CoffeeShop:
         user = [(None, 'Mexico')]
         """
 
-        # Aseguramos la ruta por defecto.
-        path = db_path if db_path else DEFAULT_DB_FILE
-        if self.model:
+        # Hay modelo, no ruta
+        if self.model and db_path is None:
             path = self.model._db_file
+        # No hay modelo, no ruta
+        if self.model is None and db_path is None:
+            path = DEFAULT_DB_FILE
+        # Hay ruta
+        if db_path:
+            path = db_path
 
         argument = []
         for k, v in kwargs.items():
@@ -265,10 +270,15 @@ class CoffeeShop:
 
                 argument.append(dicc)
 
-        # Aseguramos la ruta por defecto.
-        path = db_path if db_path else DEFAULT_DB_FILE
-        if self.model:
+        # Hay modelo, no ruta
+        if self.model and db_path is None:
             path = self.model._db_file
+        # No hay modelo, no ruta
+        if self.model is None and db_path is None:
+            path = DEFAULT_DB_FILE
+        # Hay ruta
+        if db_path:
+            path = db_path
 
         update(
             db_path=path,
@@ -387,10 +397,15 @@ class CoffeeShop:
             }]
             argument.append(dicc)
 
-        # Aseguramos la ruta por defecto.
-        path = db_path if db_path else DEFAULT_DB_FILE
-        if self.model:
+        # Hay modelo, no ruta
+        if self.model and db_path is None:
             path = self.model._db_file
+        # No hay modelo, no ruta
+        if self.model is None and db_path is None:
+            path = DEFAULT_DB_FILE
+        # Hay ruta
+        if db_path:
+            path = db_path
 
         delete(
             db_path=path,

@@ -10,6 +10,7 @@ de **kwargs y encadenamiento de metodes.
 """
 # Modulos Propios
 from ..cook.layer import query
+from ..tool.function import environment
 
 # Modulos Python
 import warnings
@@ -19,10 +20,11 @@ import os
 # Modulos de Terceros
 from dotenv import load_dotenv
 
-# Configuracion de loggings; variables de entorno
-load_dotenv()
-log = os.getenv("LOG", "WARNING").upper()
-log_level = getattr(logging, log, logging.WARNING)
+# .envs; log, dir, db
+envs = environment()
+LOG = envs.get("log", "WARNING")
+
+log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
     format='%(asctime)s [%(levelname)s] '
@@ -895,9 +897,11 @@ class QueryBox:
 
     def all(self, db_path=None, _from=None):
 
+        # Validar ruta
         if db_path is None:
-            db_path = self.model._db_file
+            path = self.model._db_file
 
+        # Validar tabla; query
         if _from is None:
             _from = self.model._table
 
@@ -937,7 +941,7 @@ class QueryBox:
             return self
 
         row, col = query(
-            db_path=db_path,
+            db_path=path,
             select=s_select,
             _from=_from,
             sp_select=sp_select,

@@ -9,6 +9,7 @@
 # Modulos Propios
 from pancakes.cook.mold import PanCakesORM
 from pancakes.tool.idu import CoffeeShop
+from pancakes.tool.box import QueryBox
 from pancakes.datatype import sql_datatype
 from pancakes.cook.layer import query
 from pancakes.cook.furnace import insert
@@ -85,6 +86,19 @@ def test_coffee_delete():
     CoffeeShop().d(user__user_id__same=1)
     dicc = User.all().to_dict()
 
+    assert dicc == [
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+    ]
+
+def test_querybox():
+    """
+    QueryBox Puede ser global si lo instanciamos de la siguiente manera.
+    Esto debe ser forzoso, es la unica manera de no perder columnas
+    con las salidas
+    """
+    query_user = QueryBox(User)
+    dicc = query_user.select().all(_from="user").to_dict()
+    
     assert dicc == [
         {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
     ]
