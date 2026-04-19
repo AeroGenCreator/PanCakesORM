@@ -90,3 +90,11 @@ def test_real_4():
     {'RECIPE PRODUCT LINE ID': 2, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Milk'},
     {'RECIPE PRODUCT LINE ID': 3, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Salt'}
     ]
+def test_final_link():
+	dicc5 = Product.link("recipe", "category", "recipe_product_line").select(
+	"category__category", "product__product_name", "recipe__recipe_ingredient").all().to_dict(label=True)
+	[
+	{'RECIPE PRODUCT LINE ID': 1, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Sugar'},
+	{'RECIPE PRODUCT LINE ID': 2, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Milk'}, 
+	{'RECIPE PRODUCT LINE ID': 3, 'Category': 'Dessert', 'Product Name': 'Concha', 'Recipe Ingredient': 'Salt'}
+	]

@@ -423,12 +423,11 @@ def test_multi_link_agg_gp():
         client="name").all().to_dict()
 
     assert api == [
-    {'client__name': 'Andres', 'client__name__count': 2},
-    {'client__name': 'Lupita', 'client__name__count': 1},
-    {'client__name': 'Malteada', 'client__name__count': 1},
-    {'client__name': 'Peke', 'client__name__count': 4},
-    {'client__name': 'Polar', 'client__name__count': 1}
-    ]
+        {'client__name': 'Andres', 'client__name__count': 2},
+        {'client__name': 'Lupita', 'client__name__count': 1},
+        {'client__name': 'Malteada', 'client__name__count': 1},
+        {'client__name': 'Peke', 'client__name__count': 4},
+        {'client__name': 'Polar', 'client__name__count': 1}]
 
 def test_output_raw_line_up_ids():
     row, col = Client.id().all().raw(line_up=True)

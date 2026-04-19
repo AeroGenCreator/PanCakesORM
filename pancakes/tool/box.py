@@ -979,15 +979,15 @@ class QueryBox:
         return self
 
     def link(self, *relation):
+        """ Esta función imita **kwargs de add()
+        tipo de union + __ + tabla extra = [id referencia, tabla]
+        """
 
         # Si no hay datos, salir
         if not relation:
             return self
 
-        # Obtener las relaciones en una lista de diccionarios
-        # Imitan el **kwargs de .add()
-        # tipo de union + __ + tabla extra = [id referencia, tabla]
-
+        by_dependency = False
         kwargs = {}
 
         # Iteracion sobre los nombre de tablas dadas
@@ -1054,11 +1054,120 @@ class QueryBox:
             # Por defecto INNER JOIN
             kwargs[f"in__{rel}"] = [field, self.model._table]
 
-        # Ejecutamos la union
-        # Desempaquetamos el diccionario:
-        self.add(**kwargs)
+        dicc_values = kwargs.values()
+        for v in dicc_values:
+            if v[0] is None or v[1] is None:
+                by_dependency = True
+                break
 
+        if by_dependency:
+            copy = list(relation)
+
+            # Orden de relacion por dependencia:
+            DEP = reversed(self.model._order)
+            copy.insert(0, self.model._table)
+            REL = [d for d in DEP if d in copy]
+            winner = self.model
+
+            # Iterar esquema de relación
+            kwargs = {}
+            for t in REL:
+
+                # Bandera Validación
+                flag = True
+
+                TABS = REL
+                MODEL = self.model._family[t]
+                TABS.remove(MODEL._table)
+
+                # Iteracion sobre los nombre de tablas dadas
+                for rel in TABS:
+
+                    # validar que se hayan pasado strings
+                    if not isinstance(rel, str):
+                        msg = (
+                            f"Passed table name {rel} "
+                            f"must be a string."
+                        )
+                        logger.critical(msg)
+                        raise TypeError(type(rel))
+
+                    field = None
+
+                    # Iteramos los "objetos" tipo "campos" <- o sea columnas
+                    # "_fields"
+                    for f in MODEL._fields:
+
+                        # Evaluamos que el campo tenga el atributo:
+                        # "second_table".
+                        # Que el nombre dado y que el nombre del campo
+                        # sean iguales
+                        #
+                        # Se guarda y salimos de bucle
+                        if (
+                            hasattr(f, "second_table") and
+                            rel == f.second_table
+                        ):
+
+                            field = f._name
+                            winner = MODEL
+                            break
+
+                    # Validamos que la operacion directa no encontro campos
+                    # Pasamos a la operacion inversa (de tabla padre a hija).
+                    if field is None:
+
+                        # Buscamos relacion del PRIMARY KEY de la tabla
+                        # A la FOREIGN KEY de la tabla hija
+                        c_id = f"{MODEL._table}_id"
+                        # Buscamos que la tabla exista en la base de datos
+                        if rel not in MODEL._family:
+                            msg = (
+                                f"Passed {rel} tables does not exists. "
+                                "Make sure of the spelling and "
+                                "make sure of relation before "
+                                "trying again."
+                            )
+                            logger.critical(msg)
+                            raise KeyError(rel)
+
+                        # Si existe accedemos a la tabla entera
+                        # e iteramos sus campos
+                        tab2 = MODEL._family[rel]
+
+                        for f in tab2._fields:
+                            if c_id == f._name:
+                                field = f._name
+                                winner = MODEL
+                                break
+
+                    # Si no relación absoluta; reportar cambio de esquema
+                    if field is None:
+                        flag = False
+                        break
+
+                    # Agregamos la relacion al dicc "kwargs"
+                    # Por defecto INNER JOIN
+                    kwargs[f"in__{rel}"] = [field, MODEL._table]
+                
+                # Cambiamos el esquema de busqueda
+                if flag == False:
+                    continue
+                else:
+                    break
+            
+            # Si se encontraron nulos:
+            self.model = winner
+            self.add(**kwargs)
+            return self
+
+        # Si no hay nulos retornamos
+        self.add(**kwargs)
         return self
+
+        # -------------------
+
+        
 
     def count(self):
         self.select(

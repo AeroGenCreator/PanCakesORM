@@ -215,16 +215,8 @@ def test_duplicated_name_when_output():
     assert api2 == {'user': {'USER ID 0': [1], 'Usuario 1': ['Tabla1']}, 'user_dos': {'USER_DOS ID 2': [1], 'Usuario 3': ['Tabla1'], 'User User Dos Rel 4': [1]}}
 
 def test_error_queries_relaciones():
-    """
-    mensaje:
-    f"Invalid 'id reference' datatype: {udid}. "
-    "No relationship found. "
-    "Ensure you have related your tables "
-    "before using methods like .link(), .add(), "
-    "or the .query() function."
-    """
-    with pytest.raises(TypeError):
-        dicc = Category.link('user').all().to_dict()
+    dicc = Category.link('user').all().to_dict()
+    assert dicc == []
 
 def test_vacios():
     row, col = Category.all().raw()
