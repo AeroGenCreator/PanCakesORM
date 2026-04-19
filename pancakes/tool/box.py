@@ -385,7 +385,7 @@ class QueryBox:
         return
 
     def select(self, *columns):
-        
+
         if not columns:
             return self
 
@@ -486,7 +486,7 @@ class QueryBox:
                 name = " ".join(name)
 
             self.s_label.append(f"{name} id".upper())
-            self.s_select=[
+            self.s_select = [
                 {
                     "name": f"{m_tab}_id",
                     "agg": ""
@@ -1149,13 +1149,13 @@ class QueryBox:
                     # Agregamos la relacion al dicc "kwargs"
                     # Por defecto INNER JOIN
                     kwargs[f"in__{rel}"] = [field, MODEL._table]
-                
+
                 # Cambiamos el esquema de busqueda
-                if flag == False:
+                if flag is False:
                     continue
                 else:
                     break
-            
+
             # Si se encontraron nulos:
             self.model = winner
             self.add(**kwargs)
@@ -1164,10 +1164,6 @@ class QueryBox:
         # Si no hay nulos retornamos
         self.add(**kwargs)
         return self
-
-        # -------------------
-
-        
 
     def count(self):
         self.select(
