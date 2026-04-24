@@ -28,6 +28,7 @@ class Country(PanCakesORM):
     _db_file = file
 
     _table = 'country'
+    _depends = "self"
 
     name = sql_datatype.Char(comment='Country')
 
@@ -36,6 +37,7 @@ class Client(PanCakesORM):
     _db_file = file
 
     _table = 'client'
+    _depends = ["country"]
 
     name = sql_datatype.Char(comment='Client Name')
     country_id = sql_datatype.ForeignKey(
@@ -51,6 +53,7 @@ class Sale(PanCakesORM):
     _db_file = file
 
     _table = 'sale'
+    _depends = ["client"]
 
     name = sql_datatype.Char(comment='Sale Code')
     client_id = sql_datatype.ForeignKey(
@@ -719,3 +722,37 @@ def test_to_json_label_select_full_agg():
             'Country': ['Mexico', 'Mexico', 'Brasil', 'Brasil', 'Mexico']
         }
     }
+
+# TESTING -> "DATA TRUNCADA" -> POR PAQUETES
+
+def test_lim_off():
+    dicc = Client.off(num=2).lim(2).all().to_dict()
+
+    assert dicc == [
+    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2},
+    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1}
+    ]
+
+def test_lim_off_sort():
+    dicc = Sale.sort(sale__sale_id="DESC").link("client").lim(2).off(2).all().to_dict()
+
+    assert dicc == [
+    {'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5, 'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2},
+    {'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2}
+    ]
+
+# OJO CON LOS JOINS QUE NO SE INTERSECTAN POR UNA LINEA
+# Aqui la relacion, a pais es a traves de "client" pero "sale" no tiene
+# una dependencia directa a "country" por tanto se usa add() y LEFT JOIN
+def test_complex_link():
+    dicc = Sale.sort(
+        sale__name="DESC").add(
+        lf__client=["client_id", "sale"],
+        lf__country=["country_id", "client"]).lim(
+        2).off(
+        2).all(
+        ).to_dict()
+
+    assert dicc == [
+    {'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5, 'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil'},
+    {'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3, 'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil'}]

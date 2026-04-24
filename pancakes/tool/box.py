@@ -849,6 +849,7 @@ class QueryBox:
 
     def sort(self, **kwargs):
         """
+        Equivalente a ORDER BY
         """
         DIRECTION = {'DESC', 'ASC', ''}
 

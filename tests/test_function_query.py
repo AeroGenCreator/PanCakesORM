@@ -956,3 +956,35 @@ def test_query_multi_table_one_all_one():
         ('2015', 4, 'Literatura', '2010-06-20T00:00:00', 'Feliz'),
         ('2019', 1, 'Matematicas', '2020-06-22T00:00:00', 'Andres')
     ]
+
+# TESTING "TRUNCAR SALIDA" -> "POR PAQUETES"
+
+def test_limit_offset():
+    res, col = query(
+        db_path=global_path,
+        select="*",
+        _from="estudiante",
+        limit=2,
+        offset=2
+    )
+
+    assert res == [(3, 'Andres', 30, 0, 7, 2), (4, 'Polar', 6, 1, 4, 2)]
+
+def test_limit_offset_order_by():
+    res, col = query(
+        db_path=global_path,
+        select="*",
+        _from="estudiante",
+        order_by=[
+            {
+                'table':'estudiante',
+                'name':'name',
+                'order':'desc'
+            }
+
+        ],
+        limit=2,
+        offset=2
+    )
+
+    assert res == [(2, 'Feliz', 10, 0, 7, 1), (1, 'Chanchito', 5, 1, 7, 1)]

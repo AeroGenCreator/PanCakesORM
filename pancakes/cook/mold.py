@@ -631,7 +631,7 @@ class PanCakesORM:
 
     @classmethod  # Inyección Segura
     def off(cls, num: int = None):
-        return cls.q().offset(num)
+        return cls.q().off(num)
 
     @classmethod  # Inyeccion Segura
     def all(cls):
