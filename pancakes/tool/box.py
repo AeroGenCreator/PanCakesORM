@@ -51,6 +51,7 @@ class QueryBox:
         self.group = None
         self.order = None
         self.limit = None
+        self.offset = None
         self.ids = False
         self.row = None
         self.col = None
@@ -909,6 +910,20 @@ class QueryBox:
         self.limit = limit
         return self
 
+    def off(self, offset: int):
+        """
+        Asigna un valor integer para seleccionar
+        el comienzo del query.
+        """
+        if not isinstance(offset, int):
+            msg = f"Invalid datatype: {offset}."
+            logger.critical(msg)
+            raise TypeError(type(offset))
+
+        offset = offset if offset else None
+        self.offset = offset
+        return self
+
     def id(self):
         """
         Bandera que especifica al query devolver
@@ -935,6 +950,7 @@ class QueryBox:
         group = self.group if self.group else None
         order = self.order if self.order else None
         limit = self.limit if self.limit else None
+        offset = self.offset if self.offset else None
 
         ambiguous = (
             ids and s_select,
@@ -970,7 +986,8 @@ class QueryBox:
             condition=condition,
             group_by=group,
             order_by=order,
-            limit=limit
+            limit=limit,
+            offset=offset
         )
 
         self.row = row

@@ -40,7 +40,8 @@ def query(
     condition: list = None,
     group_by: list = None,
     order_by: list = None,
-    limit: int = None
+    limit: int = None,
+    offset: int = None
 ):
     """
     Ejecuta una consulta SQL avanzada, sanitizada y dinámica.
@@ -482,6 +483,19 @@ def query(
         limit_clause = "LIMIT ?"
         c_data.append(limit)
 
+    # CONSTRUCCIÓN 'OFFSET' CLAUSE
+    offset_clause = ""
+
+    if offset:
+
+        if not isinstance(offset, int):
+            msg = f"Invalid datatype: {offset}."
+            logger.critical(msg)
+            raise TypeError(type(offset))
+
+        offset_clause = "OFFSET ?"
+        c_data.append(offset)
+
     # Construccion del Query Final
     sql = (
         f"{select_clause} "
@@ -489,7 +503,8 @@ def query(
         f"{where_clause} "
         f"{group_clause} "
         f"{order_clause} "
-        f"{limit_clause};"
+        f"{limit_clause} "
+        f"{offset_clause};"
     )
 
     sql = " ".join(sql.split()).strip()

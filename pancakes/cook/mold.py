@@ -103,7 +103,6 @@ class PanCakesORM:
     _family = {}
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
-    _depends = "self"
     _metadata = {}
     _order = []
 
@@ -176,7 +175,7 @@ class PanCakesORM:
     @classmethod
     def _check_dependencies(cls) -> None:
         """
-        Evalua el atributo de clase cls.depends:
+        Evalua el atributo de clase cls._depends:
         1. Valida el tipo de dato
         2. Valida: O string valido o iterable valido.
         3. Se guardan las dependencias en una lista de diccionarios.
@@ -184,6 +183,16 @@ class PanCakesORM:
         """
 
         externals = []
+
+        if '_depends' not in cls.__dict__.keys():
+            msg = (
+                f"Model {cls._table} does not have declared attribute "
+                f"'_depends' which must be specified for relations "
+                f"among tables in database. PanCakesORM set _'depends' "
+                f"to 'self'; table - {cls._table}"
+            )
+            logger.warning(msg)
+            cls._depends = "self"
 
         # Validar tipo de dato
         if not isinstance(cls._depends, (str, list, tuple)):
@@ -199,8 +208,8 @@ class PanCakesORM:
         if isinstance(cls._depends, str) and cls._depends != "self":
             msg = (
                 f"Class attribute _depends only accepts the "
-                f"following string when there is no dependencies "
-                f"on other tables: 'self'. Any other string will "
+                f"following string when there are no dependencies "
+                f"to other tables: 'self'. Any other string will "
                 f"raise this message."
             )
             logger.critical(msg)
@@ -490,7 +499,8 @@ class PanCakesORM:
         condition: list = None,
         group_by: list = None,
         order_by: list = None,
-        limit: int = None
+        limit: int = None,
+        offset: int = None
     ):
         """
         Llama a la funcion de consulta global.
@@ -505,6 +515,7 @@ class PanCakesORM:
         group_by = None if group_by is None else group_by
         order_by = None if order_by is None else order_by
         limit = None if limit is None else limit
+        offset = None if offset is None else offset
 
         res, col = query(
             db_path=db_path,
@@ -515,7 +526,8 @@ class PanCakesORM:
             condition=condition,
             group_by=group_by,
             order_by=order_by,
-            limit=limit
+            limit=limit,
+            offset=offset
         )
 
         return res, col
@@ -616,6 +628,10 @@ class PanCakesORM:
     @classmethod  # Iyeccion Segura
     def lim(cls, num: int = None):
         return cls.q().lim(num)
+
+    @classmethod  # Inyección Segura
+    def off(cls, num: int = None):
+        return cls.q().offset(num)
 
     @classmethod  # Inyeccion Segura
     def all(cls):
