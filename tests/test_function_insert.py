@@ -67,15 +67,18 @@ class SaleLine(PanCakesORM):
 
     client_id = sql_datatype.ForeignKey(
             second_table='client',
-            column_id = 'client_id'
+            column_id = 'client_id',
+            comment="Rel1"
         )
     sale_id = sql_datatype.ForeignKey(
             second_table='sale',
-            column_id='sale_id'
+            column_id='sale_id',
+            comment="Rel2"
         )
     product_id = sql_datatype.ForeignKey(
             second_table='product',
-            column_id='product_id'
+            column_id='product_id',
+            comment="Rel3"
         )
     amount = sql_datatype.Float(comment='Cantidad', nls=False)
 

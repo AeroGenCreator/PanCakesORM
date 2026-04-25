@@ -6,3 +6,4 @@ setuptools
 twine
 build
 python-dotenv
+fastapi[standard]

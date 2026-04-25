@@ -60,12 +60,14 @@ class SaleLine(PanCakesORM):
 
     client_id = sql_datatype.ForeignKey(
             second_table='client',
-            column_id = 'client_id'
+            column_id = 'client_id',
+            comment="Rel1"
         )
     product_id = sql_datatype.ForeignKey(
             second_table='product',
             column_id='product_id',
-            on_del='cascade'
+            on_del='cascade',
+            comment="Rel2"
         )
 
 insert(

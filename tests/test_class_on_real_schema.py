@@ -38,7 +38,8 @@ class Product(PanCakesORM):
     category_id = sql_datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
-        on_del="cascade"
+        on_del="cascade",
+        comment="Pro Cat Rel"
     )
 
 class Category(PanCakesORM):
@@ -58,22 +59,26 @@ class SaleLine(PanCakesORM):
     product_id = sql_datatype.ForeignKey(
         second_table="product",
         column_id="product_id",
-        on_del="cascade"
+        on_del="cascade",
+        comment="Sale Line Pro Rel"
     )
     category_id = sql_datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
-        on_del="cascade"
+        on_del="cascade",
+        comment="Sale Line Cat Rel"
     )
     client_id = sql_datatype.ForeignKey(
         second_table="client",
         column_id="client_id",
-        on_del="cascade"
+        on_del="cascade",
+        comment="Sale Line Cli Rel"
     )
     sale_id = sql_datatype.ForeignKey(
         second_table="sale",
         column_id="sale_id",
-        on_del="cascade"
+        on_del="cascade",
+        comment="Sale Line Sale Rel"
     )
     quantity = sql_datatype.Float(comment="Quantity")
 
@@ -133,22 +138,26 @@ def test_quitar_group_constraint():
         product_id = sql_datatype.ForeignKey(
             second_table="product",
             column_id="product_id",
-            on_del="cascade"
+            on_del="cascade",
+            comment="rel1"
         )
         category_id = sql_datatype.ForeignKey(
             second_table="category",
             column_id="category_id",
-            on_del="cascade"
+            on_del="cascade",
+            comment="rel2"
         )
         client_id = sql_datatype.ForeignKey(
             second_table="client",
             column_id="client_id",
-            on_del="cascade"
+            on_del="cascade",
+            comment="rel3"
         )
         sale_id = sql_datatype.ForeignKey(
             second_table="sale",
             column_id="sale_id",
-            on_del="cascade"
+            on_del="cascade",
+            comment="rel4"
         )
         quantity = sql_datatype.Float(comment="Quantity")
 
