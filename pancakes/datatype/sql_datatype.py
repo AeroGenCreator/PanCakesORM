@@ -40,6 +40,7 @@ class DataTypeSQL:
 
     def _pydantic(self):
         self.nls = None if self.nls == "" else True
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
 
@@ -69,6 +70,7 @@ class Text(DataTypeSQL):
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
 
@@ -103,6 +105,7 @@ class Char(DataTypeSQL):
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"size": (self.size, 250)})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
@@ -150,6 +153,7 @@ class Int(DataTypeSQL):
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
         self._schema.update({"lt": (self.lt, None)})
@@ -200,6 +204,7 @@ class Float(DataTypeSQL):
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
         self._schema.update({"lt": (self.lt, None)})
@@ -232,6 +237,7 @@ class Bool(DataTypeSQL):
         self._dtype = f'{self._data_type} {self.nls} {self._default}'
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"required": (self.nls, None)})
         self._schema.update({"default": (self.default, None)})
 
@@ -295,4 +301,5 @@ class ForeignKey(DataTypeSQL):
         self._dtype = self._dtype.replace("  "," ").strip()
 
     def _pydantic(self):
+        self._schema.update({"comment": self.comment, "Comment Label"})
         self._schema.update({"default": (self.default, None)})

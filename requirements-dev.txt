@@ -6,4 +6,6 @@ setuptools
 twine
 build
 python-dotenv
-fastapi[standard]
+fastapi
+pydantic
+uvicorn
