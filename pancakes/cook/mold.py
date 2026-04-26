@@ -420,10 +420,12 @@ class PanCakesORM:
                 f"{unique});"
             ).strip()
             lines.append(line)
-        with db_connection(
-            db_path=cls._db_file,
-            no_foreign=True
-        ) as (conn, cur):
+        
+        # Guarda; Tablas por eliminar
+        tabs_to_drop = []
+
+        # Conexion; FK activado.
+        with db_connection(db_path=cls._db_file) as (conn, cur):
             for ln, t in zip(lines, order):
                 column_in_model = list(cls._metadata[t]["columns"])
                 cur.execute(
@@ -450,12 +452,19 @@ class PanCakesORM:
                         f"SELECT {columns_str} "
                         f"FROM [{t}_old];"
                     )
-                    cur.execute(
-                        f"DROP TABLE IF EXISTS [{t}_old];"
-                    )
+                    tabs_to_drop.append(t)
                     continue
                 else:
                     cur.execute(ln)
+        
+        # Conexion; FK desactivado.
+        with db_connection(
+            db_path=cls._db_file,
+            no_foreign=True
+        ) as (conn, cur):
+            for drop_tab in tabs_to_drop:
+                cur.execute(f"DROP TABLE IF EXISTS [{drop_tab}_old];")
+
         logger.info(f"PASSED TABLES: [{list(cls._metadata.keys())}].")
         logger.info(f"SUCCESSFUL ONES: [{order}].")
 
