@@ -27,7 +27,7 @@ class Category(PanCakesORM):
     _db_dir = dir_
     _db_file = file
 
-    name = sql_datatype.Char(comment='Categoria', nls=False)
+    name = sql_datatype.Char(comment='Categoria', required=False)
 
 class Product(PanCakesORM):
     _table = 'product'
@@ -35,8 +35,8 @@ class Product(PanCakesORM):
     _db_file = file
     _depends = ["category"]
 
-    name = sql_datatype.Char(comment='Producto', nls=False)
-    price = sql_datatype.Float(comment='Precio', nls=False)
+    name = sql_datatype.Char(comment='Producto', required=False)
+    price = sql_datatype.Float(comment='Precio', required=False)
     category_id = sql_datatype.ForeignKey(
             second_table = 'category',
             column_id = 'category_id',
@@ -48,16 +48,16 @@ class Client(PanCakesORM):
     _db_dir = dir_
     _db_file = file
 
-    name = sql_datatype.Char(comment='Nombre', nls=False)
-    surname = sql_datatype.Char(comment='Apellido', nls=False)
+    name = sql_datatype.Char(comment='Nombre', required=False)
+    surname = sql_datatype.Char(comment='Apellido', required=False)
 
 class Sale(PanCakesORM):
     _table = 'sale'
     _db_dir = dir_
     _db_file = file
 
-    code = sql_datatype.Char(comment='Folio', nls=False)
-    date = sql_datatype.Text(comment='Fecha', nls=False)
+    code = sql_datatype.Char(comment='Folio', required=False)
+    date = sql_datatype.Text(comment='Fecha', required=False)
 
 class SaleLine(PanCakesORM):
     _table = 'sale_line'
@@ -80,7 +80,7 @@ class SaleLine(PanCakesORM):
             column_id='product_id',
             comment="Rel3"
         )
-    amount = sql_datatype.Float(comment='Cantidad', nls=False)
+    amount = sql_datatype.Float(comment='Cantidad', required=False)
 
 def test_insert():
     Category.insert(

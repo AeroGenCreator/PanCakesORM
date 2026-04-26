@@ -283,8 +283,10 @@ class PanCakesORM:
             sql_datatype.Bool
             )
 
+        schema_cache = []
         # Iteramos PanCakesORM
         for key, value in data.items():
+
             # Valida unica seleccion tipo de dato "columna sql"
             if isinstance(value, column_type):
                 # Limpiamos los nombres de columnas
@@ -298,15 +300,20 @@ class PanCakesORM:
                         f"""The Column Name "{key}" In
                         {cls.__name__} Is Not Valid."""
                     )
-                # Agregar 'nombre', 'obj. columna', 'comentario frontend'
+                # Agrega 'nombre', 'obj. columna', 'comentario frontend'
                 value._name = clean_name
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
+                # Esquema; actualizado
+                value._schema["column"] = value._name
+                schema_cache.append(value._schema)
 
         cls._metadata[cls._table]['fields'] = cls._fields
         cls._metadata[cls._table]['comments'] = cls.comment
         columns = [f._name for f in cls._fields]
         cls._metadata[cls._table]['columns'] = columns
+        cls._metadata[cls._table]['schema'] = schema_cache
+
         return
 
     @classmethod

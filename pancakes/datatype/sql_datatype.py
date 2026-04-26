@@ -1,7 +1,7 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at 
+# You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 """
 Definiendo Todos Los Tipos De Datos SQLite3 A Traves De Clases
@@ -12,37 +12,39 @@ class DataTypeSQL:
     """
     Base De Construccion Para Los Tipos de Datos SQL
     Valores por defecto "pydantic":
-    column: str
     comment: str
-    required: bool
-    default: str | None
+    nls: bools -> NOT NULL en SQL
+    required: bool -> Requerido Para la API
     """
     _data_type = ''
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
-        default: str | None = None
+        required: bool | None = None
     ):
 
         self.comment = comment
-        self.nls = 'NOT NULL' if nls else ''
-        self.default = default
+        self.required = required
         self._dtype = None
-        # atributo '_name' se asigna cuando se declara modelo
-        # Revisar: '_get_fields', mold.py
         self._name = None
         self._schema = {}
+        # atributo '_name' se asigna cuando se declara modelo
+        # Revisar: '_get_fields', mold.py
 
     def _sentence(self):
+        self.nls = "NOT NULL" if bool(self.required) else ""
         self._dtype = f'{self._data_type} {self.nls}'.strip()
 
     def _pydantic(self):
-        self.nls = None if self.nls == "" else True
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
+        self._schema = {
+            "column": None,
+            "type": None,
+            "required": None,
+            "default": None,
+            "constraint": {},
+            "metadata": {}
+        }
 
 
 class Text(DataTypeSQL):
@@ -50,29 +52,32 @@ class Text(DataTypeSQL):
     Almacena texto sin restricción de caracteres
     """
     _data_type = 'TEXT'
-    _default = "DEFAULT ''"
+    _sql_default = "DEFAULT ''"
+    _python = str
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
+        required: bool | None = None,
         default: str | None = None
     ):
-        
-        super().__init__(comment=comment, nls=nls, default=default)
+
+        super().__init__(comment=comment, required=required)
+        self.default = default
         self._sentence()
         self._pydantic()
 
     def _sentence(self):
-        self._dtype = (
-            f"{self._data_type} {self.nls} {self._default}"
-        )
+        super()._sentence()
+        self._dtype = f"{self._data_type} {self.nls} {self._sql_default}"
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = bool(self.required)
+        self._schema["default"] = self.default
+        self._schema["metadata"].update({"label": self.comment})
 
 
 class Char(DataTypeSQL):
@@ -81,34 +86,41 @@ class Char(DataTypeSQL):
     """
 
     _data_type = 'VARCHAR'
-    _default = "DEFAULT ''"
+    _sql_default = "DEFAULT ''"
+    _python = str
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
         size: int = 250,
-        unq: bool = False,
+        required: bool | None = None,
+        unique: bool | None = None,
         default: str | None = None
     ):
-        super().__init__(comment=comment, nls=nls, default=default)
-        self.unq = 'UNIQUE COLLATE NOCASE' if unq else ''
+        super().__init__(comment=comment, required=required)
         self.size = size
+        self.unique = unique
+        self.default = default
         self._sentence()
         self._pydantic()
 
     def _sentence(self):
+        super()._sentence()
+        sql_unique = 'UNIQUE COLLATE NOCASE' if self.unique else ""
         self._dtype = (
             f"{self._data_type}"
-            f"({self.size}) {self.nls} {self._default} {self.unq}"
+            f"({self.size}) {self.nls} {self._sql_default} {sql_unique}"
         )
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"size": (self.size, 250)})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = bool(self.required)
+        self._schema["default"] = self.default
+        self._schema["constraint"].update({"max_length": self.size})
+        self._schema["constraint"].update({"unique": bool(self.unique)})
+        self._schema["metadata"].update({"label": self.comment})
 
 
 class Int(DataTypeSQL):
@@ -120,46 +132,54 @@ class Int(DataTypeSQL):
     -> lt; less than
     -> le; less equal
     -> gt; greater than
-    -> ge; greater equal 
+    -> ge; greater equal
     """
 
     _data_type = 'INTEGER'
-    _default = 'DEFAULT 0'
+    _sql_default = 'DEFAULT 0'
+    _python = int
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
-        unq: bool = False,
         lt: int | None = None,
         le: int | None = None,
         gt: int | None = None,
         ge: int | None = None,
-        default: int | None = None
+        default: int | None = None,
+        required: bool | None = None,
+        unique: bool | None = None
     ):
-        super().__init__(comment=comment, nls=nls, default=default)
-        self.unq = 'UNIQUE' if unq else ''
+        super().__init__(comment=comment, required=required)
         self.lt = lt
         self.le = le
         self.gt = gt
         self.ge = ge
+        self.required = required
+        self.default = default
+        self.unique = unique
         self._sentence()
         self._pydantic()
 
     def _sentence(self):
+        super()._sentence()
+        sql_unique = "UNIQUE" if self.unique else ""
         self._dtype = (
-            f"{self._data_type} {self.nls} {self._default} {self.unq}"
+            f"{self._data_type} {self.nls} {self._sql_default} {sql_unique}"
         )
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
-        self._schema.update({"lt": (self.lt, None)})
-        self._schema.update({"le": (self.le, None)})
-        self._schema.update({"gt": (self.gt, None)})
-        self._schema.update({"ge": (self.ge, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = bool(self.required)
+        self._schema["default"] = self.default
+        self._schema["constraint"].update({"unique": bool(self.unique)})
+        self._schema["constraint"].update({"lt": self.lt})
+        self._schema["constraint"].update({"le": self.le})
+        self._schema["constraint"].update({"gt": self.gt})
+        self._schema["constraint"].update({"ge": self.ge})
+        self._schema["metadata"].update({"label": self.comment})
 
 
 class Float(DataTypeSQL):
@@ -171,46 +191,54 @@ class Float(DataTypeSQL):
     -> lt; less than
     -> le; less equal
     -> gt; greater than
-    -> ge; greater equal 
+    -> ge; greater equal
     """
 
     _data_type = 'FLOAT'
-    _default = 'DEFAULT 0'
+    _sql_default = 'DEFAULT 0'
+    _python = float
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
-        unq: bool = False,
         lt: int | None = None,
         le: int | None = None,
         gt: int | None = None,
         ge: int | None = None,
-        default: int | None = None
+        default: int | None = None,
+        required: bool | None = None,
+        unique: bool | None = None
     ):
-        super().__init__(comment=comment, nls=nls, default=default)
-        self.unq = 'UNIQUE' if unq else ''
+        super().__init__(comment=comment, required=required)
         self.lt = lt
         self.le = le
         self.gt = gt
         self.ge = ge
+        self.required = required
+        self.default = default
+        self.unique = unique
         self._sentence()
         self._pydantic()
 
     def _sentence(self):
+        super()._sentence()
+        sql_unique = "UNIQUE" if self.unique else ""
         self._dtype = (
-            f"{self._data_type} {self.nls} {self._default} {self.unq}"
+            f"{self._data_type} {self.nls} {self._sql_default} {sql_unique}"
         )
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
-        self._schema.update({"lt": (self.lt, None)})
-        self._schema.update({"le": (self.le, None)})
-        self._schema.update({"gt": (self.gt, None)})
-        self._schema.update({"ge": (self.ge, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = bool(self.required)
+        self._schema["default"] = self.default
+        self._schema["constraint"].update({"unique": bool(self.unique)})
+        self._schema["constraint"].update({"lt": self.lt})
+        self._schema["constraint"].update({"le": self.le})
+        self._schema["constraint"].update({"gt": self.gt})
+        self._schema["constraint"].update({"ge": self.ge})
+        self._schema["metadata"].update({"label": self.comment})
 
 
 class Bool(DataTypeSQL):
@@ -221,25 +249,31 @@ class Bool(DataTypeSQL):
     """
 
     _data_type = 'BOOLEAN'
-    _default = 'DEFAULT 1'
+    _sql_default = 'DEFAULT 1'
+    _python = bool
 
     def __init__(
         self,
         comment: str,
-        nls: bool | None = None,
-        default: bool | None = None
+        default: bool | None = None,
+        required: bool | None = None
     ):
 
-        super().__init__(comment=comment, nls=nls, default=default)
+        super().__init__(comment=comment, required=required)
+        self.default = default
         self._sentence()
+        self._pydantic()
 
     def _sentence(self):
-        self._dtype = f'{self._data_type} {self.nls} {self._default}'
+        super()._sentence()
+        self._dtype = f'{self._data_type} {self.nls} {self._sql_default}'
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"required": (self.nls, None)})
-        self._schema.update({"default": (self.default, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = bool(self.required)
+        self._schema["default"] = self.default
+        self._schema["metadata"].update({"label": self.comment})
 
 
 class ForeignKey(DataTypeSQL):
@@ -264,9 +298,10 @@ class ForeignKey(DataTypeSQL):
     -> Notar como ambos compartiran el nombre "client_id"
     """
 
-    ACTIONS = {'no action','restrict','set null', 'cascade'}
+    ACTIONS = {'no action', 'restrict', 'set null', 'cascade'}
     _data_type = 'INTEGER'
     _not_null = False
+    _python = int
     # UNIQUE no se define porque en las relaciones de tablas pueden haber
     # ids repetidos
 
@@ -282,24 +317,29 @@ class ForeignKey(DataTypeSQL):
 
         super().__init__(
             comment=comment,
-            nls=ForeignKey._not_null,
-            default=default
+            required=self._not_null
         )
 
         self.second_table = second_table
         self.column_id = column_id
         self.on_del = on_del.upper() if on_del in self.ACTIONS else 'SET NULL'
-        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE' 
+        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE'
+        self.default = default
         self._sentence()
         self._pydantic()
 
     def _sentence(self):
+        super()._sentence()
+
         self._dtype = f"""
         {self._data_type} {self.nls} REFERENCES {self.second_table}
         ({self.column_id}) ON DELETE {self.on_del} ON UPDATE {self.on_upd}
         """
-        self._dtype = self._dtype.replace("  "," ").strip()
+        self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
-        self._schema.update({"comment": self.comment, "Comment Label"})
-        self._schema.update({"default": (self.default, None)})
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = False
+        self._schema["default"] = self.default
+        self._schema["metadata"].update({"label": self.comment})

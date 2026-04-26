@@ -30,15 +30,15 @@ class Category(PanCakesORM):
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Categoria', nls=False)
+    name = sql_datatype.Char(comment='Categoria', required=False)
 
 class Product(PanCakesORM):
     _table = 'product'
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Producto', nls=False)
-    price = sql_datatype.Float(comment='Precio', nls=False)
+    name = sql_datatype.Char(comment='Producto', required=False)
+    price = sql_datatype.Float(comment='Precio', required=False)
     category_id = sql_datatype.ForeignKey(
             second_table = 'category',
             column_id = 'category_id',
@@ -50,8 +50,8 @@ class Client(PanCakesORM):
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Nombre', nls=False)
-    surname = sql_datatype.Char(comment='Apellido', nls=False)
+    name = sql_datatype.Char(comment='Nombre', required=False)
+    surname = sql_datatype.Char(comment='Apellido', required=False)
 
 class SaleLine(PanCakesORM):
     _table = 'sale_line'

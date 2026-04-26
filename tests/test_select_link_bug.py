@@ -21,7 +21,7 @@ class Category(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 
-	category = sql_datatype.Char(comment="Category", unq=True)
+	category = sql_datatype.Char(comment="Category", unique=True)
 	
 class Product(PanCakesORM):
 	_table = "product"
@@ -30,7 +30,7 @@ class Product(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 	
-	product_name = sql_datatype.Char(comment="Product Name", unq=True)
+	product_name = sql_datatype.Char(comment="Product Name", unique=True)
 	category_id = sql_datatype.ForeignKey(
 		comment="Product Category Rel",
 		second_table="category",
@@ -43,7 +43,7 @@ class Recipe(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 	
-	recipe_ingredient = sql_datatype.Char(comment="Recipe Ingredient", unq=True)
+	recipe_ingredient = sql_datatype.Char(comment="Recipe Ingredient", unique=True)
 
 class RecipeProductLine(PanCakesORM):
 	_table = "recipe_product_line"
