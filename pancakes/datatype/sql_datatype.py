@@ -76,7 +76,7 @@ class Text(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
 
 
 class Char(DataTypeSQL):
@@ -120,7 +120,7 @@ class Char(DataTypeSQL):
         self._schema["constraints"].update({"max_length": self.size})
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
 
 
 class Int(DataTypeSQL):
@@ -184,7 +184,7 @@ class Int(DataTypeSQL):
             self._schema["constraints"].update({"gt": self.gt})
         if self.ge:
             self._schema["constraints"].update({"ge": self.ge})
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
 
 
 class Float(DataTypeSQL):
@@ -248,7 +248,7 @@ class Float(DataTypeSQL):
             self._schema["constraints"].update({"gt": self.gt})
         if self.ge:
             self._schema["constraints"].update({"ge": self.ge})
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
 
 
 class Bool(DataTypeSQL):
@@ -283,7 +283,7 @@ class Bool(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
 
 
 class ForeignKey(DataTypeSQL):
@@ -352,11 +352,11 @@ class ForeignKey(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = False
         self._schema["default"] = self.default
-        self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update(
             {"foreign_key": {
-                "target_table": self.second_table,
-                "target_column": self.column_id
+                "second_table": self.second_table,
+                "column_id": self.column_id
             }
         })
 

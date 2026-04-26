@@ -270,7 +270,8 @@ class PanCakesORM:
         cls._fields = []
         # JSON para API
         cls._json = {cls._table: {}}
-        cls.comment = [f"{cls._table} Id".capitalize()]
+        id_comment = f"{cls._table} id".upper()
+        cls.comment = [id_comment]
 
         # Metadata de PanCakesORM
         data = cls.__dict__
@@ -293,6 +294,7 @@ class PanCakesORM:
                 "default": None,
                 "constraints": {},
                 "metadata": {
+                    "comment": id_comment,
                     "primary_key": True,
                     "read_only": True
                 }
