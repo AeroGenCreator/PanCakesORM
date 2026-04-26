@@ -268,6 +268,8 @@ class PanCakesORM:
 
         # Atributos nuevos de clase; _fields, comment
         cls._fields = []
+        # JSON para API
+        cls._json = {cls._table: {}}
         cls.comment = [f"{cls._table} Id".capitalize()]
 
         # Metadata de PanCakesORM
@@ -283,7 +285,20 @@ class PanCakesORM:
             sql_datatype.Bool
             )
 
-        schema_cache = []
+        # Esquema; field_id 'modelo' | cache esquema 'modelo'
+        schema_cache = {
+            f"{cls._table}_id": {
+                "type": int,
+                "required": False,
+                "default": None,
+                "constraints": {},
+                "metadata": {
+                    "primary_key": True,
+                    "read_only": True
+                }
+            }
+        }
+        
         # Iteramos PanCakesORM
         for key, value in data.items():
 
@@ -305,14 +320,13 @@ class PanCakesORM:
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
                 # Esquema; actualizado
-                value._schema["column"] = value._name
-                schema_cache.append(value._schema)
+                schema_cache.update({value._name: value._schema})
 
         cls._metadata[cls._table]['fields'] = cls._fields
         cls._metadata[cls._table]['comments'] = cls.comment
         columns = [f._name for f in cls._fields]
         cls._metadata[cls._table]['columns'] = columns
-        cls._metadata[cls._table]['schema'] = schema_cache
+        cls._json[cls._table]['schema'] = schema_cache
 
         return
 
@@ -442,6 +456,10 @@ class PanCakesORM:
                     cur.execute(ln)
         logger.info(f"PASSED TABLES: [{list(cls._metadata.keys())}].")
         logger.info(f"SUCCESSFUL ONES: [{order}].")
+
+    @classmethod  # Tipado Pydantic de Modelos Para FastAPI
+    def _pydantic_schema(cls):
+        pass
 
     @classmethod  # Inyeccion Segura
     def table_exists(cls):

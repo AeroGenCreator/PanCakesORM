@@ -38,11 +38,10 @@ class DataTypeSQL:
 
     def _pydantic(self):
         self._schema = {
-            "column": None,
             "type": None,
             "required": None,
             "default": None,
-            "constraint": {},
+            "constraints": {},
             "metadata": {}
         }
 
@@ -118,8 +117,9 @@ class Char(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["constraint"].update({"max_length": self.size})
-        self._schema["constraint"].update({"unique": bool(self.unique)})
+        self._schema["constraints"].update({"max_length": self.size})
+        if self.unique:
+            self._schema["constraints"].update({"unique": bool(self.unique)})
         self._schema["metadata"].update({"label": self.comment})
 
 
@@ -174,11 +174,16 @@ class Int(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["constraint"].update({"unique": bool(self.unique)})
-        self._schema["constraint"].update({"lt": self.lt})
-        self._schema["constraint"].update({"le": self.le})
-        self._schema["constraint"].update({"gt": self.gt})
-        self._schema["constraint"].update({"ge": self.ge})
+        if self.unique:
+            self._schema["constraints"].update({"unique": bool(self.unique)})
+        if self.lt:
+            self._schema["constraints"].update({"lt": self.lt})
+        if self.le:
+            self._schema["constraints"].update({"le": self.le})
+        if self.gt:
+            self._schema["constraints"].update({"gt": self.gt})
+        if self.ge:
+            self._schema["constraints"].update({"ge": self.ge})
         self._schema["metadata"].update({"label": self.comment})
 
 
@@ -233,11 +238,16 @@ class Float(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["constraint"].update({"unique": bool(self.unique)})
-        self._schema["constraint"].update({"lt": self.lt})
-        self._schema["constraint"].update({"le": self.le})
-        self._schema["constraint"].update({"gt": self.gt})
-        self._schema["constraint"].update({"ge": self.ge})
+        if self.unique:
+            self._schema["constraints"].update({"unique": bool(self.unique)})
+        if self.lt:
+            self._schema["constraints"].update({"lt": self.lt})
+        if self.le:
+            self._schema["constraints"].update({"le": self.le})
+        if self.gt:
+            self._schema["constraints"].update({"gt": self.gt})
+        if self.ge:
+            self._schema["constraints"].update({"ge": self.ge})
         self._schema["metadata"].update({"label": self.comment})
 
 
@@ -343,3 +353,10 @@ class ForeignKey(DataTypeSQL):
         self._schema["required"] = False
         self._schema["default"] = self.default
         self._schema["metadata"].update({"label": self.comment})
+        self._schema["metadata"].update(
+            {"foreign_key": {
+                "target_table": self.second_table,
+                "target_column": self.column_id
+            }
+        })
+
