@@ -25,7 +25,7 @@ class Category(PanCakesORM):
 
 	category_name = sql_datatype.Char(
 		comment="Category Name",
-		size=200,
+		max_length=200,
 		required=True,
 		unique=True,
 		default="Unknown"
@@ -47,26 +47,24 @@ class Inventory(PanCakesORM):
 	)
 	product_name = sql_datatype.Char(
 		comment="Product Name",
-		size=100,
+		max_length=100,
+		min_length=10,
 		required=True,
-		unique=True,
-		default="No Product"
+		unique=True
 	)
 	stock_quantity = sql_datatype.Int(
 		comment="Stock Quantity",
         le=100,
-        ge=0,
+        ge=1,
         default=1,
         required=True,
-        unique=True
 	)
 	product_price = sql_datatype.Float(
 		comment="Product Price",
 		lt=1000,
-        gt=0,
+        gt=1,
         default=0.1,
         required=True,
-        unique=True
 	)
 	saleable = sql_datatype.Bool(
 		comment="Saleable Product",
@@ -80,4 +78,62 @@ class Inventory(PanCakesORM):
         on_del='set null',
         on_upd='cascade',
         default= 1
+	)
+
+create_schema = Inventory._metadata[
+	"inventory"
+	][
+	"pydantic"
+	][
+	"InventoryCreateSchema"
+	]
+
+read_schema = Inventory._metadata[
+	"inventory"
+	][
+	"pydantic"
+	][
+	"InventoryReadSchema"
+	]
+
+update_schema = Inventory._metadata[
+	"inventory"
+	][
+	"pydantic"
+	][
+	"InventoryUpdateSchema"
+	]
+
+# Pydantic Validation Creation:
+def test_create_schema():
+	create_schema(
+		mk_date="2026-29-04",
+		product_name="Simple Shampoo",
+		stock_quantity=20,
+		product_price=10,
+		saleable=True
+	)
+	pass
+
+# Pydantic Validation Read:
+def test_read_schema():
+	read_schema(
+		inventory_id="1",
+		mk_date="2026-29-04",
+		product_name="Simple Shampoo",
+		stock_quantity=20,
+		product_price=10,
+		saleable=True
+	)
+	pass
+
+# Pydantic Validation Update:
+def test_update_schema():
+	update_schema(
+		inventory_id="1",
+		mk_date="2026-29-04",
+		product_name="Simple Shampoo",
+		stock_quantity=20,
+		product_price=10,
+		saleable=True
 	)

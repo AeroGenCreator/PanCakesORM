@@ -19,10 +19,14 @@ from ..cook.clean import delete
 from ..cook.furnace import insert
 
 # Modulos de Python
-import warnings
 from pathlib import Path
+from typing import Optional
+import warnings
 import logging
 import os
+
+# Modulos Terceros
+from pydantic import create_model, Field
 
 envs = environment()
 LOG = envs.get("log", "WARNING")
@@ -116,6 +120,7 @@ class PanCakesORM:
         cls._get_fields()
         cls._sort_dependencies()
         cls._init_table()
+        cls._pydantic_schema()
 
     @classmethod  # Inyeccion Segura | Test Seguro
     def _clean_table_name(cls):
@@ -464,13 +469,128 @@ class PanCakesORM:
         ) as (conn, cur):
             for drop_tab in tabs_to_drop:
                 cur.execute(f"DROP TABLE IF EXISTS [{drop_tab}_old];")
-
+        
         logger.info(f"PASSED TABLES: [{list(cls._metadata.keys())}].")
         logger.info(f"SUCCESSFUL ONES: [{order}].")
 
     @classmethod  # Tipado Pydantic de Modelos Para FastAPI
-    def _pydantic_schema(cls):
-        pass
+    def _pydantic_schema(cls) -> None:
+        """
+        Genera los modelos de tipado 'pydatinc'.
+        """
+
+        # Iterar nombre de tablas, modelos:
+        for table, model in cls._family.items():
+            
+            # Si "pydantic": modelo_pydatic ... skip
+            if "pydantic" in cls._metadata[table]:
+                continue
+            
+            # 3 modelos por tabla
+            is_create = f"{table.capitalize()}CreateSchema"
+            is_read = f"{table.capitalize()}ReadSchema" 
+            is_update = f"{table.capitalize()}UpdateSchema" 
+
+            expected_models = [is_create, is_read, is_update]
+            
+            # Esquema JSON de cada tabla
+            schema = model._json[table]["schema"]
+
+            pydantic_models = {}
+
+            # Iterar posibles modelos
+            for em in expected_models:
+
+                fields = {}
+
+                for field, props in schema.items():
+
+                    # Obtener PK si existe en el campos:
+                    PK = props.get("metadata", {}).get("primary_key", False)
+
+                    # Si es "Create" y field es Primary Key ... skip
+                    if em == is_create and PK:
+                        continue
+
+                    # Guardar todas la propiedades en variables
+                    py_type = props.get("type", str)
+                    py_required = props.get("required", False)
+                    py_default = props.get("default", None)
+                    py_constraints = props.get("constraints", {})
+                    py_metadata = props.get("metadata", {})
+                    description = py_metadata.get("comment", "")
+
+                    field_kwargs = {}
+
+                    # Descripcion Frontend
+                    field_kwargs["description"] = description
+
+                    # Llaves largas (Solo estetica)
+                    maxl = "max_length"
+                    minl = "min_length"
+                    jse = "json_schema_extra"
+
+                    # Constraints
+                    if maxl in py_constraints:
+                        field_kwargs[maxl] = py_constraints[maxl]
+                    if minl in py_constraints:
+                        field_kwargs[minl] = py_constraints[minl]
+                    if "unique" in py_constraints:
+                        field_kwargs[jse] = {"unique": True}
+                    if "lt" in py_constraints:
+                        field_kwargs["lt"] = py_constraints["lt"]
+                    if "le" in py_constraints:
+                        field_kwargs["le"] = py_constraints["le"]
+                    if "gt" in py_constraints:
+                        field_kwargs["gt"] = py_constraints["gt"]
+                    if "ge" in py_constraints:
+                        field_kwargs["ge"] = py_constraints["ge"]
+
+                    # --*-- Required | Default --*--
+
+                    # Create
+                    if em == is_create:
+                        if py_default is not None:
+                            default_value = py_default
+                        elif py_required:
+                            default_value = ...
+                        else:
+                            py_type = Optional[py_type]
+                            default_value = py_default
+
+                    # Read
+                    elif em == is_read:
+                        py_type = Optional[py_type]
+                        default_value = py_default
+
+                    # Update
+                    elif em == is_update:
+                        py_type = Optional[py_type]
+                        default_value = None
+
+                    fields[field] = (
+                        py_type, Field(
+                            default_value, **field_kwargs
+                        )
+                    )
+
+                if em == is_create:
+                    py_model = create_model(em, **fields)
+                    pydantic_models[em] = py_model
+                    continue
+
+                if em == is_read:
+                    py_model = create_model(em, **fields)
+                    pydantic_models[em] = py_model
+                    continue
+
+                if em == is_update:
+                    py_model = create_model(em, **fields)
+                    pydantic_models[em] = py_model
+
+            cls._metadata[table]["pydantic"] = pydantic_models
+
+        return
 
     @classmethod  # Inyeccion Segura
     def table_exists(cls):

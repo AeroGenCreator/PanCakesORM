@@ -31,7 +31,7 @@ class Country(PanCakesORM):
     _db_dir = Path.cwd() / 'data' / 'test_env'
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, size = 250)
+    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
 
 class Estudiante(PanCakesORM):
 
@@ -40,7 +40,7 @@ class Estudiante(PanCakesORM):
     _db_dir = Path.cwd() / 'data' / 'test_env'
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, size = 250)
+    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
     age = sql_datatype.Int(comment = 'Age', required = False, unique = False)
     is_student = sql_datatype.Bool(comment = 'Is Student', required = True)
     stature = sql_datatype.Int(comment = 'Stature', required = True)
@@ -57,7 +57,7 @@ class Curso(PanCakesORM):
     _db_dir = Path.cwd() / 'data' / 'test_env'
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Curso', required = False, unique = False, size = 250)
+    name = sql_datatype.Char(comment = 'Curso', required = False, unique = False, max_length = 250)
     date = sql_datatype.Text(comment = 'Date', required = False)
 
 class CursoEstudiante(PanCakesORM):

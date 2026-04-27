@@ -81,7 +81,7 @@ class Text(DataTypeSQL):
 
 class Char(DataTypeSQL):
     """
-    Almacena texto delimitado por 'size'.
+    Almacena texto delimitado por 'max_length'.
     """
 
     _data_type = 'VARCHAR'
@@ -91,13 +91,15 @@ class Char(DataTypeSQL):
     def __init__(
         self,
         comment: str,
-        size: int = 250,
+        max_length: int = 250,
+        min_length: int | None = None,
         required: bool | None = None,
         unique: bool | None = None,
         default: str | None = None
     ):
         super().__init__(comment=comment, required=required)
-        self.size = size
+        self.max_length = max_length
+        self.min_length = min_length
         self.unique = unique
         self.default = default
         self._sentence()
@@ -108,7 +110,7 @@ class Char(DataTypeSQL):
         sql_unique = 'UNIQUE COLLATE NOCASE' if self.unique else ""
         self._dtype = (
             f"{self._data_type}"
-            f"({self.size}) {self.nls} {self._sql_default} {sql_unique}"
+            f"({self.max_length}) {self.nls} {self._sql_default} {sql_unique}"
         )
         self._dtype = self._dtype.replace("  ", " ").strip()
 
@@ -117,7 +119,8 @@ class Char(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
-        self._schema["constraints"].update({"max_length": self.size})
+        self._schema["constraints"].update({"max_length": self.max_length})
+        self._schema["constraints"].update({"min_length": self.min_length})
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         self._schema["metadata"].update({"comment": self.comment})
