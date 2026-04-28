@@ -20,7 +20,7 @@ from ..cook.furnace import insert
 
 # Modulos de Python
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Annotated
 import warnings
 import logging
 import os
@@ -520,29 +520,48 @@ class PanCakesORM:
                     py_metadata = props.get("metadata", {})
                     description = py_metadata.get("comment", "")
 
-                    field_kwargs = {}
-
-                    # Descripcion Frontend
-                    field_kwargs["description"] = description
-
                     # Llaves largas (Solo estetica)
                     maxl = "max_length"
                     minl = "min_length"
                     jse = "json_schema_extra"
+                    
+                    field_kwargs = {}
+                    field_kwargs[jse] = {}
+
+                    # Descripcion Frontend
+                    field_kwargs["description"] = description
 
                     # Constraints
                     if maxl in py_constraints:
                         field_kwargs[maxl] = py_constraints[maxl]
+
                     if minl in py_constraints:
                         field_kwargs[minl] = py_constraints[minl]
+
                     if "unique" in py_constraints:
-                        field_kwargs[jse] = {"unique": True}
+                        field_kwargs[jse].update({"unique": True})
+
+                    if "foreign_key" in py_metadata:
+                        sec_tab = py_metadata[
+                        "foreign_key"].get("second_table","")
+                        col_id = py_metadata[
+                        "foreign_key"].get("column_id","")
+                        field_kwargs[jse].update(
+                            {"second_table": sec_tab}
+                        )
+                        field_kwargs[jse].update(
+                            {"column_id": col_id}
+                        )
+
                     if "lt" in py_constraints:
                         field_kwargs["lt"] = py_constraints["lt"]
+                    
                     if "le" in py_constraints:
                         field_kwargs["le"] = py_constraints["le"]
+                    
                     if "gt" in py_constraints:
                         field_kwargs["gt"] = py_constraints["gt"]
+                    
                     if "ge" in py_constraints:
                         field_kwargs["ge"] = py_constraints["ge"]
 
@@ -568,11 +587,11 @@ class PanCakesORM:
                         py_type = Optional[py_type]
                         default_value = None
 
-                    fields[field] = (
+                    fields[field] = Annotated[
                         py_type, Field(
                             default_value, **field_kwargs
-                        )
-                    )
+                            )
+                        ]
 
                 if em == is_create:
                     py_model = create_model(em, **fields)
