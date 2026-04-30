@@ -179,10 +179,10 @@ class CoffeeShop:
                     logger.critical(msg)
                     raise ValueError(v)
 
-                # Validar sintaxis apropiada:
+                # Validar syntax apropiada:
                 if "__" not in k:
                     msg = (
-                        "Invalid sintax form **kwargs in method .u(). "
+                        "Invalid syntax form **kwargs in method .u(). "
                         "You must separate sentence using: '__'."
                     )
                     logger.critical(msg)
@@ -241,10 +241,10 @@ class CoffeeShop:
                     logger.critical(msg)
                     raise TypeError(type(v))
 
-                # Valida sintaxis de **kwargs
+                # Valida syntax de **kwargs
                 if "__" not in k:
                     msg = (
-                        "Invalid sintax form **kwargs in method .u(). "
+                        "Invalid syntax form **kwargs in method .u(). "
                         "You must separate sentence using: '__'."
                     )
                     logger.critical(msg)
@@ -357,7 +357,7 @@ class CoffeeShop:
             # Validar separador
             if "__" not in k:
                 msg = (
-                    "Invalid sintax - argument. "
+                    "Invalid syntax - argument. "
                     "You must specify table__column__operator."
                 )
                 logger.critical(msg)
