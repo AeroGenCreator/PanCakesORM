@@ -137,3 +137,5 @@ def test_update_schema():
 		product_price=10,
 		saleable=True
 	)
+
+print(Inventory.schema)

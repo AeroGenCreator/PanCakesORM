@@ -103,6 +103,7 @@ class PanCakesORM:
     # un backup de tabla: metadata
     # -> _order: Guarda el orden de creación de tablas segun
     # las dependencias.
+    # cls.schema: dict {"pydantic modelo": modelo}
 
     _family = {}
     _db_dir = DEFAULT_DIR
@@ -609,6 +610,8 @@ class PanCakesORM:
 
             cls._metadata[table]["pydantic"] = pydantic_models
 
+        # Exponer Modelos:
+        cls.schema = cls._metadata[table]["pydantic"]
         return
 
     @classmethod  # Inyeccion Segura
