@@ -15,6 +15,8 @@ from ..tool.function import environment # Variables de entorno
 from ..cook.furnace import insert  # Funcion insert()
 from ..cook.ingredient import update  # Funcion update()
 from ..cook.clean import delete  # Funcion delete()
+from ..tool.filter_validator import DeleteFilterValidator
+from ..tool.filter_validator import UpdateFilterValidator
 
 # Modulos Python
 import warnings
@@ -157,7 +159,17 @@ class CoffeeShop:
         }
         """
 
+        # Valida Pydantic; kwargs | update_all
+        validated = UpdateFilterValidator.model_validate(
+            {"filters": kwargs, "update_all": update_all}
+        )
+
+        kwargs = validated.filters
+        update_all = validated.update_all
+
+        # LOGICA
         argument = []
+
         if not update_all:
 
             for k, v in kwargs.items():
@@ -348,6 +360,14 @@ class CoffeeShop:
         notlike: "NOT LIKE"
         }
         """
+
+        # La validacion carga {"filters": kwargs}
+        validated = DeleteFilterValidator.model_validate(
+            {"filters": kwargs}
+        )
+
+        # Objeto.filters = kwargs
+        kwargs = validated.filters
 
         argument = []
 
