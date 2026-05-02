@@ -10,11 +10,17 @@
 from pancakes.cook.mold import PanCakesORM
 from pancakes.datatype import sql_datatype
 
+
 # Modulos Python
 from pathlib import Path
 
+# Modulos Terceros
+from fastapi import FastAPI
+
+app = FastAPI()
+
 path_dir = Path.cwd() / "data" / "test_env"
-path_db = path_dir / "pydantic.sqlite"
+path_db = path_dir / "endpoint.sqlite"
 
 
 class Category(PanCakesORM):
@@ -50,7 +56,7 @@ class Inventory(PanCakesORM):
 		max_length=100,
 		min_length=10,
 		required=True,
-		unique=True
+		unique=False
 	)
 	stock_quantity = sql_datatype.Int(
 		comment="Stock Quantity",
@@ -76,66 +82,10 @@ class Inventory(PanCakesORM):
         column_id="category_id",
         comment="Prod. Cate. Rel",
         on_del='set null',
-        on_upd='cascade',
-        default= 1
+        on_upd='cascade'
 	)
 
-create_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryCreateSchema"
-	]
-
-read_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryReadSchema"
-	]
-
-update_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryUpdateSchema"
-	]
-
-# Pydantic Validation Creation:
-def test_create_schema():
-	create_schema(
-		mk_date="2026-29-04",
-		product_name="Simple Shampoo",
-		stock_quantity=20,
-		product_price=10,
-		saleable=True
-	)
-	pass
-
-# Pydantic Validation Read:
-def test_read_schema():
-	read_schema(
-		inventory_id="1",
-		mk_date="2026-29-04",
-		product_name="Simple Shampoo",
-		stock_quantity=20,
-		product_price=10,
-		saleable=True
-	)
-	pass
-
-# Pydantic Validation Update:
-def test_update_schema():
-	update_schema(
-		inventory_id="1",
-		mk_date="2026-29-04",
-		product_name="Simple Shampoo",
-		stock_quantity=20,
-		product_price=10,
-		saleable=True
-	)
-
-print(Inventory.SCHEMAS)
+print(PanCakesORM.SCHEMAS)
+routers = PanCakesORM.ROUTERS
+for r in routers:
+	app.include_router(r)

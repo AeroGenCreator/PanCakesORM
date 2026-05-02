@@ -159,14 +159,6 @@ class CoffeeShop:
         }
         """
 
-        # Valida Pydantic; kwargs | update_all
-        validated = UpdateFilterValidator.model_validate(
-            {"filters": kwargs, "update_all": update_all}
-        )
-
-        kwargs = validated.filters
-        update_all = validated.update_all
-
         # LOGICA
         argument = []
 

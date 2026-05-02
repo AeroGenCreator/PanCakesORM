@@ -18,7 +18,7 @@ Basado en Pydantic; Construccion de un 'Validacion De Filtro'
 # Mis Modulos
 
 # Modulos Python
-from typing import Annotated
+from typing import Annotated, Union, Dict, Tuple, Any
 
 # Modulos de Terceros
 from pydantic import BaseModel, model_validator, Field
@@ -147,7 +147,14 @@ class UpdateFilterValidator(BaseModel):
 	}
 
 	update_all: Annotated[bool, Field(False)]
-	filters: Annotated[dict[str, object], Field(...)]
+	filters: Annotated[
+		Dict[
+			str, Tuple[
+				Union[str, int, float, bool],
+				Union[str, int, float, bool, list, tuple]
+			]
+		], Field(...)
+	]
 
 	@model_validator(mode="before")
 	@classmethod

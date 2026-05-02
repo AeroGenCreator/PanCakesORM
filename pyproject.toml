@@ -12,7 +12,7 @@ authors = [
   { name="Andres Alberto Lopez Mendoza", email="andres.lopez.full.dev@gmail.com" },
 ]
 license = { text = "Apache-2.0" }
-dependencies = ["python-dotenv", "fastapi", "pydantic", "uvicorn"]
+dependencies = ["python-dotenv", "fastapi[standard]"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",

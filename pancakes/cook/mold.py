@@ -17,6 +17,8 @@ from ..cook.layer import query
 from ..cook.ingredient import update
 from ..cook.clean import delete
 from ..cook.furnace import insert
+from ..tool.filter_validator import DeleteFilterValidator
+from ..tool.filter_validator import UpdateFilterValidator
 
 # Modulos de Python
 from pathlib import Path
@@ -27,6 +29,7 @@ import os
 
 # Modulos Terceros
 from pydantic import create_model, Field
+from fastapi import APIRouter
 
 envs = environment()
 LOG = envs.get("log", "WARNING")
@@ -103,13 +106,18 @@ class PanCakesORM:
     # un backup de tabla: metadata
     # -> _order: Guarda el orden de creación de tablas segun
     # las dependencias.
-    # cls.schema: dict {"pydantic modelo": modelo}
+    # cls.SCHEMAS: dict {"pydantic modelo": modelo}
+    # cls.ROUTERS: -> Almacena los endpoints de TODOS los modelos por routers.
+    # cls.MODEL_COUNT: [] -> Compara; Modelo tiene 'routers'?
 
     _family = {}
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
     _metadata = {}
     _order = []
+    SCHEMAS = {}
+    ROUTERS = []
+    MODEL_COUNT_ROUTERS = []
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -122,6 +130,8 @@ class PanCakesORM:
         cls._sort_dependencies()
         cls._init_table()
         cls._pydantic_schema()
+        cls._expose_schemas_()
+        cls._routers_()
 
     @classmethod  # Inyeccion Segura | Test Seguro
     def _clean_table_name(cls):
@@ -380,7 +390,7 @@ class PanCakesORM:
             # Se actualiza la lista de diccs con los faltantes.
             llaves = cache
 
-            # Detener si encontramos referencia cicular o error de nombre.
+            # Detener si encontramos referencia circular o error de nombre.
             if freno == len(llaves):
                 valids = list(cls._order)
                 msg = (
@@ -488,9 +498,9 @@ class PanCakesORM:
                 continue
             
             # 3 modelos por tabla
-            is_create = f"{table.capitalize()}CreateSchema"
-            is_read = f"{table.capitalize()}ReadSchema" 
-            is_update = f"{table.capitalize()}UpdateSchema" 
+            is_create = f"{model.__name__.capitalize()}CreateSchema"
+            is_read = f"{model.__name__.capitalize()}ReadSchema" 
+            is_update = f"{model.__name__.capitalize()}UpdateSchema" 
 
             expected_models = [is_create, is_read, is_update]
             
@@ -610,8 +620,115 @@ class PanCakesORM:
 
             cls._metadata[table]["pydantic"] = pydantic_models
 
-        # Exponer Modelos:
-        cls.schema = cls._metadata[table]["pydantic"]
+        return
+
+    @classmethod
+    def _expose_schemas_(cls) -> None:
+        """
+        Iteracion de modelos cls._family
+
+        Evaluar si los esquemas se han expuesto;
+        De lo contrario se exponen en cls.SCHEMAS
+        """
+
+        for n, m in cls._family.items():
+
+            for sn, sm in m._metadata[n]["pydantic"].items():
+
+                if sn in set(cls.SCHEMAS.keys()):
+                    msg = (
+                        f"'{n}' model's schema {sn} has been already "
+                        "exposed... moving in to next model ..."
+                    )
+                    logger.debug(msg)
+                    continue
+
+                cls.SCHEMAS.update({sn: sm})
+
+        return
+
+    @classmethod
+    def _routers_(cls) -> None:
+        """
+        Importantante:
+        Evaluar; Si modelo ya tiene routers
+
+        1. Se iteran los modelos.
+        2. Si ya tiene routers, se salta al siguiente.
+
+        """
+
+        # Iterar modelos:
+        for n, m in cls._family.items():
+
+            # Evaluar si los routers existen:
+            if n in cls.MODEL_COUNT_ROUTERS:
+                msg = (
+                    f"'{cls._table}' model's routers have been "
+                    f"already created... moving to next one..."
+                )
+                logger.debug(msg)
+                continue
+
+            # Cargar esquemas pydantic de validacion
+            sc_create = m.SCHEMAS[f"{m.__name__.capitalize()}CreateSchema"]
+            sc_read = m.SCHEMAS[f"{m.__name__.capitalize()}ReadSchema"]
+            sc_update = m.SCHEMAS[f"{m.__name__.capitalize()}UpdateSchema"]
+            update_filter = UpdateFilterValidator
+            delete_filter = DeleteFilterValidator
+
+            # Creacion del router en esta iteracion.
+            router = APIRouter(
+                prefix=f"/{m.__name__.lower()}"
+            )
+
+            # --*-- CREACION DE ENDPOINTS --*--
+
+            def make_read_all(model):
+                def read_all():
+                    return model.all().to_dict(label=True)
+                return read_all
+
+            def make_create(model):
+                def create(data: sc_create, model=model):
+                    validated = sc_create.model_validate(data)
+                    SQL = [v for c, v in validated.__dict__.items()]
+                    SQL.insert(0, None)
+                    line = tuple(SQL)
+                    kwargs = {model._table: [line]}
+                    model.i(**kwargs)
+                return create
+
+            def make_update(model):
+                def update(kwargs: update_filter, model=model):
+                    import ipdb; ipdb.set_trace()
+                    argument = kwargs.filters
+                    entire = kwargs.update_all
+                    model.u(**argument, update_all=entire)
+                return update
+
+            # --*-- EXPOSICION DE ENDPOINTS --*--
+            
+            router.add_api_route(
+                "/",
+                make_read_all(m),
+                methods=["GET"]
+            )
+
+            router.add_api_route(
+                "/",
+                make_create(m),
+                methods=["POST"]
+            )
+            router.add_api_route(
+                "/",
+                make_update(m),
+                methods=["PUT"]
+            )
+
+            cls.ROUTERS.append(router)
+            cls.MODEL_COUNT_ROUTERS.append(n)
+
         return
 
     @classmethod  # Inyeccion Segura
