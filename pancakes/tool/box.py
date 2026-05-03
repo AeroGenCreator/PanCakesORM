@@ -454,6 +454,7 @@ class QueryBox:
                 lab = [c.comment for c in obj._fields if c._name == col]
                 lab = f"{"".join(lab)} {agg.upper()}"
                 lab = " ".join(lab.split(" ")).strip()
+
                 self.sp_label.append(lab)
 
                 dicc = {
@@ -465,10 +466,21 @@ class QueryBox:
                 continue
 
             elif tab == m_tab:
-                # Obtenemos el comment desde la tabla main
-                lab = [c.comment for c in self.model._fields if c._name == col]
-                lab = f"{"".join(lab)} {agg.upper()}"
-                lab = " ".join(lab.split(" ")).strip()
+
+                # Label; si se selecciona id
+                if col == f"{tab}_id":
+                    if not agg:
+                        lab = f"{tab} id".upper()
+                    else:
+                        lab = f"{tab} id {agg}".upper()
+
+                # Iterar campos; si no selecciona id
+                else:
+                    # Obtenemos el comment desde la tabla main
+                    lab = [c.comment for c in self.model._fields if c._name == col]
+                    lab = f"{"".join(lab)} {agg.upper()}"
+                    lab = " ".join(lab.split(" ")).strip()
+
                 self.s_label.append(lab)
 
                 dicc = {

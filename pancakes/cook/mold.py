@@ -19,6 +19,7 @@ from ..cook.clean import delete
 from ..cook.furnace import insert
 from ..tool.filter_validator import DeleteFilterValidator
 from ..tool.filter_validator import UpdateFilterValidator
+from ..query_validator.query_validator import ValidateSelect
 
 # Modulos de Python
 from pathlib import Path
@@ -691,21 +692,41 @@ class PanCakesORM:
 
             def make_create(model):
                 def create(data: sc_create, model=model):
-                    validated = sc_create.model_validate(data)
-                    SQL = [v for c, v in validated.__dict__.items()]
+                    dicc = data.model_dump()
+                    cols = model._metadata[model._table]["columns"]
+                    SQL = [dicc.get(col) for col in cols]
                     SQL.insert(0, None)
                     line = tuple(SQL)
                     kwargs = {model._table: [line]}
                     model.i(**kwargs)
+                    return {"ms": "Data Created"}
                 return create
 
             def make_update(model):
                 def update(kwargs: update_filter, model=model):
-                    import ipdb; ipdb.set_trace()
                     argument = kwargs.filters
                     entire = kwargs.update_all
                     model.u(**argument, update_all=entire)
+                    return {"ms": "Data Updated"}
                 return update
+
+            def make_delete(model):
+                def delete(kwargs: delete_filter, model=model):
+                    model.d(**kwargs)
+                    return {"ms": "Data Deleted"}
+                return delete
+
+            def make_api_query(model):
+                def api_query(
+                    s: ValidateSelect,
+                    model=model
+                ):
+                    select = s.select
+                    dicc = model.select(
+                        *select
+                    ).all().to_dict(label=True)
+                    return dicc
+                return api_query
 
             # --*-- EXPOSICION DE ENDPOINTS --*--
             
@@ -724,6 +745,16 @@ class PanCakesORM:
                 "/",
                 make_update(m),
                 methods=["PUT"]
+            )
+            router.add_api_route(
+                "/",
+                make_delete(m),
+                methods=["DELETE"]
+            )
+            router.add_api_route(
+                "/query/",
+                make_api_query(m),
+                methods=["POST"]
             )
 
             cls.ROUTERS.append(router)
