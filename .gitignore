@@ -7,6 +7,7 @@ pancakes/__pycache__/
 pancakes/cook/__pycache__/
 pancakes/datatype/__pycache__/
 pancakes/tool/__pycache__/
+pancakes/query_validator/__pycache__
 .pytest_cache/
 tests/__pycache__/
 
