@@ -449,11 +449,18 @@ class QueryBox:
 
             if tab != m_tab:  # <- Si estamos seleccionando de union
 
-                obj = self.model._family[tab]  # <- Buscamos la Tabla
-                # Obtenemos el comment:
-                lab = [c.comment for c in obj._fields if c._name == col]
-                lab = f"{"".join(lab)} {agg.upper()}"
-                lab = " ".join(lab.split(" ")).strip()
+                # Label; si seleccion "id"
+                if col == f"{tab}_id":
+                    if not agg:
+                        lab = f"{tab} id".upper()
+                    else:
+                        lab = f"{tab} id {agg}".upper()
+                else:
+                    obj = self.model._family[tab]  # <- Buscamos la Tabla
+                    # Obtenemos el comment:
+                    lab = [c.comment for c in obj._fields if c._name == col]
+                    lab = f"{"".join(lab)} {agg.upper()}"
+                    lab = " ".join(lab.split(" ")).strip()
 
                 self.sp_label.append(lab)
 
@@ -467,7 +474,7 @@ class QueryBox:
 
             elif tab == m_tab:
 
-                # Label; si se selecciona id
+                # Label; si seleccion "id"
                 if col == f"{tab}_id":
                     if not agg:
                         lab = f"{tab} id".upper()
@@ -1009,8 +1016,11 @@ class QueryBox:
         return self
 
     def link(self, *relation):
-        """ Esta función imita **kwargs de add()
+        """ 
+        * Esta función imita **kwargs de add()
         tipo de union + __ + tabla extra = [id referencia, tabla]
+
+        * Recibe; list[tabla1, tabla2, etc...]
         """
 
         # Si no hay datos, salir

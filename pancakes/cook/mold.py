@@ -20,6 +20,8 @@ from ..cook.furnace import insert
 from ..tool.filter_validator import DeleteFilterValidator
 from ..tool.filter_validator import UpdateFilterValidator
 from ..query_validator.query_validator import ValidateSelect
+from ..query_validator.query_validator import ValidateFilter
+from ..query_validator.query_validator import ValidateLink
 
 # Modulos de Python
 from pathlib import Path
@@ -343,8 +345,11 @@ class PanCakesORM:
 
         cls._metadata[cls._table]['fields'] = cls._fields
         cls._metadata[cls._table]['comments'] = cls.comment
+
         columns = [f._name for f in cls._fields]
+        columns.insert(0, f"{cls._table}_id")
         cls._metadata[cls._table]['columns'] = columns
+
         cls._json[cls._table]['schema'] = schema_cache
 
         return
@@ -695,7 +700,6 @@ class PanCakesORM:
                     dicc = data.model_dump()
                     cols = model._metadata[model._table]["columns"]
                     SQL = [dicc.get(col) for col in cols]
-                    SQL.insert(0, None)
                     line = tuple(SQL)
                     kwargs = {model._table: [line]}
                     model.i(**kwargs)
@@ -719,11 +723,19 @@ class PanCakesORM:
             def make_api_query(model):
                 def api_query(
                     s: ValidateSelect,
+                    f: ValidateFilter,
+                    l: ValidateLink,
                     model=model
                 ):
                     select = s.select
+                    filters = f.filters
+                    links = l.links
                     dicc = model.select(
                         *select
+                    ).filter(
+                        **filters
+                    ).link(
+                        *links
                     ).all().to_dict(label=True)
                     return dicc
                 return api_query
@@ -987,3 +999,9 @@ class PanCakesORM:
     @classmethod
     def d(cls, **kwargs):
         return cls.manager().d(**kwargs)
+
+
+# Despues Cargas: Inyectar "Clase Modelo" -> Validadores Pydantic
+ValidateSelect.MODEL = PanCakesORM
+ValidateFilter.MODEL = PanCakesORM
+ValidateLink.MODEL = PanCakesORM
