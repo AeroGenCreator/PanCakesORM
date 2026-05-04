@@ -833,9 +833,8 @@ class QueryBox:
         Agrupar pasando el nombre de la tabla como argumento
         y el nombre de la columna como valor:
 
-        Ejemplo
+        Ej: category="name"
 
-        sale = name
         """
         if not kwargs:
             return self
@@ -869,6 +868,8 @@ class QueryBox:
     def sort(self, **kwargs):
         """
         Equivalente a ORDER BY
+
+        Ej: tabla__columna = "DESC"
         """
         DIRECTION = {'DESC', 'ASC', ''}
 

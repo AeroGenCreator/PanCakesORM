@@ -26,14 +26,11 @@ Metodos Modo Add:
 
 
 # Modulos Python
-from typing import Annotated, Union, Dict, Tuple, Any, ClassVar, List, Optional, Set, Type, TYPE_CHECKING
+from typing import Annotated, Union, Optional, ClassVar, Type, Any
+from typing import Dict, Tuple, List, Set
 
 # Modulos de Terceros
 from pydantic import BaseModel, model_validator, Field
-
-# Mis Modulos (Solo importa, si estamos pasando data al validador)
-if TYPE_CHECKING:
-	from ..cook.mold import PanCakesORM
 
 # --*-- METODOS MODO BASICO --*--
 
@@ -81,7 +78,7 @@ class ValidateSelect(BaseModel):
 
 			if "__" not in string:
 				raise ValueError(
-					f"Valid separator not found "
+					f"Valid separator '__' not found "
 					f"in passed string: {string}"
 				)
 
@@ -207,7 +204,7 @@ class ValidateFilter(BaseModel):
 			# Validar llaves:
 			if "__" not in key:
 				raise ValueError(
-					f"Valid separator not found "
+					f"Valid separator '__' not found "
 					f"in passed string: {key}"
 				)
 
@@ -310,3 +307,120 @@ class ValidateLink(BaseModel):
 				)
 
 		return data
+
+
+class ValidateGroupBy(BaseModel):
+
+	MODEL: ClassVar[Optional[Type]] = None
+
+	groups: Optional[dict[str, str]] = {}
+
+	@model_validator(mode="before")
+	@classmethod
+	def _validate_group_by_(cls, data: dict):
+
+		# No GROUP BY; retornar
+		if not data:
+			return data
+
+		# Tablas | Columnas -> Base de datos
+		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+		DB_COLUMNS = []
+		for t in DB_TABLES:
+			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+
+		# Iterar kwargs
+		kwargs = data.get("groups", {})
+
+		for tab, col in kwargs.items():
+
+			# Validar Tabla | Columna
+			if tab not in DB_TABLES:
+					raise ValueError(
+						f"Passed table '{tab}' "
+						f"does not exist in DATABASE "
+						f"Valid tables are {DB_TABLES}"
+					)
+			if col not in DB_COLUMNS:
+				raise ValueError(
+					f"Passed column name '{col}' "
+					f"does not exist in DATABASE "
+					f"Valid columns are {DB_COLUMNS}"
+				)
+
+		return data
+
+
+class ValidateOrderBy(BaseModel):
+
+	MODEL: ClassVar[Optional[Type]] = None
+
+	DIRECTION: ClassVar[set[str]] = {"DESC", "ASC"}
+
+	orders: Optional[Dict[str, str]] = {}
+
+	@model_validator(mode="before")
+	@classmethod
+	def _validate_order_by_(cls, data: dict):
+
+		# No ORDER BY; retornar
+		if not data:
+			return data
+
+		# Tablas | Columnas -> Base de datos
+		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+		DB_COLUMNS = []
+		for t in DB_TABLES:
+			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+
+		# Iterar kwargs:
+		kwargs = data.get("orders", {})
+
+		for key, value in kwargs.items():
+
+			if "__" not in key:
+				raise ValueError(
+					f"Valid separator '__' not found "
+					f"in passed argument: {key}"
+				)
+
+			parts = key.split("__")
+
+			if len(parts) != 2:
+				raise ValueError(
+					f"ORDER BY statement must contain "
+					f"the following syntax: "
+					f"table__column = 'DESC' or 'ASC' "
+					f"split by '__'. "
+					f"Passed statement: {key}"
+				)
+
+			tab = parts[0]
+			col = parts[1]
+			direction = value
+
+			# Validar: Tabla | Columna | Direccion
+			if tab not in DB_TABLES:
+					raise ValueError(
+						f"Passed table '{tab}' "
+						f"does not exist in DATABASE "
+						f"Valid tables are {DB_TABLES}"
+					)
+			if col not in DB_COLUMNS:
+				raise ValueError(
+					f"Passed column name '{col}' "
+					f"does not exist in DATABASE "
+					f"Valid columns are {DB_COLUMNS}"
+				)
+			if direction not in cls.DIRECTION:
+				raise ValueError(
+					f"Invalid passed direction {direction}. "
+					f"Valid directions are: {cls.DIRECTION}. "
+				)
+
+		return data
+
+
+class ValidateLimitOffset(BaseModel):
+
+	num: Optional[int] = None

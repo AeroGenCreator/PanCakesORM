@@ -22,6 +22,9 @@ from ..tool.filter_validator import UpdateFilterValidator
 from ..query_validator.query_validator import ValidateSelect
 from ..query_validator.query_validator import ValidateFilter
 from ..query_validator.query_validator import ValidateLink
+from ..query_validator.query_validator import ValidateGroupBy
+from ..query_validator.query_validator import ValidateOrderBy
+from ..query_validator.query_validator import ValidateLimitOffset
 
 # Modulos de Python
 from pathlib import Path
@@ -725,17 +728,34 @@ class PanCakesORM:
                     s: ValidateSelect,
                     f: ValidateFilter,
                     l: ValidateLink,
+                    g: ValidateGroupBy,
+                    o: ValidateOrderBy,
+                    limit: ValidateLimitOffset,
+                    offset: ValidateLimitOffset,
                     model=model
                 ):
                     select = s.select
                     filters = f.filters
                     links = l.links
+                    groups = g.groups
+                    orders = o.orders
+                    limits = limit.num
+                    offsets = offset.num
+
                     dicc = model.select(
                         *select
                     ).filter(
                         **filters
                     ).link(
                         *links
+                    ).gp(
+                        **groups
+                    ).sort(
+                        **orders
+                    ).lim(
+                        limit=limits
+                    ).off(
+                        offset=offsets
                     ).all().to_dict(label=True)
                     return dicc
                 return api_query
@@ -747,7 +767,6 @@ class PanCakesORM:
                 make_read_all(m),
                 methods=["GET"]
             )
-
             router.add_api_route(
                 "/",
                 make_create(m),
@@ -1005,3 +1024,5 @@ class PanCakesORM:
 ValidateSelect.MODEL = PanCakesORM
 ValidateFilter.MODEL = PanCakesORM
 ValidateLink.MODEL = PanCakesORM
+ValidateGroupBy.MODEL = PanCakesORM
+ValidateOrderBy.MODEL = PanCakesORM
