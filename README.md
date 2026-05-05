@@ -78,12 +78,12 @@ El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones comp
 ### 🗂️ Jerarquia de Directorios
 
 ```
-            .
+        .
         └── pancakes/
             ├── models/
             │   └── model.py
             ├── sql/
-            │   └── sql_datatype.py
+            │   └── datatype.py
             ├── valid/
             │   ├── query_validator.py
             │   └── filter_validator.py
