@@ -3,32 +3,44 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
+
 """
-Clase Padre Abstracta:
-Define La Logica de Tabla Que Sera Heredada Por Las Clases Hijas (Tablas)
+
+'Modelo Padre' -> PanCakesORM:
+
+Definde herencia de 'modelo' de todas las clases hijas.
+
+Contenido:
+
+1. Carga de variables de entorno. / definir rutas defecto.
+2. Carga de logger.
+3. Clase PanCakesORM.
+4. Inyectar Modelo PanCakesORM -> Modelos Validacion Pydantic.
+
 """
 
 # Modulos Originales PanCakesORM
-from ..datatype import sql_datatype
-from ..tool.function import db_connection, environment
-from ..tool.box import QueryBox
-from ..tool.idu import CoffeeShop
-from ..cook.layer import query
-from ..cook.ingredient import update
-from ..cook.clean import delete
-from ..cook.furnace import insert
-from ..tool.filter_validator import DeleteFilterValidator
-from ..tool.filter_validator import UpdateFilterValidator
-from ..query_validator.query_validator import ValidateSelect
-from ..query_validator.query_validator import ValidateFilter
-from ..query_validator.query_validator import ValidateLink
-from ..query_validator.query_validator import ValidateGroupBy
-from ..query_validator.query_validator import ValidateOrderBy
-from ..query_validator.query_validator import ValidateLimitOffset
+from ..sql import datatype
+from ..abstract.query_box import QueryBox
+from ..abstract.abstract_box import AbstractBox
+from ..valid.filter_validator import DeleteFilterValidator
+from ..valid.filter_validator import UpdateFilterValidator
+from ..valid.query_validator import ValidateSelect
+from ..valid.query_validator import ValidateFilter
+from ..valid.query_validator import ValidateLink
+from ..valid.query_validator import ValidateGroupBy
+from ..valid.query_validator import ValidateOrderBy
+from ..valid.query_validator import ValidateLimitOffset
+from ..tools.functions import db_connection
+from ..tools.functions import environment
+from ..orm.insert import insert
+from ..orm.update import update
+from ..orm.delete import delete
+from ..orm.query import query
 
 # Modulos de Python
-from pathlib import Path
 from typing import Optional, Annotated
+from pathlib import Path
 import warnings
 import logging
 import os
@@ -81,7 +93,7 @@ class PanCakesORM:
     Se almacene con su tabla en -> cls._metadata
 
     5. _get_fields:
-    Valida los "objetos" de tipo "sql_datatype". Se genern los
+    Valida los "objetos" de tipo "datatype". Se genern los
     nombre de columna. Se asignan a su propio objeto. Se guardan los
     objetos como una lista en el atributo de clase: "_fields".
     Se guardan los comments de frontend en cls.comment.
@@ -300,12 +312,12 @@ class PanCakesORM:
 
         # Tipo de datos validos
         column_type = (
-            sql_datatype.Char,
-            sql_datatype.Int,
-            sql_datatype.Float,
-            sql_datatype.ForeignKey,
-            sql_datatype.Text,
-            sql_datatype.Bool
+            datatype.Char,
+            datatype.Int,
+            datatype.Float,
+            datatype.ForeignKey,
+            datatype.Text,
+            datatype.Bool
             )
 
         # Esquema; field_id 'modelo' | cache esquema 'modelo'
@@ -1003,7 +1015,7 @@ class PanCakesORM:
     # Insert declarativo
     @classmethod
     def manager(cls):
-        return CoffeeShop(model=cls)
+        return AbstractBox(model=cls)
 
     @classmethod  # Inyeccion Segura
     def i(cls, **kwargs):

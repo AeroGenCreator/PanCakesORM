@@ -15,8 +15,8 @@ tiempo real, de lo contrario, no se intenta una sincronizacion
 manteniendo hacia el estado del esquema optimizado.
 """
 
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
 from pathlib import Path
 
 import sqlite3
@@ -34,8 +34,8 @@ class Product(PanCakesORM):
     _db_file = FILE
     _depends = ["category"]
 
-    name = sql_datatype.Char(comment="Product Name")
-    category_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment="Product Name")
+    category_id = datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
         on_del="cascade",
@@ -47,7 +47,7 @@ class Category(PanCakesORM):
     _db_dir = DIR
     _db_file = FILE
 
-    name = sql_datatype.Char(comment="Category Name")
+    name = datatype.Char(comment="Category Name")
 
 class SaleLine(PanCakesORM):
     _table = "sale_line"
@@ -56,45 +56,45 @@ class SaleLine(PanCakesORM):
     _depends = ['product', 'category', 'client', 'sale']
     _group_constraint = ('product_id', 'category_id')
 
-    product_id = sql_datatype.ForeignKey(
+    product_id = datatype.ForeignKey(
         second_table="product",
         column_id="product_id",
         on_del="cascade",
         comment="Sale Line Pro Rel"
     )
-    category_id = sql_datatype.ForeignKey(
+    category_id = datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
         on_del="cascade",
         comment="Sale Line Cat Rel"
     )
-    client_id = sql_datatype.ForeignKey(
+    client_id = datatype.ForeignKey(
         second_table="client",
         column_id="client_id",
         on_del="cascade",
         comment="Sale Line Cli Rel"
     )
-    sale_id = sql_datatype.ForeignKey(
+    sale_id = datatype.ForeignKey(
         second_table="sale",
         column_id="sale_id",
         on_del="cascade",
         comment="Sale Line Sale Rel"
     )
-    quantity = sql_datatype.Float(comment="Quantity")
+    quantity = datatype.Float(comment="Quantity")
 
 class Client(PanCakesORM):
     _table = "client"
     _db_dir = DIR
     _db_file = FILE
 
-    name = sql_datatype.Char(comment="Client Name")
+    name = datatype.Char(comment="Client Name")
 
 class Sale(PanCakesORM):
     _table = "sale"
     _db_dir = DIR
     _db_file = FILE
 
-    name = sql_datatype.Char(comment="Sale Code")
+    name = datatype.Char(comment="Sale Code")
 
 Product.i(product=[(None, "Pan", None)])
 Category.i(category=[(None, "Panaderia")])
@@ -120,7 +120,7 @@ def test_sinchronized_schema():
         _db_file = FILE
         _depends = ["category"]
 
-        name = sql_datatype.Char(comment="Product Name")
+        name = datatype.Char(comment="Product Name")
 
     api = Product2.all().to_dict()
     
@@ -135,31 +135,31 @@ def test_quitar_group_constraint():
         _db_file = FILE
         _depends = ['product', 'category', 'client', 'sale']
 
-        product_id = sql_datatype.ForeignKey(
+        product_id = datatype.ForeignKey(
             second_table="product",
             column_id="product_id",
             on_del="cascade",
             comment="rel1"
         )
-        category_id = sql_datatype.ForeignKey(
+        category_id = datatype.ForeignKey(
             second_table="category",
             column_id="category_id",
             on_del="cascade",
             comment="rel2"
         )
-        client_id = sql_datatype.ForeignKey(
+        client_id = datatype.ForeignKey(
             second_table="client",
             column_id="client_id",
             on_del="cascade",
             comment="rel3"
         )
-        sale_id = sql_datatype.ForeignKey(
+        sale_id = datatype.ForeignKey(
             second_table="sale",
             column_id="sale_id",
             on_del="cascade",
             comment="rel4"
         )
-        quantity = sql_datatype.Float(comment="Quantity")
+        quantity = datatype.Float(comment="Quantity")
 
     SaleLine2.i(sale_line=[(None, 1, 1, None, None, None)])
 

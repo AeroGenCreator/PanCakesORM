@@ -7,10 +7,10 @@
 """ Test Delete -*- PanCakesORM -*- """
 
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
-from pancakes.cook.furnace import insert
-from pancakes.cook.clean import delete
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
+from pancakes.orm.insert import insert
+from pancakes.orm.delete import delete
 
 # Modulos Python
 from pathlib import Path
@@ -30,16 +30,16 @@ class Category(PanCakesORM):
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Categoria', required=False)
+    name = datatype.Char(comment='Categoria', required=False)
 
 class Product(PanCakesORM):
     _table = 'product'
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Producto', required=False)
-    price = sql_datatype.Float(comment='Precio', required=False)
-    category_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment='Producto', required=False)
+    price = datatype.Float(comment='Precio', required=False)
+    category_id = datatype.ForeignKey(
             second_table = 'category',
             column_id = 'category_id',
             comment = 'Categoria'
@@ -50,20 +50,20 @@ class Client(PanCakesORM):
     _db_dir = dir_path
     _db_file = file_path
 
-    name = sql_datatype.Char(comment='Nombre', required=False)
-    surname = sql_datatype.Char(comment='Apellido', required=False)
+    name = datatype.Char(comment='Nombre', required=False)
+    surname = datatype.Char(comment='Apellido', required=False)
 
 class SaleLine(PanCakesORM):
     _table = 'sale_line'
     _db_dir = dir_path
     _db_file = file_path
 
-    client_id = sql_datatype.ForeignKey(
+    client_id = datatype.ForeignKey(
             second_table='client',
             column_id = 'client_id',
             comment="Rel1"
         )
-    product_id = sql_datatype.ForeignKey(
+    product_id = datatype.ForeignKey(
             second_table='product',
             column_id='product_id',
             on_del='cascade',

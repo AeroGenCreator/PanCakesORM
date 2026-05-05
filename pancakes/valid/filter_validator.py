@@ -6,16 +6,13 @@
 
 """
 
-Basado en Pydantic; Construccion de un 'Validacion De Filtro'
--> Valida -> .d(), .u(), select():
-	
-	kwargs: tabla__columna__operador = valor
-	1. Llave del kwargs
-	2. Coherencia con el valor
+Basado en Pydantic; 
+
+Construccion de un 'Validacion De Filtro'
+
+-> Valida -> .d(), .u():
 
 """
-
-# Mis Modulos
 
 # Modulos Python
 from typing import Annotated, Union, Dict, Tuple, Any

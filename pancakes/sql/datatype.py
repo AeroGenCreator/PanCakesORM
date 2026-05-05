@@ -3,8 +3,20 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
+
 """
 Definiendo Todos Los Tipos De Datos SQLite3 A Traves De Clases
+
+Contenido
+
+1. Clase General
+2. Text
+3. Char
+4. Int
+5. Float
+6. Bool
+7. ForeignKey
+
 """
 
 
@@ -362,4 +374,3 @@ class ForeignKey(DataTypeSQL):
                 "column_id": self.column_id
             }
         })
-

@@ -1,13 +1,14 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
 
 """ Test Main Class -*- PanCakesORM -*- """
 
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
 
 # Modulos Python
 from pathlib import Path
@@ -27,7 +28,7 @@ class Category(PanCakesORM):
     _db_dir = dir_
     _db_file = file
 
-    name = sql_datatype.Char(comment='Categoria', required=False)
+    name = datatype.Char(comment='Categoria', required=False)
 
 class Product(PanCakesORM):
     _table = 'product'
@@ -35,9 +36,9 @@ class Product(PanCakesORM):
     _db_file = file
     _depends = ["category"]
 
-    name = sql_datatype.Char(comment='Producto', required=False)
-    price = sql_datatype.Float(comment='Precio', required=False)
-    category_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment='Producto', required=False)
+    price = datatype.Float(comment='Precio', required=False)
+    category_id = datatype.ForeignKey(
             second_table = 'category',
             column_id = 'category_id',
             comment = 'Categoria'
@@ -48,16 +49,16 @@ class Client(PanCakesORM):
     _db_dir = dir_
     _db_file = file
 
-    name = sql_datatype.Char(comment='Nombre', required=False)
-    surname = sql_datatype.Char(comment='Apellido', required=False)
+    name = datatype.Char(comment='Nombre', required=False)
+    surname = datatype.Char(comment='Apellido', required=False)
 
 class Sale(PanCakesORM):
     _table = 'sale'
     _db_dir = dir_
     _db_file = file
 
-    code = sql_datatype.Char(comment='Folio', required=False)
-    date = sql_datatype.Text(comment='Fecha', required=False)
+    code = datatype.Char(comment='Folio', required=False)
+    date = datatype.Text(comment='Fecha', required=False)
 
 class SaleLine(PanCakesORM):
     _table = 'sale_line'
@@ -65,22 +66,22 @@ class SaleLine(PanCakesORM):
     _db_file = file
     _depends = ["client", "sale", "product"]
 
-    client_id = sql_datatype.ForeignKey(
+    client_id = datatype.ForeignKey(
             second_table='client',
             column_id = 'client_id',
             comment="Rel1"
         )
-    sale_id = sql_datatype.ForeignKey(
+    sale_id = datatype.ForeignKey(
             second_table='sale',
             column_id='sale_id',
             comment="Rel2"
         )
-    product_id = sql_datatype.ForeignKey(
+    product_id = datatype.ForeignKey(
             second_table='product',
             column_id='product_id',
             comment="Rel3"
         )
-    amount = sql_datatype.Float(comment='Cantidad', required=False)
+    amount = datatype.Float(comment='Cantidad', required=False)
 
 def test_insert():
     Category.insert(

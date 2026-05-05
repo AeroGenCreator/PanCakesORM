@@ -2,14 +2,16 @@
 .venv/
 
 # CACHE
+pancakes/abstract/__pycache__/
+pancakes/models/__pycache__/
+pancakes/valid/__pycache__/
+pancakes/tools/__pycache__/
+pancakes/sql/__pycache__/
+pancakes/orm/__pycache__/
 pancakes/.pytest_cache/
 pancakes/__pycache__/
-pancakes/cook/__pycache__/
-pancakes/datatype/__pycache__/
-pancakes/tool/__pycache__/
-pancakes/query_validator/__pycache__
-.pytest_cache/
 tests/__pycache__/
+.pytest_cache/
 
 # USELES DIRECTORY
 pancakes/data/

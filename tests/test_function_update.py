@@ -7,10 +7,10 @@
 """ Test Update -*- update -*- """
 # required unique
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
-from pancakes.cook.ingredient import update
-from pancakes.cook.furnace import insert
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
+from pancakes.orm.insert import insert
+from pancakes.orm.update import update
 
 # Modulos Python
 from pathlib import Path
@@ -32,7 +32,7 @@ class Country(PanCakesORM):
     _db_dir = global_dir
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
+    name = datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
 
 class Estudiante(PanCakesORM):
 
@@ -41,11 +41,11 @@ class Estudiante(PanCakesORM):
     _db_dir = global_dir
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
-    age = sql_datatype.Int(comment = 'Age', required = False, unique = False)
-    is_student = sql_datatype.Bool(comment = 'Is Student', required = True)
-    stature = sql_datatype.Int(comment = 'Stature', required = True)
-    country_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
+    age = datatype.Int(comment = 'Age', required = False, unique = False)
+    is_student = datatype.Bool(comment = 'Is Student', required = True)
+    stature = datatype.Int(comment = 'Stature', required = True)
+    country_id = datatype.ForeignKey(
         second_table = 'country',
         column_id = 'country_id',
         comment = 'Country',
@@ -58,8 +58,8 @@ class Curso(PanCakesORM):
     _db_dir = global_dir
     _db_file = global_path
 
-    name = sql_datatype.Char(comment = 'Curso', required = False, unique = False, max_length = 250)
-    date = sql_datatype.Text(comment = 'Date', required = False)
+    name = datatype.Char(comment = 'Curso', required = False, unique = False, max_length = 250)
+    date = datatype.Text(comment = 'Date', required = False)
 
 class CursoEstudiante(PanCakesORM):
     _table = 'curso_estudiante'
@@ -67,19 +67,19 @@ class CursoEstudiante(PanCakesORM):
     _db_dir = global_dir
     _db_file = global_path
 
-    curso_id = sql_datatype.ForeignKey(
+    curso_id = datatype.ForeignKey(
         second_table = 'curso',
         column_id = 'curso_id',
         comment = 'Curso',
         on_del = 'set null',
         on_upd = 'set null')
-    estudiante_id = sql_datatype.ForeignKey(
+    estudiante_id = datatype.ForeignKey(
         second_table = 'estudiante',
         column_id = 'estudiante_id',
         comment = 'Estudiante',
         on_del = 'set null',
         on_upd = 'set null')
-    fecha = sql_datatype.Text(comment = 'Fecha', required = False)
+    fecha = datatype.Text(comment = 'Fecha', required = False)
 
 insert(
     db_path=global_path,

@@ -9,8 +9,8 @@ Declaracion De Clase QueryBox() Queries declarativos a traves
 de **kwargs y encadenamiento de metodes.
 """
 # Modulos Propios
-from ..cook.layer import query
-from ..tool.function import environment
+from ..tools.functions import environment
+from ..orm.query import query
 
 # Modulos Python
 import warnings

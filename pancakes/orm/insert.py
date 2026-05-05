@@ -9,7 +9,9 @@ Este fichero centraliza la funcion insert()
 """
 
 # Modulos Propios
-from ..tool.function import db_connection, clean_string, environment
+from ..tools.functions import db_connection
+from ..tools.functions import clean_string
+from ..tools.functions import environment
 
 # Modulos Python
 from pathlib import Path

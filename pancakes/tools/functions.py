@@ -3,6 +3,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
+
 """
 1. Declaracion De Clase Context Manager: Inyeccion De Dependencia
 (Conexion y Cursor) - Es Utilizada Por La Clase ORM Principal.
@@ -11,16 +12,27 @@
 """
 
 # Modulos Python
-import sqlite3
 from contextlib import contextmanager
+from pathlib import Path
+import sqlite3
 import logging
 import os
-from pathlib import Path
 
 # Modulos de Terceros
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Configuracion de loggings
+log = os.getenv("LOG", "WARNING").upper()
+log_level = getattr(logging, log, logging.WARNING)
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s [%(levelname)s] '
+    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
+    force=True
+)
+logger = logging.getLogger(__name__)
 
 def environment():
     """
@@ -59,18 +71,6 @@ def environment():
     
     return envs
 
-# Configuracion de loggings
-log = os.getenv("LOG", "WARNING").upper()
-log_level = getattr(logging, log, logging.WARNING)
-logging.basicConfig(
-    level=log_level,
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
-    force=True
-)
-logger = logging.getLogger(__name__)
-
-
 @contextmanager
 def db_connection(
     db_path: str,
@@ -107,7 +107,6 @@ def db_connection(
     finally:
         conn.close()
         logger.debug(f"Closed Connection: database {db_path}.")
-
 
 def clean_string(string: str):
     if string == "*":

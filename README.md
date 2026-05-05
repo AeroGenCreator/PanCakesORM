@@ -1,4 +1,5 @@
 # PanCakesORM
+
 ![static](https://img.shields.io/badge/python-python?style=for-the-badge&logo=python&logoColor=white&labelColor=black&color=yellow)
 ![static](https://img.shields.io/badge/sqlite-sqlite?style=for-the-badge&logo=sqlite&logoColor=white&labelColor=black&color=yellow)
 ![static](https://img.shields.io/badge/pytest-pytest?style=for-the-badge&logo=pytest&logoColor=white&labelColor=black&color=yellow)
@@ -9,6 +10,7 @@
 ![image](assets/banner.png)
 
 # PanCakesORM 🥞
+
 **Simplify Your Data Layer**
 
 PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLite3 que prioriza la legibilidad y la velocidad de desarrollo. Si buscas la potencia de SQL con la elegancia de una sintaxis declarativa y moderna, PanCakesORM es para ti.
@@ -42,9 +44,9 @@ User.i(user=[(None, "Omar", 30)])  # <- El primer elemento de tupla es el "id"
 users = User.filter(user__age__gt=18).all().to_dict()
 ```
 
-## [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
+# [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
 
-💪 Fortalezas y Robustez
+### 💪 Fortalezas y Robustez
 
 PanCakesORM no es solo una cara bonita; está construido para ser el motor confiable de tus aplicaciones:
 
@@ -63,7 +65,7 @@ PanCakesORM no es solo una cara bonita; está construido para ser el motor confi
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
     de más de 125 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
-🏗️ Arquitectura de Consultas (QueryBox)
+### 🏗️ Arquitectura de Consultas (QueryBox)
 
 El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones complejas de forma visual y estructurada:
 
@@ -73,7 +75,31 @@ El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones comp
 
     Lógica Booleana: Encadena condiciones con __and y __or de forma nativa en los argumentos.
 
-🛠️ Requisitos
+### 🗂️ Jerarquia de Directorios
+
+```
+            .
+        └── pancakes/
+            ├── models/
+            │   └── model.py
+            ├── sql/
+            │   └── sql_datatype.py
+            ├── valid/
+            │   ├── query_validator.py
+            │   └── filter_validator.py
+            ├── orm/
+            │   ├── insert.py
+            │   ├── update.py
+            │   ├── delete.py
+            │   └── query.py
+            ├── tools/
+            │   └── functions.py
+            └── abstract/
+                ├── query_box.py
+                └── abstract_box.py
+```
+
+### 🛠️ Requisitos
 
     Python 3.12+
 

@@ -7,9 +7,9 @@
 """ Test QueryBox Class -*- PanCakesORM -*- """
 
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
-from pancakes.cook.furnace import insert
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
+from pancakes.orm.insert import insert
 
 # Modulos Python
 from pathlib import Path
@@ -30,7 +30,7 @@ class Country(PanCakesORM):
     _table = 'country'
     _depends = "self"
 
-    name = sql_datatype.Char(comment='Country')
+    name = datatype.Char(comment='Country')
 
 class Client(PanCakesORM):
     _db_dir = dir_
@@ -39,8 +39,8 @@ class Client(PanCakesORM):
     _table = 'client'
     _depends = ["country"]
 
-    name = sql_datatype.Char(comment='Client Name')
-    country_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment='Client Name')
+    country_id = datatype.ForeignKey(
         second_table='country',
         column_id='country_id',
         comment="Country Rel",
@@ -55,8 +55,8 @@ class Sale(PanCakesORM):
     _table = 'sale'
     _depends = ["client"]
 
-    name = sql_datatype.Char(comment='Sale Code')
-    client_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment='Sale Code')
+    client_id = datatype.ForeignKey(
         second_table='client',
         column_id='client_id',
         comment='Cliente Rel',

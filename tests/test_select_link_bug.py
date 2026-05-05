@@ -5,10 +5,9 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 """ -*- Test Self oriented link -*- """
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
 import pandas as pd
-import ipdb
 from pathlib import Path
 
 # GLOBAL PATH para pruebas
@@ -21,7 +20,7 @@ class Category(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 
-	category = sql_datatype.Char(comment="Category", unique=True)
+	category = datatype.Char(comment="Category", unique=True)
 	
 class Product(PanCakesORM):
 	_table = "product"
@@ -30,8 +29,8 @@ class Product(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 	
-	product_name = sql_datatype.Char(comment="Product Name", unique=True)
-	category_id = sql_datatype.ForeignKey(
+	product_name = datatype.Char(comment="Product Name", unique=True)
+	category_id = datatype.ForeignKey(
 		comment="Product Category Rel",
 		second_table="category",
 		column_id="category_id"
@@ -43,7 +42,7 @@ class Recipe(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 	
-	recipe_ingredient = sql_datatype.Char(comment="Recipe Ingredient", unique=True)
+	recipe_ingredient = datatype.Char(comment="Recipe Ingredient", unique=True)
 
 class RecipeProductLine(PanCakesORM):
 	_table = "recipe_product_line"
@@ -52,17 +51,17 @@ class RecipeProductLine(PanCakesORM):
 	_db_dir = dir_
 	_db_file = file_
 	
-	recipe_id = sql_datatype.ForeignKey(
+	recipe_id = datatype.ForeignKey(
 		comment="Recipe Line Rel",
 		second_table="recipe",
 		column_id="recipe_id"
 	)
-	product_id = sql_datatype.ForeignKey(
+	product_id = datatype.ForeignKey(
 		comment="Product Line Rel",
 		second_table="product",
 		column_id="product_id"
 	)
-	category_id = sql_datatype.ForeignKey(
+	category_id = datatype.ForeignKey(
 		comment="Category Line Rel",
 		second_table="category",
 		column_id="category_id"

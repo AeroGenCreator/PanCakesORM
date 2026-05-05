@@ -5,18 +5,16 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 """
-Declaracion De Clase CoffeeShop() Metodos Insert | Delete | Update
+Declaracion De Clase AbstractBox() Metodos Insert | Delete | Update
 facilitados a traves de helpers.
 de **kwargs y encadenamiento de metodes.
 """
 
 # Modulos Propios
-from ..tool.function import environment # Variables de entorno
-from ..cook.furnace import insert  # Funcion insert()
-from ..cook.ingredient import update  # Funcion update()
-from ..cook.clean import delete  # Funcion delete()
-from ..tool.filter_validator import DeleteFilterValidator
-from ..tool.filter_validator import UpdateFilterValidator
+from ..tools.functions import environment # Variables de entorno
+from ..orm.insert import insert  # Funcion insert()
+from ..orm.update import update  # Funcion update()
+from ..orm.delete import delete  # Funcion delete()
 
 # Modulos Python
 import warnings
@@ -55,9 +53,9 @@ OPERATOR = {
 }
 
 
-class CoffeeShop:
+class AbstractBox:
     """
-    CoffeeShop genera una capa de abstraccion para las funciones:
+    AbstractBox genera una capa de abstraccion para las funciones:
 
     - insert()
     - update()
@@ -65,7 +63,7 @@ class CoffeeShop:
 
     Esto permite que las funciones anteriores puedan ser usadas
     de manera declarativa. Esto sobre clases PanCakesORM directamente
-    o generando instancias a traves de CoffeeShop si se desea un uso global.
+    o generando instancias a traves de AbstractBox si se desea un uso global.
     """
 
     def __init__(self, model=None):
@@ -352,14 +350,6 @@ class CoffeeShop:
         notlike: "NOT LIKE"
         }
         """
-
-        # La validacion carga {"filters": kwargs}
-        validated = DeleteFilterValidator.model_validate(
-            {"filters": kwargs}
-        )
-
-        # Objeto.filters = kwargs
-        kwargs = validated.filters
 
         argument = []
 

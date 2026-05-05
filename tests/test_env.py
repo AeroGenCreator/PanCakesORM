@@ -7,23 +7,23 @@
 """ Test QueryBox Class -*- PanCakesORM -*- """
 
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.tool.idu import CoffeeShop
-from pancakes.tool.box import QueryBox
-from pancakes.datatype import sql_datatype
-from pancakes.cook.layer import query
-from pancakes.cook.furnace import insert
-from pancakes.cook.clean import delete
-from pancakes.cook.ingredient import update
+from pancakes.abstract.abstract_box import AbstractBox
+from pancakes.abstract.query_box import QueryBox
+from pancakes.models.model import PanCakesORM
+from pancakes.orm.insert import insert
+from pancakes.orm.update import update
+from pancakes.orm.delete import delete
+from pancakes.orm.query import query
+from pancakes.sql import datatype
 
 # Modulos Desarrollo
 import ipdb
 import pandas as pd
 
 class User(PanCakesORM):
+    name = datatype.Char(comment="User Name")
     _table = "user"
 
-    name = sql_datatype.Char(comment="User Name")
 
 def test_env_query():
     row, col = query(select="*", _from="user")
@@ -64,30 +64,30 @@ def test_env_update():
     assert row == [(1, 'PanCakesORM')]
 
 def test_coffee_insert():
-    CoffeeShop().i(user=[(None, "CoffeeShop")])
+    AbstractBox().i(user=[(None, "AbstractBox")])
     dicc = User.all().to_dict()
 
     assert dicc == [
         {'user__user_id': 1, 'user__name': 'PanCakesORM'}, 
-        {'user__user_id': 2, 'user__name': 'CoffeeShop'}
+        {'user__user_id': 2, 'user__name': 'AbstractBox'}
     ]
 
 def test_coffee_update():
-    CoffeeShop().u(
-        user__name__user_id__same=("PanCakesORM & CoffeeShop & QueryBox", 2))
+    AbstractBox().u(
+        user__name__user_id__same=("PanCakesORM & AbstractBox & QueryBox", 2))
     dicc = User.all().to_dict()
 
     assert dicc == [
         {'user__user_id': 1, 'user__name': 'PanCakesORM'}, 
-        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & AbstractBox & QueryBox'}
     ]
 
 def test_coffee_delete():
-    CoffeeShop().d(user__user_id__same=1)
+    AbstractBox().d(user__user_id__same=1)
     dicc = User.all().to_dict()
 
     assert dicc == [
-        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & AbstractBox & QueryBox'}
     ]
 
 def test_querybox():
@@ -100,5 +100,5 @@ def test_querybox():
     dicc = query_user.select().all(_from="user").to_dict()
     
     assert dicc == [
-        {'user__user_id': 2, 'user__name': 'PanCakesORM & CoffeeShop & QueryBox'}
+        {'user__user_id': 2, 'user__name': 'PanCakesORM & AbstractBox & QueryBox'}
     ]

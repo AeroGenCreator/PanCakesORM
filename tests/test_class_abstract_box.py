@@ -4,13 +4,13 @@
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-""" Test CoffeeShop Class -*- PanCakesORM -*- """
+""" Test AbstractBox Class -*- PanCakesORM -*- """
 
 # Modulos Propios
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
-from pancakes.tool.idu import CoffeeShop
-from pancakes.tool.box import QueryBox
+from pancakes.abstract.abstract_box import AbstractBox
+from pancakes.abstract.query_box import QueryBox
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
 
 # Modulos Python
 from pathlib import Path
@@ -23,7 +23,7 @@ import pytest
 
 # GLOBAL PATH para pruebas
 dir_ = Path.cwd() / 'data' / 'test_env'
-file =  dir_ / 'coffee_shop.sqlite'
+file =  dir_ / 'abs_box_shop.sqlite'
 
 class User(PanCakesORM):
     _db_dir = dir_
@@ -31,7 +31,7 @@ class User(PanCakesORM):
 
     _table = 'user'
 
-    name = sql_datatype.Char(comment='Usuario')
+    name = datatype.Char(comment='Usuario')
 
 class Product(PanCakesORM):
     _db_dir = dir_
@@ -39,7 +39,7 @@ class Product(PanCakesORM):
 
     _table = 'product'
 
-    name = sql_datatype.Char(comment='Producto')
+    name = datatype.Char(comment='Producto')
 
 class UserDos(PanCakesORM):
     _db_dir = dir_
@@ -47,8 +47,8 @@ class UserDos(PanCakesORM):
 
     _table = 'user_dos'
 
-    name = sql_datatype.Char(comment='Usuario')
-    user_id = sql_datatype.ForeignKey(
+    name = datatype.Char(comment='Usuario')
+    user_id = datatype.ForeignKey(
         second_table='user',
         column_id='user_id',
         comment="User User Dos Rel"
@@ -60,15 +60,15 @@ class Category(PanCakesORM):
 
     _table = 'category'
 
-    name = sql_datatype.Char(comment='Unique Category')
+    name = datatype.Char(comment='Unique Category')
 
 # --*-- INSERT --*--
 def test_method_i():
-    coffee = CoffeeShop()
+    abs_box = AbstractBox()
 
     box = QueryBox() # Esta manera de hacer query no funciona (debemos corregirla)
 
-    coffee.i(db_path=file, user=[(None, "Andres")])
+    abs_box.i(db_path=file, user=[(None, "Andres")])
     api = User.all().to_dict()
 
     assert api == [{'user__user_id': 1, 'user__name': 'Andres'}]
@@ -84,8 +84,8 @@ def test_method_i_on_class():
 
 # --*-- UPDATE --*--
 def test_method_u_one_table_all():
-    coffee = CoffeeShop()
-    coffee.u(db_path=file, user__name="Po", update_all=True)
+    abs_box = AbstractBox()
+    abs_box.u(db_path=file, user__name="Po", update_all=True)
     api = User.all().to_dict()
 
     api == [
@@ -94,8 +94,8 @@ def test_method_u_one_table_all():
     ]
 
 def test_method_u_one_table_multiple_rows():
-    coffee = CoffeeShop()
-    coffee.u(db_path=file, user__name__user_id__in=["Andres", [1, 2]])
+    abs_box = AbstractBox()
+    abs_box.u(db_path=file, user__name__user_id__in=["Andres", [1, 2]])
     api = User.all().to_dict()
 
     api == [
@@ -104,8 +104,8 @@ def test_method_u_one_table_multiple_rows():
     ]
 
 def test_method_u_one_table_one_row():
-    coffee = CoffeeShop()
-    coffee.u(db_path=file, user__name__user_id__same=("Malteada", 1))
+    abs_box = AbstractBox()
+    abs_box.u(db_path=file, user__name__user_id__same=("Malteada", 1))
     api = User.all().to_dict()
 
     assert api == [
@@ -115,8 +115,8 @@ def test_method_u_one_table_one_row():
 
 # --*-- INSERT MULTIPLES TABLAS --*--
 def test_method_i_multiple_tables():
-    coffee = CoffeeShop()
-    coffee.i(db_path=file, user=[(None, "Lupita")], product=[(None, "IPad")])
+    abs_box = AbstractBox()
+    abs_box.i(db_path=file, user=[(None, "Lupita")], product=[(None, "IPad")])
 
     res1 = User.all().to_dict()
     res2 = Product.all().to_dict()
@@ -130,8 +130,8 @@ def test_method_i_multiple_tables():
 
 # --*-- UPDATE MULTIPLES TABLAS --*--
 def test_method_u_multiple_tables():
-    coffee = CoffeeShop()
-    coffee.u(
+    abs_box = AbstractBox()
+    abs_box.u(
         db_path=file,
         user__name__user_id__gtsm=("Guadalupe", 3),
         product__name__product_id__same=("Apple Ipad", 1))
@@ -148,17 +148,17 @@ def test_method_u_multiple_tables():
 
 # --*-- DELETE --*--
 def test_method_d_one_table():
-    coffee = CoffeeShop()
+    abs_box = AbstractBox()
     row, col = User.filter(user__name__in=["Andres", "Guadalupe"]).id().all().raw(line_up=True)
     ids = row[0]
-    coffee.d(db_path=file, user__user_id__in=ids)
+    abs_box.d(db_path=file, user__user_id__in=ids)
     api = User.all().to_dict()
 
     assert api == [{'user__user_id': 1, 'user__name': 'Malteada'}]
 
 def test_method_d_multi_table():
-    coffee = CoffeeShop()
-    coffee.d(
+    abs_box = AbstractBox()
+    abs_box.d(
         db_path=file,
         user__user_id__same=1,
         product__product_id__same=1
