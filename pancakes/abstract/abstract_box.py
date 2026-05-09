@@ -311,8 +311,8 @@ class AbstractBox:
         4. Este metodo no borra todas las filas de una tabla. Si se quiere
         limpieza completa usar metodo .delete(delete_all=True)
 
-        user__user_id__same = (Raul, 10)
-        user__user_id__same = (data, valor_de_condicion)
+        user__user_id__same = Raul
+        user__user_id__same = valor_de_condicion
 
         Equivale a:
 

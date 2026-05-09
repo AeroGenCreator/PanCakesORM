@@ -7,3 +7,4 @@ twine
 build
 python-dotenv
 fastapi[standard]
+pydantic

@@ -25,16 +25,28 @@ Obtener PanCakesORM es tan sencillo como un comando. Disponible directamente en 
 pip install pancakes-orm
 ```
 
+**Agrega tus rutas**
+
+En la raiz de proyecto agrega el archivo .env "De esta manera controlas `directorio` base de datos y fichero `Sqlite3` -> Base de Datos."
+
+```
+LOG=INFO
+DB_DIR=data
+DB_FILE=database.sqlite3
+```
+
 **Tu primera tabla en segundos**
 
 ```python
-from pancakes.cook.mold import PanCakesORM
-from pancakes.datatype import sql_datatype
+from pancakes.models.model import PanCakesORM
+from pancakes.sql import datatype
 
-class User(PanCakesORM):
-    _table = 'user'
-    name = sql_datatype.Char(comment="User Name")
-    age = sql_datatype.Integer(comment="User Age")
+class User(PanCakesORM):  # Tu fichero .env carga las rutas
+    _table = "user"
+    _depends = "self"
+    
+    name = datatype.Char(comment="User Name")
+    age = datatype.Integer(comment="User Age")
 
 # ¡Insertar!
 User.i(user=[(None, "Omar", 30)])  # <- El primer elemento de tupla es el "id"
@@ -105,3 +117,6 @@ El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones comp
 
     SQLite3
 
+    fastapi[standard]
+
+    python-dotenv
