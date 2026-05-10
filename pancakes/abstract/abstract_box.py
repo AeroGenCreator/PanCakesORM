@@ -11,7 +11,10 @@ de **kwargs y encadenamiento de metodes.
 """
 
 # Modulos Propios
-from ..tools.functions import environment # Variables de entorno
+from ..valid.filter_validator import DeleteFilterValidator  # Val. Kwargs Del.
+from ..valid.filter_validator import UpdateFilterValidator  # Val. Kwargs Udp.
+from ..tools.functions import environment  # Variables de entorno
+from ..tools.functions import validate_field  # Validar Por Campo "Data"
 from ..orm.insert import insert  # Funcion insert()
 from ..orm.update import update  # Funcion update()
 from ..orm.delete import delete  # Funcion delete()
@@ -90,8 +93,24 @@ class AbstractBox:
         if db_path:
             path = db_path
 
+        # Pydantic Valida -> Inserts
+        VALIDATED_KWARGS = {}
+
+        for TAB, LISTS in kwargs.items():
+            SCH = self.model._metadata[TAB]["validators"]["CreateValidator"]
+            COLS = self.model._metadata[TAB]["columns"]
+            VALIDATED = []
+            for TUPS in LISTS:
+                dicc = dict(zip(COLS, TUPS))
+                data = SCH.model_validate(dicc)
+                val_dicc = data.model_dump()
+                res = tuple([e for i, e in val_dicc.items()])
+                VALIDATED.append(res)
+
+            VALIDATED_KWARGS[TAB] = VALIDATED
+
         argument = []
-        for k, v in kwargs.items():
+        for k, v in VALIDATED_KWARGS.items():
 
             # Validamos que los datos sean listas:
             if not isinstance(v, list):

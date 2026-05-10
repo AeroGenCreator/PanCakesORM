@@ -48,6 +48,7 @@ import os
 
 # Modulos Terceros
 from pydantic import create_model
+from pydantic import TypeAdapter
 from fastapi import APIRouter
 from pydantic import Field
 
@@ -151,8 +152,8 @@ class PanCakesORM:
 		cls._get_fields()
 		cls._sort_dependencies()
 		cls._init_table()
-		cls._pydantic_schema()
-		cls._expose_schemas_()
+		cls._pydantic_validators_()
+		cls._expose_validators_()
 		cls._routers_()
 
 	@classmethod  # Inyeccion Segura | Test Seguro
@@ -509,166 +510,150 @@ class PanCakesORM:
 		logger.info(f"PASSED TABLES: [{list(cls._metadata.keys())}].")
 		logger.info(f"SUCCESSFUL ONES: [{order}].")
 
-	@classmethod  # Tipado Pydantic de Modelos Para FastAPI
-	def _pydantic_schema(cls) -> None:
-		"""
-		Genera los modelos de tipado 'pydatinc'.
-		"""
+	@classmethod
+	def _pydantic_validators_(cls) -> None:
+		
+		# Llaves extensas -> Se usan mas abajo.
+		KEY = "foreign_key"
+		JSON = "json_schema_extra"
 
-		# Iterar nombre de tablas, modelos:
+		# 0. Objetivo -> Validadores
+		CREATE = "CreateValidator"
+		ADAPTER = "AdapterValidator"
+		ANNOTATED = "AnnotatedFields"
+
+		# 1. Acceder a los modelos
 		for table, model in cls._family.items():
-
-			# Si "pydantic": modelo_pydatic ... skip
-			if "pydantic" in cls._metadata[table]:
+			
+			# 2. Skip... Si "validators" existe en mdoelo actual.
+			skip = cls._metadata[table].get("validators", False)
+			if skip:
 				continue
 
-			# 3 modelos por tabla
-			is_create = f"{model.__name__.capitalize()}CreateSchema"
-			is_read = f"{model.__name__.capitalize()}ReadSchema"
-			is_update = f"{model.__name__.capitalize()}UpdateSchema"
+			# 3. Esquema Pydantic de la Tabla
+			schema = cls._json[table]["schema"]
 
-			expected_models = [is_create, is_read, is_update]
+			# 4. Objetivo -> Mapear Annotated[] por campos de modelo.
+			FIELDS = {}
 
-			# Esquema JSON de cada tabla
-			schema = model._json[table]["schema"]
+			cls._metadata[table]["validators"] = {
+				CREATE: None,
+				ADAPTER: {},
+				ANNOTATED: None
+			}
 
-			pydantic_models = {}
+			# 5. Extraer metatada por campo
+			for name, field in schema.items():
 
-			# Iterar posibles modelos
-			for em in expected_models:
+				KWARGS = {}
 
-				fields = {}
+				# Validadores Capa 1
+				f_type = field.get("type", str)
+				f_required = field.get("required", False)
+				f_default = field.get("default", None)
+				f_constraints = field.get("constraints", {})
+				f_metadata = field.get("metadata", {})
 
-				for field, props in schema.items():
+				# Validadores Capa 2
+				f_comment = f_metadata.get("comment", "NO COMMENT")
+				f_unique = f_constraints.get("unique", False)
 
-					# Obtener PK si existe en el campos:
-					PK = props.get("metadata", {}).get("primary_key", False)
+				# Text -> 'No Valida Extra' ... Salto a 'Char'
+				f_max_length = f_constraints.get("max_length", None)
+				f_min_length = f_constraints.get("min_length", None)
 
-					# Si es "Create" y field es Primary Key ... skip
-					if em == is_create and PK:
-						continue
+				# 'Int' y 'Float'
+				f_lt = f_constraints.get("lt", None)
+				f_le = f_constraints.get("le", None)
+				f_gt = f_constraints.get("gt", None)
+				f_ge = f_constraints.get("ge", None)
 
-					# Guardar todas la propiedades en variables
-					py_type = props.get("type", str)
-					py_required = props.get("required", False)
-					py_default = props.get("default", None)
-					py_constraints = props.get("constraints", {})
-					py_metadata = props.get("metadata", {})
-					description = py_metadata.get("comment", "")
 
-					# Llaves largas (Solo estetica)
-					maxl = "max_length"
-					minl = "min_length"
-					jse = "json_schema_extra"
+				# Bool --> 'No valida Extra' ... Salto a 'ForeignKey'
+				f_key = f_metadata.get(KEY, {})
+				if f_key:
+					f_second_table = f_metadata[KEY].get("second_table")
+					f_column_id = f_metadata[KEY].get("column_id")
+				else:
+					f_second_table = None
+					f_column_id = None
 
-					field_kwargs = {}
-					field_kwargs[jse] = {}
+				# 6. Construir 'KWARGS' Pydantic de cada campo
+				KWARGS[JSON] = {}
 
-					# Descripcion Frontend
-					field_kwargs["description"] = description
+				# Capa Profunda -> Extra Metadata "NO PYDANTIC"
+				KWARGS[JSON].update({"unique": f_unique})
+				KWARGS[JSON].update({"second_table": f_second_table})
+				KWARGS[JSON].update({"column_id": f_column_id})
 
-					# Constraints
-					if maxl in py_constraints:
-						field_kwargs[maxl] = py_constraints[maxl]
+				# Capa Superior -> Argumentos Nombrados "SI PYDANTIC"
+				KWARGS.update({"description": f_comment})
+				KWARGS.update({"max_length": f_max_length})
+				KWARGS.update({"min_length": f_min_length})
+				KWARGS.update({"lt": f_lt})
+				KWARGS.update({"le": f_le})
+				KWARGS.update({"gt": f_gt})
+				KWARGS.update({"ge": f_ge})
 
-					if minl in py_constraints:
-						field_kwargs[minl] = py_constraints[minl]
+				# 7. Asegurar | Default | Required | Optional
+				if f_default is not None:
+					TYPE = f_type
+					DEFAULT = f_default
+				elif f_required:
+					TYPE = f_type
+					DEFAULT = ...
+				else:
+					TYPE = Optional[f_type]
+					DEFAULT = None
 
-					if "unique" in py_constraints:
-						field_kwargs[jse].update({"unique": True})
+				# 8. Guardar Campo Pydantic "Anottated"
+				FIELDS[name] = Annotated[TYPE, Field(DEFAULT, **KWARGS)]
 
-					if "foreign_key" in py_metadata:
-						sec_tab = py_metadata[
-						"foreign_key"].get("second_table","")
-						col_id = py_metadata[
-						"foreign_key"].get("column_id","")
-						field_kwargs[jse].update(
-							{"second_table": sec_tab}
-						)
-						field_kwargs[jse].update(
-							{"column_id": col_id}
-						)
+			# 9. Modelo "CREATE"
+			MODEL = create_model(
+				f"{model.__name__.capitalize()}{CREATE}",
+				**FIELDS
+			)
+			cls._metadata[table]["validators"][CREATE] = MODEL
 
-					if "lt" in py_constraints:
-						field_kwargs["lt"] = py_constraints["lt"]
+			# 10. Adapter "UPDATE" | "DELETE" <- Comparten Validador
+			for name, annotated in FIELDS.items():
+				adapter = TypeAdapter(annotated)
+				cls._metadata[table]["validators"][ADAPTER].update(
+					{name: adapter}
+				)
 
-					if "le" in py_constraints:
-						field_kwargs["le"] = py_constraints["le"]
-
-					if "gt" in py_constraints:
-						field_kwargs["gt"] = py_constraints["gt"]
-
-					if "ge" in py_constraints:
-						field_kwargs["ge"] = py_constraints["ge"]
-
-					# --*-- Required | Default --*--
-
-					# Create
-					if em == is_create:
-						if py_default is not None:
-							default_value = py_default
-						elif py_required:
-							default_value = ...
-						else:
-							py_type = Optional[py_type]
-							default_value = py_default
-
-					# Read
-					elif em == is_read:
-						py_type = Optional[py_type]
-						default_value = py_default
-
-					# Update
-					elif em == is_update:
-						py_type = Optional[py_type]
-						default_value = None
-
-					fields[field] = Annotated[
-						py_type, Field(
-							default_value, **field_kwargs
-							)
-						]
-
-				if em == is_create:
-					py_model = create_model(em, **fields)
-					pydantic_models[em] = py_model
-					continue
-
-				if em == is_read:
-					py_model = create_model(em, **fields)
-					pydantic_models[em] = py_model
-					continue
-
-				if em == is_update:
-					py_model = create_model(em, **fields)
-					pydantic_models[em] = py_model
-
-			cls._metadata[table]["pydantic"] = pydantic_models
+			# 11. Respaldo Metadata Por Campos
+			cls._metadata[table]["validators"][ANNOTATED] = FIELDS
 
 		return
 
 	@classmethod
-	def _expose_schemas_(cls) -> None:
-		"""
-		Iteracion de modelos cls._family
+	def _expose_validators_(cls) -> None:
+		# Llaves
+		CREATE = "CreateValidator"
+		ADAPTER = "AdapterValidator"
+		ANNOTATED = "AnnotatedFields"
 
-		Evaluar si los esquemas se han expuesto;
-		De lo contrario se exponen en cls.SCHEMAS
-		"""
+		# Exponers CREATE Y ADTAPERS -> Validators
+		for table, model in cls._family.items():
 
-		for n, m in cls._family.items():
+			# Validar existencia
+			FLAG1 = cls._metadata[table].get("CREATE", False)
+			FLAG2 = cls._metadata[table].get("ADAPTER", False)
+			FLAG3 = cls._metadata[table].get("ANNOTATED", False)
 
-			for sn, sm in m._metadata[n]["pydantic"].items():
+			if FLAG1 and FLAG2 and FLAG3:
+				continue
 
-				if sn in set(cls.SCHEMAS.keys()):
-					msg = (
-						f"'{n}' model's schema {sn} has been already "
-						"exposed... moving in to next model ..."
-					)
-					logger.debug(msg)
-					continue
+			# Exposicion:
+			create = cls._metadata[table]["validators"][CREATE]
+			adapter = cls._metadata[table]["validators"][ADAPTER]
+			annotated = cls._metadata[table]["validators"][ANNOTATED]
 
-				cls.SCHEMAS.update({sn: sm})
+			cls.CREATE = create
+			cls.ADAPTER = adapter
+			cls.ANNOTATED = annotated
 
 		return
 
@@ -696,9 +681,7 @@ class PanCakesORM:
 				continue
 
 			# Cargar esquemas pydantic de validacion
-			sc_create = m.SCHEMAS[f"{m.__name__.capitalize()}CreateSchema"]
-			sc_read = m.SCHEMAS[f"{m.__name__.capitalize()}ReadSchema"]
-			sc_update = m.SCHEMAS[f"{m.__name__.capitalize()}UpdateSchema"]
+			CREATE = m.CREATE
 
 			# Creacion del router en esta iteracion.
 			router = APIRouter(
@@ -713,7 +696,7 @@ class PanCakesORM:
 				return read_all
 
 			def make_create(model):
-				def create(data: sc_create, model=model):
+				def create(data: CREATE, model=model):
 					dicc = data.model_dump()
 					cols = model._metadata[model._table]["columns"]
 					SQL = [dicc.get(col) for col in cols]

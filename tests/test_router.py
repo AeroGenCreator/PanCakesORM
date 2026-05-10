@@ -84,7 +84,6 @@ class Inventory(PanCakesORM):
         on_upd='cascade'
 	)
 
-print(PanCakesORM.SCHEMAS)
 routers = PanCakesORM.ROUTERS
 for r in routers:
 	app.include_router(r)

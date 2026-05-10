@@ -16,7 +16,6 @@ from pathlib import Path
 path_dir = Path.cwd() / "data" / "test_env"
 path_db = path_dir / "pydantic.sqlite"
 
-
 class Category(PanCakesORM):
 	_table = "category"
 	_depends = "self"
@@ -56,14 +55,14 @@ class Inventory(PanCakesORM):
 		comment="Stock Quantity",
         le=100,
         ge=1,
-        default=1,
+        default=10,
         required=True,
 	)
 	product_price = datatype.Float(
 		comment="Product Price",
 		lt=1000,
         gt=1,
-        default=0.1,
+        default=10,
         required=True,
 	)
 	saleable = datatype.Bool(
@@ -76,33 +75,10 @@ class Inventory(PanCakesORM):
         column_id="category_id",
         comment="Prod. Cate. Rel",
         on_del='set null',
-        on_upd='cascade',
-        default= 1
+        on_upd='cascade'
 	)
 
-create_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryCreateSchema"
-	]
-
-read_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryReadSchema"
-	]
-
-update_schema = Inventory._metadata[
-	"inventory"
-	][
-	"pydantic"
-	][
-	"InventoryUpdateSchema"
-	]
+create_schema = Inventory.CREATE
 
 # Pydantic Validation Creation:
 def test_create_schema():
@@ -115,27 +91,23 @@ def test_create_schema():
 	)
 	pass
 
-# Pydantic Validation Read:
-def test_read_schema():
-	read_schema(
-		inventory_id="1",
-		mk_date="2026-29-04",
-		product_name="Simple Shampoo",
-		stock_quantity=20,
-		product_price=10,
-		saleable=True
-	)
-	pass
+print()
+print(Inventory.CREATE)
+print()
+print(Inventory.ADAPTER)
+print()
+print(Inventory.ANNOTATED)
 
-# Pydantic Validation Update:
-def test_update_schema():
-	update_schema(
-		inventory_id="1",
-		mk_date="2026-29-04",
-		product_name="Simple Shampoo",
-		stock_quantity=20,
-		product_price=10,
-		saleable=True
-	)
+print()
+print(Category.CREATE)
+print()
+print(Category.ADAPTER)
+print()
+print(Category.ANNOTATED)
 
-print(Inventory.SCHEMAS)
+def test_i():
+	Inventory.i(inventory=[
+			(None,"2026-28-04","SuperProducto",10,10,True,None),
+			(None,"2026-28-05","SuperProducto2",12,11,True,None)
+		]
+	)

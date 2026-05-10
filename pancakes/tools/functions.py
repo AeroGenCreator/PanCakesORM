@@ -14,6 +14,7 @@
 # Modulos Python
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 import sqlite3
 import logging
 import os
@@ -119,3 +120,14 @@ def clean_string(string: str):
         msg = f'Invalid string passed for cleaning {string}.'
         logger.critical(msg)
         raise ValueError(msg)
+
+def validate_field(model, field, data):
+
+    # Carga Validador Por Campo
+    adapter = model.ADAPTER[field]
+
+    # Valida La data
+    validated = adapter.validate_python(data)
+
+    # Retorna Data Validada
+    return validated

@@ -64,7 +64,7 @@ class Category(PanCakesORM):
 
 # --*-- INSERT --*--
 def test_method_i():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
 
     box = QueryBox() # Esta manera de hacer query no funciona (debemos corregirla)
 
@@ -115,7 +115,7 @@ def test_method_u_one_table_one_row():
 
 # --*-- INSERT MULTIPLES TABLAS --*--
 def test_method_i_multiple_tables():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.i(db_path=file, user=[(None, "Lupita")], product=[(None, "IPad")])
 
     res1 = User.all().to_dict()

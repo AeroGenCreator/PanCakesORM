@@ -64,7 +64,7 @@ def test_env_update():
     assert row == [(1, 'PanCakesORM')]
 
 def test_coffee_insert():
-    AbstractBox().i(user=[(None, "AbstractBox")])
+    AbstractBox(model=PanCakesORM).i(user=[(None, "AbstractBox")])
     dicc = User.all().to_dict()
 
     assert dicc == [
@@ -73,7 +73,7 @@ def test_coffee_insert():
     ]
 
 def test_coffee_update():
-    AbstractBox().u(
+    AbstractBox(model=PanCakesORM).u(
         user__name__user_id__same=("PanCakesORM & AbstractBox & QueryBox", 2))
     dicc = User.all().to_dict()
 
@@ -83,7 +83,7 @@ def test_coffee_update():
     ]
 
 def test_coffee_delete():
-    AbstractBox().d(user__user_id__same=1)
+    AbstractBox(model=PanCakesORM).d(user__user_id__same=1)
     dicc = User.all().to_dict()
 
     assert dicc == [
