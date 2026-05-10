@@ -91,7 +91,7 @@ def test_create_schema():
 	)
 	pass
 
-print()
+"""print()
 print(Inventory.CREATE)
 print()
 print(Inventory.ADAPTER)
@@ -103,11 +103,25 @@ print(Category.CREATE)
 print()
 print(Category.ADAPTER)
 print()
-print(Category.ANNOTATED)
+print(Category.ANNOTATED)"""
 
 def test_i():
-	Inventory.i(inventory=[
-			(None,"2026-28-04","SuperProducto",10,10,True,None),
-			(None,"2026-28-05","SuperProducto2",12,11,True,None)
+	Inventory.i(
+		category=[
+			(None, "Categoria Numero 1")
+		],
+		inventory=[
+			(None,"2026-28-04","SuperProducto",10,10,True, 1),
+			(None,"2026-28-05","SuperProducto2",12,11,True,None),
+			(None,"-miss","SuperProducto3","-miss","-miss","-miss","-miss")
 		]
 	)
+
+	data = Inventory.return_all()
+	assert data == [
+		(1, '2026-28-04', 'SuperProducto', 10, 10.0, 1, 1),
+		(2, '2026-28-05', 'SuperProducto2', 12, 11.0, 1, None),
+		(3, '2026-28-04', 'SuperProducto3', 10, 10.0, 1, None)
+	]
+
+

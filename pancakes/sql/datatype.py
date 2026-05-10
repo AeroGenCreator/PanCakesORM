@@ -337,7 +337,6 @@ class ForeignKey(DataTypeSQL):
         comment: str,
         on_del: str = 'set null',
         on_upd: str = 'cascade',
-        default: int | None = None
     ):
 
         super().__init__(
@@ -349,7 +348,6 @@ class ForeignKey(DataTypeSQL):
         self.column_id = column_id
         self.on_del = on_del.upper() if on_del in self.ACTIONS else 'SET NULL'
         self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE'
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -366,7 +364,7 @@ class ForeignKey(DataTypeSQL):
         super()._pydantic()
         self._schema["type"] = self._python
         self._schema["required"] = False
-        self._schema["default"] = self.default
+        self._schema["default"] = None
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update(
             {"foreign_key": {

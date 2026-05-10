@@ -597,7 +597,7 @@ class PanCakesORM:
 
 				# 7. Asegurar | Default | Required | Optional
 				if f_default is not None:
-					TYPE = f_type
+					TYPE = Optional[f_type]
 					DEFAULT = f_default
 				elif f_required:
 					TYPE = f_type

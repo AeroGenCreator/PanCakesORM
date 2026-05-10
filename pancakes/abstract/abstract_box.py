@@ -99,17 +99,26 @@ class AbstractBox:
         for TAB, LISTS in kwargs.items():
             SCH = self.model._metadata[TAB]["validators"]["CreateValidator"]
             COLS = self.model._metadata[TAB]["columns"]
+
             VALIDATED = []
             for TUPS in LISTS:
                 dicc = dict(zip(COLS, TUPS))
-                data = SCH.model_validate(dicc)
+
+                
+                clean = {}
+                for c, v in dicc.items():
+                    if v != "-miss":
+                        clean.update({c: v})
+                
+                data = SCH.model_validate(clean)
                 val_dicc = data.model_dump()
                 res = tuple([e for i, e in val_dicc.items()])
                 VALIDATED.append(res)
 
             VALIDATED_KWARGS[TAB] = VALIDATED
-
+        
         argument = []
+
         for k, v in VALIDATED_KWARGS.items():
 
             # Validamos que los datos sean listas:
@@ -121,6 +130,7 @@ class AbstractBox:
             argument.append({'table': k, 'data': v})
 
         insert(db_path=path, params=argument)
+        
         return
 
     def u(
