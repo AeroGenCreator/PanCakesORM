@@ -221,11 +221,11 @@ class Float(DataTypeSQL):
     def __init__(
         self,
         comment: str,
-        lt: int | None = None,
-        le: int | None = None,
-        gt: int | None = None,
-        ge: int | None = None,
-        default: int | None = None,
+        lt: float | None = None,
+        le: float | None = None,
+        gt: float | None = None,
+        ge: float | None = None,
+        default: float | None = None,
         required: bool | None = None,
         unique: bool | None = None
     ):
