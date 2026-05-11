@@ -65,8 +65,14 @@ class AbstractBox:
     - delete()
 
     Esto permite que las funciones anteriores puedan ser usadas
-    de manera declarativa. Esto sobre clases PanCakesORM directamente
-    o generando instancias a traves de AbstractBox si se desea un uso global.
+    de manera declarativa.
+
+    Importante:
+    Se puede usar como metodo directamente sobre el modelo:
+    Inventory.i()
+
+    Tambien puede ser instanciado:
+    box = QueryBox(PanCakesORM)
     """
 
     def __init__(self, model=None):
@@ -104,7 +110,6 @@ class AbstractBox:
             for TUPS in LISTS:
                 dicc = dict(zip(COLS, TUPS))
 
-                
                 clean = {}
                 for c, v in dicc.items():
                     if v != "-miss":
@@ -148,7 +153,7 @@ class AbstractBox:
         por indices.
 
         user__name__user_id__same = (Raul, 10)
-        user__name__user_id__same = (data, valor_de_condicion)
+        tabla__col__ccol__operador = (data, valor_de_condicion)
 
         Equivale a:
 
@@ -163,6 +168,9 @@ class AbstractBox:
                 'logic':'',     <- Operador logico
             }]
         }]
+
+        3. Declaracion (Modificar Columna Completa)
+        tabla__columna = Valor
 
         NOTA: Este helper no permite actulizar por multiples condiciones
         (AND, OR) esta pensado para ser usado por ids. Si se necesita una
@@ -186,6 +194,49 @@ class AbstractBox:
         }
         """
 
+        # Hay modelo, no ruta
+        if self.model and db_path is None:
+            path = self.model._db_file
+        # No hay modelo, no ruta
+        if self.model is None and db_path is None:
+            path = DEFAULT_DB_FILE
+        # Hay ruta
+        if db_path:
+            path = db_path
+        
+        # Validacion -> Filtros Declarativos
+        KWARGS = UpdateFilterValidator.model_validate(
+            {"filters": kwargs, "update_all": update_all}
+        )
+        UPDATE_ALL = KWARGS.update_all
+        ARGS = KWARGS.filters
+
+        # Validacion -> Data Ingresada Con Campo Pydatic Declarado
+        VALIDATED_KWARGS = {}
+        for key, val in ARGS.items():
+            PARTS = key.split("__")
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            
+            
+            ADAPTER = self.model._metadata[TAB][
+            "validators"]["AdapterValidator"][COL]
+
+            if len(PARTS) == 4:
+
+                VAL = val[0]
+                VALID = ADAPTER.validate_python(VAL)
+                VALIDATED_KWARGS.update({key: (VALID, val[1])})
+        
+            else:
+                VAL = val
+                VALID = ADAPTER.validate_python(VAL)
+                VALIDATED_KWARGS.update({key: VALID})
+
+        # Asignacion Valores Validados
+        kwargs = VALIDATED_KWARGS
+        update_all = UPDATE_ALL
+        
         # LOGICA
         argument = []
 
@@ -301,16 +352,6 @@ class AbstractBox:
 
                 argument.append(dicc)
 
-        # Hay modelo, no ruta
-        if self.model and db_path is None:
-            path = self.model._db_file
-        # No hay modelo, no ruta
-        if self.model is None and db_path is None:
-            path = DEFAULT_DB_FILE
-        # Hay ruta
-        if db_path:
-            path = db_path
-
         update(
             db_path=path,
             params=argument,
@@ -380,6 +421,16 @@ class AbstractBox:
         }
         """
 
+        # Hay modelo, no ruta
+        if self.model and db_path is None:
+            path = self.model._db_file
+        # No hay modelo, no ruta
+        if self.model is None and db_path is None:
+            path = DEFAULT_DB_FILE
+        # Hay ruta
+        if db_path:
+            path = db_path
+        
         argument = []
 
         for k, v in kwargs.items():
@@ -427,16 +478,6 @@ class AbstractBox:
                 "value": dat
             }]
             argument.append(dicc)
-
-        # Hay modelo, no ruta
-        if self.model and db_path is None:
-            path = self.model._db_file
-        # No hay modelo, no ruta
-        if self.model is None and db_path is None:
-            path = DEFAULT_DB_FILE
-        # Hay ruta
-        if db_path:
-            path = db_path
 
         delete(
             db_path=path,

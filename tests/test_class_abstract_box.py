@@ -84,7 +84,7 @@ def test_method_i_on_class():
 
 # --*-- UPDATE --*--
 def test_method_u_one_table_all():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.u(db_path=file, user__name="Po", update_all=True)
     api = User.all().to_dict()
 
@@ -94,7 +94,7 @@ def test_method_u_one_table_all():
     ]
 
 def test_method_u_one_table_multiple_rows():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.u(db_path=file, user__name__user_id__in=["Andres", [1, 2]])
     api = User.all().to_dict()
 
@@ -104,7 +104,7 @@ def test_method_u_one_table_multiple_rows():
     ]
 
 def test_method_u_one_table_one_row():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.u(db_path=file, user__name__user_id__same=("Malteada", 1))
     api = User.all().to_dict()
 
@@ -130,7 +130,7 @@ def test_method_i_multiple_tables():
 
 # --*-- UPDATE MULTIPLES TABLAS --*--
 def test_method_u_multiple_tables():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.u(
         db_path=file,
         user__name__user_id__gtsm=("Guadalupe", 3),
@@ -148,7 +148,7 @@ def test_method_u_multiple_tables():
 
 # --*-- DELETE --*--
 def test_method_d_one_table():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     row, col = User.filter(user__name__in=["Andres", "Guadalupe"]).id().all().raw(line_up=True)
     ids = row[0]
     abs_box.d(db_path=file, user__user_id__in=ids)
@@ -157,7 +157,7 @@ def test_method_d_one_table():
     assert api == [{'user__user_id': 1, 'user__name': 'Malteada'}]
 
 def test_method_d_multi_table():
-    abs_box = AbstractBox()
+    abs_box = AbstractBox(model=PanCakesORM)
     abs_box.d(
         db_path=file,
         user__user_id__same=1,

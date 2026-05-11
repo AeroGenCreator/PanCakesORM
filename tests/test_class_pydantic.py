@@ -13,6 +13,10 @@ from pancakes.sql import datatype
 # Modulos Python
 from pathlib import Path
 
+# Terceros
+from pydantic import ValidationError
+import pytest
+
 path_dir = Path.cwd() / "data" / "test_env"
 path_db = path_dir / "pydantic.sqlite"
 
@@ -124,4 +128,47 @@ def test_i():
 		(3, '2026-28-04', 'SuperProducto3', 10, 10.0, 1, None)
 	]
 
+def test_u():
+	Inventory.u(
+		inventory__saleable__inventory_id__same=[False, 1],
+		inventory__mk_date__inventory_id__in=["2025-01-01", [2, 3]],
+	)
 
+	data = Inventory.return_all()
+
+	assert data == [
+		(1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
+		(2, '2025-01-01', 'SuperProducto2', 12, 11.0, 1, None),
+		(3, '2025-01-01', 'SuperProducto3', 10, 10.0, 1, None)
+	]
+
+def test_u_type_constraints():
+	wrong_data = {"inventory__product_name__inventory_id__same": ["Un", 1]}
+	with pytest.raises(ValidationError) as excinfo:
+		Inventory.u(**wrong_data)
+
+	info = [{
+		'type': 'string_too_short',
+		'loc': (),
+		'msg': 'String should have at least 10 characters',
+		'input': 'Un',
+		'ctx': {'min_length': 10},
+		'url': 'https://errors.pydantic.dev/2.13/v/string_too_short'
+	}]
+
+	errors = excinfo.value.errors()
+	
+	assert errors == info
+
+def test_u_all():
+	Inventory.u(inventory__saleable=False, update_all=True)
+	data = Inventory.return_all()
+
+	assert data == [
+		(1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
+		(2, '2025-01-01', 'SuperProducto2', 12, 11.0, 0, None),
+		(3, '2025-01-01', 'SuperProducto3', 10, 10.0, 0, None)
+	]
+
+def test_d():
+	pass

@@ -207,22 +207,11 @@ class UpdateFilterValidator(BaseModel):
 	}
 
 	update_all: Annotated[bool, Field(False)]
-	filters: Annotated[
-		Dict[
-			str, Tuple[
-				Union[str, int, float, bool],
-				Union[str, int, float, bool,
-					List[
-						Union[str, int, float]
-					],
-					Tuple[
-						Union[str, int, float]
-					]
-				]
-			]
-		], Field(...)
-	]
-
+	filters: Dict[
+		str, 
+		Union[str, int, float, bool, List[Any], Tuple[Any, ...]]
+	] = Field(...)
+	
 	@model_validator(mode="before")
 	@classmethod
 	def _validate_filter_(
