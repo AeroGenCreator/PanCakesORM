@@ -9,14 +9,12 @@ Este codigo centraliza la funcion de lectura avanzada query()
 """
 
 # Modulos Propios
-from ..tools.functions import db_connection
-from ..tools.functions import clean_string
-from ..tools.functions import environment
+import logging
 
 # Modulos Python
 from pathlib import Path
-import logging
-import os
+
+from ..tools.functions import clean_string, db_connection, environment
 
 envs = environment()
 LOG = envs.get("log", "WARNING")
@@ -460,6 +458,11 @@ def query(
                 logger.critical(msg)
                 raise TypeError(type(o_info))
 
+            if set(o_info.keys()) != O_MIN:
+                msg = f"Invalid Keys: {o_info}."
+                logger.critical(msg)
+                raise KeyError(o_info)
+
             o_tab = clean_string(o_info.get('table', ''))
             o_name = clean_string(o_info.get('name', ''))
             o_order = o_info.get('order', '').upper()
@@ -513,7 +516,7 @@ def query(
 
     # Validamos la ruta del query
     db_path = db_path if db_path else DEFAULT_DB_FILE
-    
+
     if not isinstance(db_path, (str, Path)):
         msg = f"Invalid datatype: {db_path}."
         logger.critical(msg)

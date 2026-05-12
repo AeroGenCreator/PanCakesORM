@@ -9,14 +9,12 @@ Este fichero centraliza la funcion insert()
 """
 
 # Modulos Propios
-from ..tools.functions import db_connection
-from ..tools.functions import clean_string
-from ..tools.functions import environment
+import logging
 
 # Modulos Python
 from pathlib import Path
-import logging
-import os
+
+from ..tools.functions import clean_string, db_connection, environment
 
 envs = environment()
 LOG = envs.get("log", "WARNING")
@@ -87,18 +85,18 @@ def insert(
         i_data = i_info.get('data', '')
 
         if not i_tab:
-            msg = f"Invalid characters for 'table'."
+            msg = "Invalid characters for 'table'."
             logger.critical(msg)
             raise ValueError(i_tab)
 
         if not isinstance(i_data, list):
-            msg = f"For key: 'data', INSERT expects a list of tuples."
+            msg = "For key: 'data', INSERT expects a list of tuples."
             logger.critical(msg)
             raise TypeError(type(i_data))
 
         i_valid = all(isinstance(x, tuple) for x in i_data)
         if not i_valid:
-            msg = f"For key 'data', INSERT expects a list of tuples."
+            msg = "For key 'data', INSERT expects a list of tuples."
             logger.critical(msg)
             raise TypeError(i_data)
 
@@ -111,7 +109,7 @@ def insert(
         data.append(i_data)
 
     if not data:
-        msg = f"'Command' INSERT contains no data."
+        msg = "'Command' INSERT contains no data."
         logger.critical(msg)
         raise ValueError(data)
 

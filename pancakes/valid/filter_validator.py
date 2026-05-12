@@ -19,346 +19,346 @@ Construccion de 'Validacion De Filtro'
 """
 
 # Modulos Python
-from typing import Annotated
-from typing import Union
-from typing import Dict
-from typing import Tuple
-from typing import Any
-from typing import ClassVar
-from typing import Optional
-from typing import Type
-from typing import List
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 
 # Modulos de Terceros
-from pydantic import Field
-from pydantic import BaseModel
-from pydantic import model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class DeleteFilterValidator(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	VALID_OPERATORS: ClassVar[set[str]] = {
-		"same",
-		"lt",
-		"ltsm",
-		"gt",
-		"gtsm",
-		"diff",
-		"in",
-		"notin",
-		"btwn",
-		"is",
-		"isnot",
-		"like",
-		"notlike"
-	}
+    VALID_OPERATORS: ClassVar[set[str]] = {
+        "same",
+        "lt",
+        "ltsm",
+        "gt",
+        "gtsm",
+        "diff",
+        "in",
+        "notin",
+        "btwn",
+        "is",
+        "isnot",
+        "like",
+        "notlike"
+    }
 
-	filters: Annotated[
-		dict[
-			str, Union[
-				str, int, float, bool,
-				Tuple[Union[str, int, float]],
-				List[Union[str, int, float]]
-			]
-		], Field(...)
-	]
+    filters: Annotated[
+        dict[
+            str, Union[
+                str, int, float, bool,
+                Tuple[Union[str, int, float]],
+                List[Union[str, int, float]]
+            ]
+        ], Field(...)
+    ]
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_filter_(cls, params: dict):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_filter_(cls, params: dict):
 
-		# Validar None
-		if not params:
-			raise TypeError(
-				f"{type(params)}. "
-				f"Delete Method .d() does not accept "
-				f"NoneType values."
-			)
+        # Validar None
+        if not params:
+            raise TypeError(
+                f"{type(params)}. "
+                f"Delete Method .d() does not accept "
+                f"NoneType values."
+            )
 
-		# Tablas | Columnas <- Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(
-				cls.MODEL._metadata[t]["columns"]
-			)
+        # Tablas | Columnas <- Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(
+                cls.MODEL._metadata[t]["columns"]
+            )
 
-		filters = params.get("filters", {})
+        filters = params.get("filters", {})
 
-		for k, v in filters.items():
+        for k, v in filters.items():
 
-			# Validar Sintaxis Kwargs
-			if "__" not in k:
-				raise ValueError(
-					f"Separator '__' was not found in {k}"
-				)
+            # Validar Sintaxis Kwargs
+            if "__" not in k:
+                raise ValueError(
+                    f"Separator '__' was not found in {k}"
+                )
 
-			parts = k.split("__")
+            parts = k.split("__")
 
-			# Filtro Delete 3 partes
-			if len(parts) == 3:
+            # Filtro Delete 3 partes
+            if len(parts) == 3:
 
-				tab = parts[0]
-				col = parts[1]
-				ope = parts[2]
+                tab = parts[0]
+                col = parts[1]
+                ope = parts[2]
 
-			else:
-				raise ValueError(
-					f"Invalid length of kwargs. "
-					f"Passed: {parts}"
-				)
+            else:
+                raise ValueError(
+                    f"Invalid length of kwargs. "
+                    f"Passed: {parts}"
+                )
 
-			# Validar Tabla
-			if tab not in DB_TABLES:
-				raise ValueError(
-					f"Passed table '{tab}' does not exist. "
-					f"Valid tables are: {DB_TABLES}"
-				)
+            # Validar Tabla
+            if tab not in DB_TABLES:
+                raise ValueError(
+                    f"Passed table '{tab}' does not exist. "
+                    f"Valid tables are: {DB_TABLES}"
+                )
 
-			# Validar Columna
-			if col not in DB_COLUMNS:
-				raise ValueError(
-					f"Passed column '{col}' does not exist. "
-					f"Valid columns for '{tab}' "
-					f"are: {DB_COLUMNS}."
-				)
+            # Validar Columna
+            if col not in DB_COLUMNS:
+                raise ValueError(
+                    f"Passed column '{col}' does not exist. "
+                    f"Valid columns for '{tab}' "
+                    f"are: {DB_COLUMNS}."
+                )
 
-			if ope in {"in", "notin", "btwn"} and not v:
-				raise ValueError(
-					f"Empty values are not accepted: {v}"
-				)
+            if ope in {"in", "notin", "btwn"} and not v:
+                raise ValueError(
+                    f"Empty values are not accepted: {v}"
+                )
 
-			# Validar Operador
-			if ope not in cls.VALID_OPERATORS:
-				raise ValueError(
-					f"Invalid Operator Passed {ope}. "
-					f"Valid ones are {cls.VALID_OPERATORS}"
-				)
+            # Validar Operador
+            if ope not in cls.VALID_OPERATORS:
+                raise ValueError(
+                    f"Invalid Operator Passed {ope}. "
+                    f"Valid ones are {cls.VALID_OPERATORS}"
+                )
 
-			# Validar Datos Iterables len()
-			if ope in {"in", "notin"}:
-				if not isinstance(v, (list, tuple)):
-					raise TypeError(
-						f"Passed value {v} must be a list "
-						f"or a tuple of values"
-					)
+            # Validar Datos Iterables len()
+            if ope in {"in", "notin"}:
+                if not isinstance(v, (list, tuple)):
+                    raise TypeError(
+                        f"Passed value {v} must be a list "
+                        f"or a tuple of values"
+                    )
 
-			# Validar Datos Iterables len(2)
-			elif ope == "btwn":
-				if not isinstance(v, (list, tuple)):
-					raise TypeError(
-						f"Passed value {v} must be a list "
-						f"or a tuple of values"
-					)
+            # Validar Datos Iterables len(2)
+            elif ope == "btwn":
+                if not isinstance(v, (list, tuple)):
+                    raise TypeError(
+                        f"Passed value {v} must be a list "
+                        f"or a tuple of values"
+                    )
 
-				if len(v) != 2:
-					raise ValueError(
-						f"Invalid length of values {v} passed "
-						f"with operator {ope}."
-						f"It requires only two values"
-					)
+                if len(v) != 2:
+                    raise ValueError(
+                        f"Invalid length of values {v} passed "
+                        f"with operator {ope}."
+                        f"It requires only two values"
+                    )
 
-				for i in v:
-					if not isinstance(i, (int, float)):
-						raise TypeError(
-							f"Operator btwn only accepts numeric "
-							f"values. You passed: {v}"
-						)
+                for i in v:
+                    if not isinstance(i, (int, float)):
+                        raise TypeError(
+                            f"Operator btwn only accepts numeric "
+                            f"values. You passed: {v}"
+                        )
 
-			# Validar Datos No Iterables
-			else:
-				if not isinstance(v, (str, int, float, bool)):
-					raise TypeError(
-						f"Invalid datatype passed to filter. "
-						f"Only operators: 'in', 'notin', 'btwn' "
-						f"accept (list, tuple). "
-						"Datatype dict is an invalid syntax."
-					)
+            # Validar Datos No Iterables
+            else:
+                if not isinstance(v, (str, int, float, bool)):
+                    raise TypeError(
+                        "Invalid datatype passed to filter. "
+                        "Only operators: 'in', 'notin', 'btwn' "
+                        "accept (list, tuple). "
+                        "Datatype dict is an invalid syntax."
+                    )
 
-		return params
+        return params
 
 
 class UpdateFilterValidator(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	TYPES: ClassVar[tuple[any]] = (
-		str,
-		int,
-		float,
-		bool
-	)
-	VALID_OPERATORS: ClassVar[set[str]] = {
-		"same",
-		"lt",
-		"ltsm",
-		"gt",
-		"gtsm",
-		"diff",
-		"in",
-		"notin",
-		"btwn",
-		"is",
-		"isnot",
-		"like",
-		"notlike"
-	}
+    TYPES: ClassVar[tuple[any]] = (
+        str,
+        int,
+        float,
+        bool
+    )
+    VALID_OPERATORS: ClassVar[set[str]] = {
+        "same",
+        "lt",
+        "ltsm",
+        "gt",
+        "gtsm",
+        "diff",
+        "in",
+        "notin",
+        "btwn",
+        "is",
+        "isnot",
+        "like",
+        "notlike"
+    }
 
-	update_all: Annotated[bool, Field(False)]
-	filters: Dict[
-		str, 
-		Union[str, int, float, bool, List[Any], Tuple[Any, ...]]
-	] = Field(...)
-	
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_filter_(
-		cls,
-		params: dict
-	):
+    update_all: Annotated[bool, Field(False)]
+    filters: Dict[
+        str,
+        Union[str, int, float, bool, List[Any], Tuple[Any, ...]]
+    ] = Field(...)
 
-		# Valid None
-		if not params:
-			raise TypeError(
-				f"{type(params)}. "
-				f"Update Method .u() does not accept "
-				f"NoneType values."
-			)
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_filter_(
+        cls,
+        params: dict
+    ):
 
-		# Tablas | Columnas <- Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(
-				cls.MODEL._metadata[t]["columns"]
-			)
+        # Valid None
+        if not params:
+            raise TypeError(
+                f"{type(params)}. "
+                f"Update Method .u() does not accept "
+                f"NoneType values."
+            )
 
-		# Argumentos .u()
-		filters = params.get("filters", {})
-		update_all = params.get("update_all", False)
+        # Tablas | Columnas <- Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(
+                cls.MODEL._metadata[t]["columns"]
+            )
 
-		for k, v in filters.items():
+        # Argumentos .u()
+        filters = params.get("filters", {})
+        update_all = params.get("update_all", False)
 
-			# Validar Sintaxis
-			if "__" not in k:
-				raise ValueError(
-					f"Separator '__' was not found in {k}"
-				)
+        for k, v in filters.items():
 
-			parts = k.split("__")
+            # Validar Sintaxis
+            if "__" not in k:
+                raise ValueError(
+                    f"Separator '__' was not found in {k}"
+                )
 
-			# Validar Update All
-			if len(parts) == 2 and update_all is True:
+            parts = k.split("__")
 
-				tab = parts[0]
-				col = parts[1]
+            # Validar Update All
+            if len(parts) == 2 and update_all is True:
 
-				# Validar Tabla
-				if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' does not exist. "
-						f"Valid tables are: {DB_TABLES}"
-					)
+                tab = parts[0]
+                col = parts[1]
 
-				# Validar Columna
-				if col not in DB_COLUMNS:
-					raise ValueError(
-						f"Passed column '{col}' does not exist. "
-						f"Valid columns for '{tab}' "
-						f"are: {DB_COLUMNS}."
-					)
+                # Validar Tabla
+                if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' does not exist. "
+                        f"Valid tables are: {DB_TABLES}"
+                    )
 
-				continue
+                # Validar Columna
+                if col not in DB_COLUMNS:
+                    raise ValueError(
+                        f"Passed column '{col}' does not exist. "
+                        f"Valid columns for '{tab}' "
+                        f"are: {DB_COLUMNS}."
+                    )
 
-			# Validar Update
-			elif len(parts) == 4 and update_all is False:
+                continue
 
-				tab = parts[0]
-				col = parts[1]
-				ccl = parts[2]
-				ope = parts[3]
+            # Validar Update
+            elif len(parts) == 4 and update_all is False:
 
-				val = v[0]
-				con = v[1]
+                tab = parts[0]
+                col = parts[1]
+                ccl = parts[2]
+                ope = parts[3]
 
-				# Validar Tabla
-				if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' does not exist. "
-						f"Valid tables are: {DB_TABLES}"
-					)
+                val = v[0]
+                con = v[1]
 
-				# Validar Columnas "col" & "ccl"
-				if (
-					col not in DB_COLUMNS or
-					ccl not in DB_COLUMNS
-				):
-					raise ValueError(
-						f"Passed column '{col}' does not exist. "
-						f"Valid columns for '{tab}' "
-						f"are: {DB_COLUMNS}."
-					)
+                # Validar Tabla
+                if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' does not exist. "
+                        f"Valid tables are: {DB_TABLES}"
+                    )
 
-			else:
-				raise ValueError(
-					f"Invalid length of kwargs passed. "
-					f"Valid 2 and 4. Passed {parts}"
-				)
+                # Validar Columnas "col" & "ccl"
+                if (
+                    col not in DB_COLUMNS or
+                    ccl not in DB_COLUMNS
+                ):
+                    raise ValueError(
+                        f"Passed column '{col}' does not exist. "
+                        f"Valid columns for '{tab}' "
+                        f"are: {DB_COLUMNS}."
+                    )
 
-			if ope in {"in", "notin", "btwn"} and not con:
-				raise ValueError(
-					f"Empty values are not accepted: {con}"
-				)
+            else:
+                raise ValueError(
+                    f"Invalid length of kwargs passed. "
+                    f"Valid 2 and 4. Passed {parts}"
+                )
 
-			if ope not in cls.VALID_OPERATORS:
-				raise ValueError(
-					f"Invalid Operator Passed {ope}. "
-					f"Valid ones are {cls.VALID_OPERATORS}"
-				)
+            if ope in {"in", "notin", "btwn"} and not con:
+                raise ValueError(
+                    f"Empty values are not accepted: {con}"
+                )
 
-			if ope in {"in", "notin"}:
-				if not isinstance(con, (list, tuple)):
-					raise TypeError(
-						f"Passed value {con} must be a list "
-						f"or a tuple of values"
-					)
+            if ope not in cls.VALID_OPERATORS:
+                raise ValueError(
+                    f"Invalid Operator Passed {ope}. "
+                    f"Valid ones are {cls.VALID_OPERATORS}"
+                )
 
-			elif ope == "btwn":
-				if not isinstance(con, (list, tuple)):
-					raise TypeError(
-						f"Passed value {con} must be a list "
-						f"or a tuple of values"
-					)
+            if ope in {"in", "notin"}:
+                if not isinstance(con, (list, tuple)):
+                    raise TypeError(
+                        f"Passed value {con} must be a list "
+                        f"or a tuple of values"
+                    )
 
-				if len(con) != 2:
-					raise ValueError(
-						f"Invalid length of values {con} passed "
-						f"with operator {ope}."
-						f"It requires only two values"
-					)
+            elif ope == "btwn":
+                if not isinstance(con, (list, tuple)):
+                    raise TypeError(
+                        f"Passed value {con} must be a list "
+                        f"or a tuple of values"
+                    )
 
-				for i in con:
-					if not isinstance(i, (int, float)):
-						raise TypeError(
-							f"Operator btwn only accepts numeric "
-							f"values. You passed: {con}"
-						)
+                if len(con) != 2:
+                    raise ValueError(
+                        f"Invalid length of values {con} passed "
+                        f"with operator {ope}."
+                        f"It requires only two values"
+                    )
 
-			else:
-				if not isinstance(con, cls.TYPES):
-					raise TypeError(
-						f"Invalid datatype passed to filter. "
-						f"Only operators: 'in', 'notin', 'btwn' "
-						f"accept (list, tuple). "
-						"Datatype dict is an invalid syntax."
-					)
+                for i in con:
+                    if not isinstance(i, (int, float)):
+                        raise TypeError(
+                            f"Operator btwn only accepts numeric "
+                            f"values. You passed: {con}"
+                        )
 
-			if not isinstance(val, cls.TYPES):
-				raise ValueError(
-					"Invalid datatype passed to be updated. "
-					f"Valid datatypes: {cls.TYPES}"
-				)
+            else:
+                if not isinstance(con, cls.TYPES):
+                    raise TypeError(
+                        "Invalid datatype passed to filter. "
+                        "Only operators: 'in', 'notin', 'btwn' "
+                        "accept (list, tuple). "
+                        "Datatype dict is an invalid syntax."
+                    )
 
-		return params
+            if not isinstance(val, cls.TYPES):
+                raise ValueError(
+                    "Invalid datatype passed to be updated. "
+                    f"Valid datatypes: {cls.TYPES}"
+                )
+
+        return params

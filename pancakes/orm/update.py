@@ -9,14 +9,12 @@ Este fichero centraliza la funcion update()
 """
 
 # Modulos Propios
-from ..tools.functions import db_connection
-from ..tools.functions import clean_string
-from ..tools.functions import environment
+import logging
 
 # Modulos Python
 from pathlib import Path
-import logging
-import os
+
+from ..tools.functions import clean_string, db_connection, environment
 
 envs = environment()
 LOG = envs.get("log", "WARNING")
@@ -208,7 +206,7 @@ def update(
             str_cons = " ".join(s_condition)
             for log in LOGICS:
                 if log and str_cons.endswith(log):
-                    str_cons = str_cons.rsplit(logic, 1)[0].strip()
+                    str_cons = str_cons.rsplit(log, 1)[0].strip()
 
             line = (
                 f"UPDATE [{s_tab}] "

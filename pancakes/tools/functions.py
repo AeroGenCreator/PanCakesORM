@@ -12,12 +12,11 @@
 """
 
 # Modulos Python
-from contextlib import contextmanager
-from pathlib import Path
-from typing import Any
-import sqlite3
 import logging
 import os
+import sqlite3
+from contextlib import contextmanager
+from pathlib import Path
 
 # Modulos de Terceros
 from dotenv import load_dotenv
@@ -42,7 +41,7 @@ def environment():
     -> DB_DIR
     -> DB_FILE
     """
-    
+
     log_valid = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
     dot_valid = {".sqlite", ".sqlite3", ".db"}
 
@@ -69,7 +68,7 @@ def environment():
         )
 
     envs = dict([("log", log), ("dir", dir_path), ("db", db_file)])
-    
+
     return envs
 
 @contextmanager

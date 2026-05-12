@@ -11,18 +11,17 @@ de **kwargs y encadenamiento de metodes.
 """
 
 # Modulos Propios
-from ..valid.filter_validator import DeleteFilterValidator  # Val. Kwargs Del.
-from ..valid.filter_validator import UpdateFilterValidator  # Val. Kwargs Udp.
-from ..tools.functions import environment  # Variables de entorno
-from ..tools.functions import validate_field  # Validar Por Campo "Data"
+# Modulos Python
+import logging
+
+from ..orm.delete import delete  # Funcion delete()
 from ..orm.insert import insert  # Funcion insert()
 from ..orm.update import update  # Funcion update()
-from ..orm.delete import delete  # Funcion delete()
-
-# Modulos Python
-import warnings
-import logging
-import os
+from ..tools.functions import environment  # Variables de entorno
+from ..valid.filter_validator import (
+    DeleteFilterValidator,  # Val. Kwargs Del.
+    UpdateFilterValidator,  # Val. Kwargs Udp.
+)
 
 # .envs; log, dir, db
 envs = environment()
@@ -33,9 +32,9 @@ DEFAULT_DB_FILE = envs.get("db")
 log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
-    force=True
+    format="%(asctime)s [%(levelname)s] "
+    "%(name)s.%(funcName)s:%(lineno)d - %(message)s",
+    force=True,
 )
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ OPERATOR = {
     "is": "IS",
     "isnot": "IS NOT",
     "like": "LIKE",
-    "notlike": "NOT LIKE"
+    "notlike": "NOT LIKE",
 }
 
 
@@ -114,38 +113,32 @@ class AbstractBox:
                 for c, v in dicc.items():
                     if v != "-miss":
                         clean.update({c: v})
-                
+
                 data = SCH.model_validate(clean)
                 val_dicc = data.model_dump()
                 res = tuple([e for i, e in val_dicc.items()])
                 VALIDATED.append(res)
 
             VALIDATED_KWARGS[TAB] = VALIDATED
-        
+
         argument = []
 
         for k, v in VALIDATED_KWARGS.items():
-
             # Validamos que los datos sean listas:
             if not isinstance(v, list):
-                msg = (f"Invalid datatype passed to method .i()")
+                msg = "Invalid datatype passed to method .i()"
                 logger.critical(msg)
                 raise TypeError(type(v))
 
-            argument.append({'table': k, 'data': v})
+            argument.append({"table": k, "data": v})
 
         insert(db_path=path, params=argument)
-        
+
         return
 
-    def u(
-        self,
-        update_all: bool = False,
-        db_path=None,
-        **kwargs
-    ) -> None:
+    def u(self, update_all: bool = False, db_path=None, **kwargs) -> None:
         """
-        1. La actualizacion de datos en una tabla se da a traves de un
+        1. La actualizacion de datos de una tabla se da a traves de un
         diccionario en la funcion update(). Para poder usar este metodo
         declarativo se convierten las llaves del diccionario en variables:
 
@@ -155,7 +148,10 @@ class AbstractBox:
         user__name__user_id__same = (Raul, 10)
         tabla__col__ccol__operador = (data, valor_de_condicion)
 
-        Equivale a:
+        3. Declaracion (Modificar Columna Completa)
+        tabla__columna = Valor
+
+        EQUIVALENCIAS update():
 
         params = [{
             'table':'user',     <- Tabla
@@ -169,8 +165,10 @@ class AbstractBox:
             }]
         }]
 
-        3. Declaracion (Modificar Columna Completa)
-        tabla__columna = Valor
+        update_all = True
+        params = [
+            {"table": "user", "name": "name", "data": Omar}
+        ]
 
         NOTA: Este helper no permite actulizar por multiples condiciones
         (AND, OR) esta pensado para ser usado por ids. Si se necesita una
@@ -197,13 +195,13 @@ class AbstractBox:
         # Hay modelo, no ruta
         if self.model and db_path is None:
             path = self.model._db_file
-        # No hay modelo, no ruta
+        # No Modelo, No Ruta -> TIP (Siempre pasar PanCakesORM) Al instanciar.
         if self.model is None and db_path is None:
             path = DEFAULT_DB_FILE
         # Hay ruta
         if db_path:
             path = db_path
-        
+
         # Validacion -> Filtros Declarativos
         KWARGS = UpdateFilterValidator.model_validate(
             {"filters": kwargs, "update_all": update_all}
@@ -217,17 +215,16 @@ class AbstractBox:
             PARTS = key.split("__")
             TAB = PARTS[0]
             COL = PARTS[1]
-            
-            
-            ADAPTER = self.model._metadata[TAB][
-            "validators"]["AdapterValidator"][COL]
+
+            ADAPTER = self.model._metadata[TAB]["validators"][
+                "AdapterValidator"
+            ][COL]
 
             if len(PARTS) == 4:
-
                 VAL = val[0]
                 VALID = ADAPTER.validate_python(VAL)
                 VALIDATED_KWARGS.update({key: (VALID, val[1])})
-        
+
             else:
                 VAL = val
                 VALID = ADAPTER.validate_python(VAL)
@@ -236,18 +233,17 @@ class AbstractBox:
         # Asignacion Valores Validados
         kwargs = VALIDATED_KWARGS
         update_all = UPDATE_ALL
-        
+
         # LOGICA
         argument = []
 
         if not update_all:
-
             for k, v in kwargs.items():
                 dicc = {}
 
                 # Validar que el argumento sea una tupla | lista:
                 if not isinstance(v, (tuple, list)):
-                    msg = ("Invalid datatype - argument in method .u().")
+                    msg = "Invalid datatype - argument in method .u()."
                     logger.critical(msg)
                     raise TypeError(type(v))
 
@@ -273,7 +269,6 @@ class AbstractBox:
                 line = k.split("__")
 
                 if len(line) == 4:
-
                     tab = line[0]
                     col = line[1]
                     con = line[2]
@@ -287,15 +282,11 @@ class AbstractBox:
                         logger.critical(msg)
                         raise KeyError(op)
 
-                    dicc['table'] = tab
-                    dicc['name'] = col
-                    dicc['data'] = dat
-                    dicc['condition'] = [
-                        {
-                            'column': con,
-                            'operator': OPERATOR[op],
-                            'value': val
-                        }
+                    dicc["table"] = tab
+                    dicc["name"] = col
+                    dicc["data"] = dat
+                    dicc["condition"] = [
+                        {"column": con, "operator": OPERATOR[op], "value": val}
                     ]
                     argument.append(dicc)
 
@@ -309,7 +300,6 @@ class AbstractBox:
                     raise ValueError(k)
 
         else:
-
             for k, v in kwargs.items():
                 dicc = {}
 
@@ -346,37 +336,31 @@ class AbstractBox:
                 tab = line[0]
                 col = line[1]
 
-                dicc['table'] = tab
-                dicc['name'] = col
-                dicc['data'] = v
+                dicc["table"] = tab
+                dicc["name"] = col
+                dicc["data"] = v
 
                 argument.append(dicc)
 
-        update(
-            db_path=path,
-            params=argument,
-            update_all=update_all
-        )
+        update(db_path=path, params=argument, update_all=update_all)
 
         return
 
-    def d(
-        self,
-        db_path=None,
-        **kwargs
-    ) -> None:
+    def d(self, db_path=None, **kwargs) -> None:
         """
         1 . La eliminación de datos en una tabla se da a traves de un
-        diccionario en la funcion delete(). Para poder usar este metodo
-        declarativo se convierten las llaves del diccionario en variables:
+        diccionario pasado a la funcion delete(). Para poder usar este metodo
+        declarativo .d() se convierten las llaves del diccionario en variables:
 
         2. Se admite una condicion; la idea es condicionar por indices.
 
         3. Este metodo no permite delete sobre SQLconstraints. Por tanto
         su seguridad de persistencia de datos esta al maximo; Si existen
-        problemas con la eliminacion de datos 1. Revisar que tus tablas
-        con llaves foraneas tengan on_del="cascade" o usar función
-        .delete(force=True) para ignorar las restricciones.
+        problemas con la eliminacion de datos:
+
+            - Revisar que tus tablas con llaves foraneas tengan
+            on_del="cascade" o usar función .delete(force=True)
+            para ignorar las restricciones.
 
         4. Este metodo no borra todas las filas de una tabla. Si se quiere
         limpieza completa usar metodo .delete(delete_all=True)
@@ -430,7 +414,11 @@ class AbstractBox:
         # Hay ruta
         if db_path:
             path = db_path
-        
+
+        # Validar Pydantic & Parsing
+        validated = DeleteFilterValidator.model_validate({"filters": kwargs})
+        kwargs = validated.filters
+
         argument = []
 
         for k, v in kwargs.items():
@@ -464,26 +452,16 @@ class AbstractBox:
 
             # Validar operador
             if opr not in OPERATOR.keys():
-                msg = (
-                    f"Invalid operator {opr}. "
-                    f"Valid ones are: {OPERATOR}."
-                )
+                msg = f"Invalid operator {opr}. Valid ones are: {OPERATOR}."
                 logger.critical(msg)
                 raise KeyError(opr)
 
             dicc["table"] = tab
-            dicc["condition"] = [{
-                "column": col,
-                "operator": OPERATOR[opr],
-                "value": dat
-            }]
+            dicc["condition"] = [
+                {"column": col, "operator": OPERATOR[opr], "value": dat}
+            ]
             argument.append(dicc)
 
-        delete(
-            db_path=path,
-            params=argument,
-            delete_all=False,
-            force=False
-        )
+        delete(db_path=path, params=argument, delete_all=False, force=False)
 
         return

@@ -109,6 +109,13 @@ print(Category.ADAPTER)
 print()
 print(Category.ANNOTATED)"""
 
+"""
+IMP. "-miss" String permitido en cualquier campo:
+Adapter Coloca Valor Defecto.
+Por tanto PanCakesORM
+-> Permite pasar None (Integridad SQL)
+-> Permite valores defecto (Modelos Pydantic)
+"""
 def test_i():
 	Inventory.i(
 		category=[
@@ -171,4 +178,19 @@ def test_u_all():
 	]
 
 def test_d():
-	pass
+	Inventory.d(inventory__inventory_id__same=3)
+	data = Inventory.return_all()
+
+	assert data == [
+		(1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
+		(2, '2025-01-01', 'SuperProducto2', 12, 11.0, 0, None)
+	]
+
+def test_d_iter():
+	Inventory.d(inventory__inventory_id__in=[1,2])
+	data = Inventory.return_all()
+
+	assert data == []
+
+print()
+print(list(PanCakesORM._metadata["inventory"].keys()))

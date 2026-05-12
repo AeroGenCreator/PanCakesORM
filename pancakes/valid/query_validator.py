@@ -8,419 +8,417 @@
 Validación Pydantic de QueryBox()
 
 Metodos Modo Basico:
-	* select()
-	* filter()
-	* link()
-	* gp()
-	* sort()
-	* lim()
-	* off()
+    * select()
+    * filter()
+    * link()
+    * gp()
+    * sort()
+    * lim()
+    * off()
 
 Metodos Modo Ids:
-	* id()
+    * id()
 
 Metodos Modo Add:
-	* add()
+    * add()
 
 """
 
-
 # Modulos Python
-from typing import Annotated, Union, Optional, ClassVar, Type, Any
-from typing import Dict, Tuple, List, Set
+from typing import ClassVar, Dict, List, Optional, Set, Tuple, Type, Union
 
 # Modulos de Terceros
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator
 
 # --*-- METODOS MODO BASICO --*--
 
 
 class ValidateSelect(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	VALID_AGGRETATION: ClassVar[Set[str]] = {
-		"min",
-		"max",
-		"sum",
-		"count",
-		"avg",
-		""
-	}
+    VALID_AGGRETATION: ClassVar[Set[str]] = {
+        "min",
+        "max",
+        "sum",
+        "count",
+        "avg",
+        ""
+    }
 
-	select: Optional[List[str]] = []
+    select: Optional[List[str]] = []
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_select_(cls, data: list):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_select_(cls, data: list):
 
-		if cls.MODEL is None:
-			raise RuntimeError(
-				f"ValidateLink.MODEL must be "
-				f"injected before using this method."
-				f"To achive this is suggested "
-				f"to make injection after all models "
-				f"are loaded in memory."
-			)
+        if cls.MODEL is None:
+            raise RuntimeError(
+                "ValidateLink.MODEL must be "
+                "injected before using this method."
+                "To achive this is suggested "
+                "to make injection after all models "
+                "are loaded in memory."
+            )
 
-		if not data:
-			return data
-		
-		# Tablas | Columnas -> Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+        if not data:
+            return data
 
-		list_strings = data.get("select", [])
+        # Tablas | Columnas -> Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
 
-		for string in list_strings:
+        list_strings = data.get("select", [])
 
-			if "__" not in string:
-				raise ValueError(
-					f"Valid separator '__' not found "
-					f"in passed string: {string}"
-				)
+        for string in list_strings:
 
-			parts = string.split("__")
+            if "__" not in string:
+                raise ValueError(
+                    f"Valid separator '__' not found "
+                    f"in passed string: {string}"
+                )
 
-			if len(parts) == 2:
-				tab = parts[0]
-				col = parts[1]
-				
-				if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' "
-						f"does not exist in DATABASE "
-						f"Valid tables are {DB_TABLES}"
-					)
-				if col not in DB_COLUMNS:
-					raise ValueError(
-						f"Passed column '{col}' "
-						f"does not exist in DATABASE "
-						f"Valid columns are {DB_COLUMNS}"
-					)
+            parts = string.split("__")
 
-			elif len(parts) ==3:
-				tab = parts[0]
-				col = parts[1]
-				agg = parts[2]
-				
-				if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' "
-						f"does not exist in DATABASE "
-						f"Valid tables are {DB_TABLES}"
-					)
-				if col not in DB_COLUMNS:
-					raise ValueError(
-						f"Passed column name '{col}' "
-						f"does not exist in DATABASE "
-						f"Valid columns are {DB_COLUMNS}"
-					)
-				if agg not in cls.VALID_AGGRETATION:
-					raise ValueError(
-						f"Invalid aggregation function "
-						f"passed to selected column "
-						f"'{agg}'. Valid ones are "
-						f"{cls.VALID_AGGRETATION}"
-					)
-				pass
+            if len(parts) == 2:
+                tab = parts[0]
+                col = parts[1]
 
-			else:
-				raise ValueError(
-					f"Invalid length of select declaration. "
-					f"Syntax; table__column__aggregation. "
-					f"Passed string: {string}. "
-					f"Parts {parts}"
-				)
+                if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' "
+                        f"does not exist in DATABASE "
+                        f"Valid tables are {DB_TABLES}"
+                    )
+                if col not in DB_COLUMNS:
+                    raise ValueError(
+                        f"Passed column '{col}' "
+                        f"does not exist in DATABASE "
+                        f"Valid columns are {DB_COLUMNS}"
+                    )
 
-		return data
+            elif len(parts) ==3:
+                tab = parts[0]
+                col = parts[1]
+                agg = parts[2]
+
+                if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' "
+                        f"does not exist in DATABASE "
+                        f"Valid tables are {DB_TABLES}"
+                    )
+                if col not in DB_COLUMNS:
+                    raise ValueError(
+                        f"Passed column name '{col}' "
+                        f"does not exist in DATABASE "
+                        f"Valid columns are {DB_COLUMNS}"
+                    )
+                if agg not in cls.VALID_AGGRETATION:
+                    raise ValueError(
+                        f"Invalid aggregation function "
+                        f"passed to selected column "
+                        f"'{agg}'. Valid ones are "
+                        f"{cls.VALID_AGGRETATION}"
+                    )
+                pass
+
+            else:
+                raise ValueError(
+                    f"Invalid length of select declaration. "
+                    f"Syntax; table__column__aggregation. "
+                    f"Passed string: {string}. "
+                    f"Parts {parts}"
+                )
+
+        return data
 
 
 class ValidateFilter(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	OPERATOR: ClassVar[Set[str]] = {
-			"same",
-			"lt",
-			"ltsm",
-			"gt",
-			"gtsm",
-			"diff",
-			"in",
-			"notin",
-			"btwn",
-			"is",
-			"isnot",
-			"like",
-			"notlike"
-			}
+    OPERATOR: ClassVar[Set[str]] = {
+            "same",
+            "lt",
+            "ltsm",
+            "gt",
+            "gtsm",
+            "diff",
+            "in",
+            "notin",
+            "btwn",
+            "is",
+            "isnot",
+            "like",
+            "notlike"
+            }
 
-	LOGIC: ClassVar[Set[str]] = {"and", "or"}
+    LOGIC: ClassVar[Set[str]] = {"and", "or"}
 
-	VALID_VALUES: ClassVar[
-		Union[str, int, float, bool, List, Tuple]
-	] = (str, int, float, bool, List, Tuple)
+    VALID_VALUES: ClassVar[
+        Union[str, int, float, bool, List, Tuple]
+    ] = (str, int, float, bool, List, Tuple)
 
-	filters: Optional[
-		Dict[
-			str, Union[str, int, float, bool,
-				List[Union[str, int, float, bool]],
-				Tuple[Union[str, int, float, bool]]
-			]
-		]
-	] = {}
+    filters: Optional[
+        Dict[
+            str, Union[str, int, float, bool,
+                List[Union[str, int, float, bool]],
+                Tuple[Union[str, int, float, bool]]
+            ]
+        ]
+    ] = {}
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_filter_(cls, data: dict):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_filter_(cls, data: dict):
 
-		if cls.MODEL is None:
-			raise RuntimeError(
-				f"ValidateLink.MODEL must be "
-				f"injected before using this method."
-				f"To achive this is suggested "
-				f"to make injection after all models "
-				f"are loaded in memory."
-			)
+        if cls.MODEL is None:
+            raise RuntimeError(
+                "ValidateLink.MODEL must be "
+                "injected before using this method."
+                "To achive this is suggested "
+                "to make injection after all models "
+                "are loaded in memory."
+            )
 
-		# Dicc vacio, retornar
-		if not data:
-			return data
+        # Dicc vacio, retornar
+        if not data:
+            return data
 
-		# Tablas | Columnas -> Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+        # Tablas | Columnas -> Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
 
-		kwargs = data.get("filters", {})
+        kwargs = data.get("filters", {})
 
-		# Iterar Kwargs:
-		for key, value in kwargs.items():
+        # Iterar Kwargs:
+        for key, value in kwargs.items():
 
-			# Validar llaves:
-			if "__" not in key:
-				raise ValueError(
-					f"Valid separator '__' not found "
-					f"in passed string: {key}"
-				)
+            # Validar llaves:
+            if "__" not in key:
+                raise ValueError(
+                    f"Valid separator '__' not found "
+                    f"in passed string: {key}"
+                )
 
-			# Separar Kwargs, Validar extension:
-			parts = key.split("__")
+            # Separar Kwargs, Validar extension:
+            parts = key.split("__")
 
-			# Validar 'logic':
-			if len(parts) == 4:
-				tab = parts[0]
-				col = parts[1]
-				ope = parts[2]
-				log = parts[3]
+            # Validar 'logic':
+            if len(parts) == 4:
+                tab = parts[0]
+                col = parts[1]
+                ope = parts[2]
+                log = parts[3]
 
-				if log not in cls.LOGIC:
-					raise ValueError(
-						f"Invalid LOGIC passed; "
-						f"'{log}'. Valid ones are "
-						f"{cls.LOGIC}"
-					)
+                if log not in cls.LOGIC:
+                    raise ValueError(
+                        f"Invalid LOGIC passed; "
+                        f"'{log}'. Valid ones are "
+                        f"{cls.LOGIC}"
+                    )
 
-			elif len(parts) == 3:
-				tab = parts[0]
-				col = parts[1]
-				ope = parts[2]
+            elif len(parts) == 3:
+                tab = parts[0]
+                col = parts[1]
+                ope = parts[2]
 
-			else:
-				raise ValueError(
-					f"Invalid length of filter declaration. "
-					f"Syntax; table__column__operator. "
-					f"or; table__column__operator__logic. "
-					f"Parts {parts}"
-				)
+            else:
+                raise ValueError(
+                    f"Invalid length of filter declaration. "
+                    f"Syntax; table__column__operator. "
+                    f"or; table__column__operator__logic. "
+                    f"Parts {parts}"
+                )
 
-			# Validar Tabla | Columna | Operador
-			if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' "
-						f"does not exist in DATABASE "
-						f"Valid tables are {DB_TABLES}"
-					)
-			if col not in DB_COLUMNS:
-				raise ValueError(
-					f"Passed column name '{col}' "
-					f"does not exist in DATABASE "
-					f"Valid columns are {DB_COLUMNS}"
-				)
-			if ope not in cls.OPERATOR:
-				raise ValueError(
-					f"Invalid OPERATOR passed; "
-					f"'{ope}'. Valid ones are "
-					f"{cls.OPERATOR}"
-				)
+            # Validar Tabla | Columna | Operador
+            if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' "
+                        f"does not exist in DATABASE "
+                        f"Valid tables are {DB_TABLES}"
+                    )
+            if col not in DB_COLUMNS:
+                raise ValueError(
+                    f"Passed column name '{col}' "
+                    f"does not exist in DATABASE "
+                    f"Valid columns are {DB_COLUMNS}"
+                )
+            if ope not in cls.OPERATOR:
+                raise ValueError(
+                    f"Invalid OPERATOR passed; "
+                    f"'{ope}'. Valid ones are "
+                    f"{cls.OPERATOR}"
+                )
 
-			# Valida: Data
-			if not isinstance(value, (cls.VALID_VALUES)):
-				raise TypeError(
-					f"Invalid datatype value; {value} "
-					f"{type(value)} "
-					f"Valid formats are; "
-					f"{cls.VALID_VALUES}"
-				)
+            # Valida: Data
+            if not isinstance(value, (cls.VALID_VALUES)):
+                raise TypeError(
+                    f"Invalid datatype value; {value} "
+                    f"{type(value)} "
+                    f"Valid formats are; "
+                    f"{cls.VALID_VALUES}"
+                )
 
-		return data
+        return data
 
 
 class ValidateLink(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	links: Optional[List[str]] = []
+    links: Optional[List[str]] = []
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_link_(cls ,data: list):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_link_(cls ,data: list):
 
-		if cls.MODEL is None:
-			raise RuntimeError(
-				f"ValidateLink.MODEL must be "
-				f"injected before using this method."
-				f"To achive this is suggested "
-				f"to make injection after all models "
-				f"are loaded in memory."
-			)
+        if cls.MODEL is None:
+            raise RuntimeError(
+                "ValidateLink.MODEL must be "
+                "injected before using this method."
+                "To achive this is suggested "
+                "to make injection after all models "
+                "are loaded in memory."
+            )
 
-		if not data:
-			return data
+        if not data:
+            return data
 
-		# Tablas -> Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        # Tablas -> Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
 
-		link = data.get("links", [])
+        link = data.get("links", [])
 
-		for tab in link:
-			
-			if tab not in DB_TABLES:
-				raise ValueError(
-					f"Passed tables name; {tab} "
-					f"does not exist in DATABASE. "
-					f"Valid tables are {DB_TABLES}"
-				)
+        for tab in link:
 
-		return data
+            if tab not in DB_TABLES:
+                raise ValueError(
+                    f"Passed tables name; {tab} "
+                    f"does not exist in DATABASE. "
+                    f"Valid tables are {DB_TABLES}"
+                )
+
+        return data
 
 
 class ValidateGroupBy(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	groups: Optional[dict[str, str]] = {}
+    groups: Optional[dict[str, str]] = {}
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_group_by_(cls, data: dict):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_group_by_(cls, data: dict):
 
-		# No GROUP BY; retornar
-		if not data:
-			return data
+        # No GROUP BY; retornar
+        if not data:
+            return data
 
-		# Tablas | Columnas -> Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+        # Tablas | Columnas -> Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
 
-		# Iterar kwargs
-		kwargs = data.get("groups", {})
+        # Iterar kwargs
+        kwargs = data.get("groups", {})
 
-		for tab, col in kwargs.items():
+        for tab, col in kwargs.items():
 
-			# Validar Tabla | Columna
-			if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' "
-						f"does not exist in DATABASE "
-						f"Valid tables are {DB_TABLES}"
-					)
-			if col not in DB_COLUMNS:
-				raise ValueError(
-					f"Passed column name '{col}' "
-					f"does not exist in DATABASE "
-					f"Valid columns are {DB_COLUMNS}"
-				)
+            # Validar Tabla | Columna
+            if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' "
+                        f"does not exist in DATABASE "
+                        f"Valid tables are {DB_TABLES}"
+                    )
+            if col not in DB_COLUMNS:
+                raise ValueError(
+                    f"Passed column name '{col}' "
+                    f"does not exist in DATABASE "
+                    f"Valid columns are {DB_COLUMNS}"
+                )
 
-		return data
+        return data
 
 
 class ValidateOrderBy(BaseModel):
 
-	MODEL: ClassVar[Optional[Type]] = None
+    MODEL: ClassVar[Optional[Type]] = None
 
-	DIRECTION: ClassVar[set[str]] = {"DESC", "ASC"}
+    DIRECTION: ClassVar[set[str]] = {"DESC", "ASC"}
 
-	orders: Optional[Dict[str, str]] = {}
+    orders: Optional[Dict[str, str]] = {}
 
-	@model_validator(mode="before")
-	@classmethod
-	def _validate_order_by_(cls, data: dict):
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_order_by_(cls, data: dict):
 
-		# No ORDER BY; retornar
-		if not data:
-			return data
+        # No ORDER BY; retornar
+        if not data:
+            return data
 
-		# Tablas | Columnas -> Base de datos
-		DB_TABLES = [t for t, m in cls.MODEL._family.items()]
-		DB_COLUMNS = []
-		for t in DB_TABLES:
-			DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+        # Tablas | Columnas -> Base de datos
+        DB_TABLES = [t for t, m in cls.MODEL._family.items()]
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
 
-		# Iterar kwargs:
-		kwargs = data.get("orders", {})
+        # Iterar kwargs:
+        kwargs = data.get("orders", {})
 
-		for key, value in kwargs.items():
+        for key, value in kwargs.items():
 
-			if "__" not in key:
-				raise ValueError(
-					f"Valid separator '__' not found "
-					f"in passed argument: {key}"
-				)
+            if "__" not in key:
+                raise ValueError(
+                    f"Valid separator '__' not found "
+                    f"in passed argument: {key}"
+                )
 
-			parts = key.split("__")
+            parts = key.split("__")
 
-			if len(parts) != 2:
-				raise ValueError(
-					f"ORDER BY statement must contain "
-					f"the following syntax: "
-					f"table__column = 'DESC' or 'ASC' "
-					f"split by '__'. "
-					f"Passed statement: {key}"
-				)
+            if len(parts) != 2:
+                raise ValueError(
+                    f"ORDER BY statement must contain "
+                    f"the following syntax: "
+                    f"table__column = 'DESC' or 'ASC' "
+                    f"split by '__'. "
+                    f"Passed statement: {key}"
+                )
 
-			tab = parts[0]
-			col = parts[1]
-			direction = value
+            tab = parts[0]
+            col = parts[1]
+            direction = value
 
-			# Validar: Tabla | Columna | Direccion
-			if tab not in DB_TABLES:
-					raise ValueError(
-						f"Passed table '{tab}' "
-						f"does not exist in DATABASE "
-						f"Valid tables are {DB_TABLES}"
-					)
-			if col not in DB_COLUMNS:
-				raise ValueError(
-					f"Passed column name '{col}' "
-					f"does not exist in DATABASE "
-					f"Valid columns are {DB_COLUMNS}"
-				)
-			if direction not in cls.DIRECTION:
-				raise ValueError(
-					f"Invalid passed direction {direction}. "
-					f"Valid directions are: {cls.DIRECTION}. "
-				)
+            # Validar: Tabla | Columna | Direccion
+            if tab not in DB_TABLES:
+                    raise ValueError(
+                        f"Passed table '{tab}' "
+                        f"does not exist in DATABASE "
+                        f"Valid tables are {DB_TABLES}"
+                    )
+            if col not in DB_COLUMNS:
+                raise ValueError(
+                    f"Passed column name '{col}' "
+                    f"does not exist in DATABASE "
+                    f"Valid columns are {DB_COLUMNS}"
+                )
+            if direction not in cls.DIRECTION:
+                raise ValueError(
+                    f"Invalid passed direction {direction}. "
+                    f"Valid directions are: {cls.DIRECTION}. "
+                )
 
-		return data
+        return data
 
 
 class ValidateLimitOffset(BaseModel):
 
-	num: Optional[int] = None
+    num: Optional[int] = None

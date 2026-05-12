@@ -9,16 +9,13 @@ Declaracion De Clase QueryBox() Queries declarativos a traves
 de **kwargs y encadenamiento de metodes.
 """
 # Modulos Propios
-from ..tools.functions import environment
-from ..orm.query import query
+import logging
 
 # Modulos Python
 import warnings
-import logging
-import os
 
-# Modulos de Terceros
-from dotenv import load_dotenv
+from ..orm.query import query
+from ..tools.functions import environment
 
 # .envs; log, dir, db
 envs = environment()
@@ -484,7 +481,10 @@ class QueryBox:
                 # Iterar campos; si no selecciona id
                 else:
                     # Obtenemos el comment desde la tabla main
-                    lab = [c.comment for c in self.model._fields if c._name == col]
+                    lab = []
+                    for c in self.model._fields:
+                        if c._name == col:
+                            lab.append(c.comment)
                     lab = f"{"".join(lab)} {agg.upper()}"
                     lab = " ".join(lab.split(" ")).strip()
 
@@ -1017,7 +1017,7 @@ class QueryBox:
         return self
 
     def link(self, *relation):
-        """ 
+        """
         * Esta función imita **kwargs de add()
         tipo de union + __ + tabla extra = [id referencia, tabla]
 
