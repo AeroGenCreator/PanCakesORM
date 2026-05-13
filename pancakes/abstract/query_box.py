@@ -744,16 +744,16 @@ class QueryBox:
 
         res = []
         keys = kwargs.keys()
+        #import ipdb; ipdb.set_trace()
 
         for k in keys:
+
             if "__" not in k:
                 msg = f"Invalid key {k}."
                 logger.critical(msg)
                 raise KeyError
 
-        for k in keys:
-
-            if not isinstance(kwargs[k], list):
+            if not isinstance(kwargs[k], (tuple, list)):
                 msg = (
                     f"Invalid datatype {kwargs[k]}. "
                     "Arguments must be a list "

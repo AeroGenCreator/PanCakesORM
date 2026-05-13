@@ -4,260 +4,249 @@
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-""" Test Update -*- update -*- """
+"""Test Update -*- update -*-"""
+
 # required unique
 # Modulos Propios
-from pancakes.models.model import PanCakesORM
-from pancakes.sql import datatype
-from pancakes.orm.insert import insert
-from pancakes.orm.update import update
+from datetime import datetime
 
 # Modulos Python
 from pathlib import Path
-from datetime import datetime, date
-import sqlite3
 
-# Modulo Desarrollo
-import ipdb
-import pandas as pd
+from pancakes.models.model import PanCakesORM
+from pancakes.orm.insert import insert
+from pancakes.orm.update import update
+from pancakes.sql import datatype
 
 # RUTA GLOBAL
-global_dir = Path.cwd() / 'data' / 'test_env'
-global_path = global_dir / 'update.sqlite'
+global_dir = Path.cwd() / "data" / "test_env"
+global_path = global_dir / "update.sqlite"
+
 
 # CREACION DE TABLAS DE PRUEBA
 class Country(PanCakesORM):
-    _table = 'country'
+    _table = "country"
     # Forzamos la ruta a nuestra carpeta de test
     _db_dir = global_dir
     _db_file = global_path
 
-    name = datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
+    name = datatype.Char(
+        comment="Name", required=False, unique=False, max_length=250
+    )
+
 
 class Estudiante(PanCakesORM):
-
-    _table = 'estudiante'
+    _table = "estudiante"
     # Forzamos la ruta a nuestra carpeta de test
     _db_dir = global_dir
     _db_file = global_path
 
-    name = datatype.Char(comment = 'Name', required = False, unique = False, max_length = 250)
-    age = datatype.Int(comment = 'Age', required = False, unique = False)
-    is_student = datatype.Bool(comment = 'Is Student', required = True)
-    stature = datatype.Int(comment = 'Stature', required = True)
+    name = datatype.Char(
+        comment="Name", required=False, unique=False, max_length=250
+    )
+    age = datatype.Int(comment="Age", required=False, unique=False)
+    is_student = datatype.Bool(comment="Is Student", required=True)
+    stature = datatype.Int(comment="Stature", required=True)
     country_id = datatype.ForeignKey(
-        second_table = 'country',
-        column_id = 'country_id',
-        comment = 'Country',
-        on_del = 'no action',
-        on_upd = 'no action')
+        second_table="country",
+        column_id="country_id",
+        comment="Country",
+        on_del="no action",
+        on_upd="no action",
+    )
+
 
 class Curso(PanCakesORM):
-    _table = 'curso'
+    _table = "curso"
     # Forzamos la ruta a nuestra carpeta de test
     _db_dir = global_dir
     _db_file = global_path
 
-    name = datatype.Char(comment = 'Curso', required = False, unique = False, max_length = 250)
-    date = datatype.Text(comment = 'Date', required = False)
+    name = datatype.Char(
+        comment="Curso", required=False, unique=False, max_length=250
+    )
+    date = datatype.Text(comment="Date", required=False)
+
 
 class CursoEstudiante(PanCakesORM):
-    _table = 'curso_estudiante'
+    _table = "curso_estudiante"
     # Forzamos la ruta a nuestra carpeta de test
     _db_dir = global_dir
     _db_file = global_path
 
     curso_id = datatype.ForeignKey(
-        second_table = 'curso',
-        column_id = 'curso_id',
-        comment = 'Curso',
-        on_del = 'set null',
-        on_upd = 'set null')
+        second_table="curso",
+        column_id="curso_id",
+        comment="Curso",
+        on_del="set null",
+        on_upd="set null",
+    )
     estudiante_id = datatype.ForeignKey(
-        second_table = 'estudiante',
-        column_id = 'estudiante_id',
-        comment = 'Estudiante',
-        on_del = 'set null',
-        on_upd = 'set null')
-    fecha = datatype.Text(comment = 'Fecha', required = False)
+        second_table="estudiante",
+        column_id="estudiante_id",
+        comment="Estudiante",
+        on_del="set null",
+        on_upd="set null",
+    )
+    fecha = datatype.Text(comment="Fecha", required=False)
+
 
 insert(
     db_path=global_path,
     params=[
         {
-        'table':'country',
-        'data':[
-                (None, 'Mexico'),
-                (None, 'Brasil'),
-                (None, 'China')
-            ]
+            "table": "country",
+            "data": [(None, "Mexico"), (None, "Brasil"), (None, "China")],
         },
         {
-        'table':'estudiante',
-        'data':[
-                (None, 'Chanchito', 5, True, 7, 1),
-                (None, 'Feliz', 10, False, 7, 1),
-                (None, 'Andres', 30, False, 7, 2),
-                (None, 'Polar', 6, True, 4, 2),
-                (None, 'Malteada', 8, False, 2, 1)
-            ]
+            "table": "estudiante",
+            "data": [
+                (None, "Chanchito", 5, True, 7, 1),
+                (None, "Feliz", 10, False, 7, 1),
+                (None, "Andres", 30, False, 7, 2),
+                (None, "Polar", 6, True, 4, 2),
+                (None, "Malteada", 8, False, 2, 1),
+            ],
         },
         {
-        'table':'curso',
-        'data':[
-                (None, 'Matematicas', datetime(2020,6,22).isoformat()),
-                (None, 'Ciencias', datetime(2021,8,15).isoformat()),
-                (None, 'Quimica', datetime(2020,6,20).isoformat()),
-                (None, 'Literatura', datetime(2010,6,20).isoformat()),
-                (None, 'Cocina', datetime(2003,3,9).isoformat()),
-                (None, 'Fisica', datetime(2008,7,10).isoformat())
-            ]
+            "table": "curso",
+            "data": [
+                (None, "Matematicas", datetime(2020, 6, 22).isoformat()),
+                (None, "Ciencias", datetime(2021, 8, 15).isoformat()),
+                (None, "Quimica", datetime(2020, 6, 20).isoformat()),
+                (None, "Literatura", datetime(2010, 6, 20).isoformat()),
+                (None, "Cocina", datetime(2003, 3, 9).isoformat()),
+                (None, "Fisica", datetime(2008, 7, 10).isoformat()),
+            ],
         },
         {
-        'table':'curso_estudiante',
-        'data':[
-                (None, 1, 1,'2018'),
-                (None, 2, 1,'2019'),
-                (None, 2, 2,'2018'),
-                (None, 4, 1,'2014'),
-                (None, 4, 2,'2015'),
-                (None, 1, 3,'2019')
-            ]
+            "table": "curso_estudiante",
+            "data": [
+                (None, 1, 1, "2018"),
+                (None, 2, 1, "2019"),
+                (None, 2, 2, "2018"),
+                (None, 4, 1, "2014"),
+                (None, 4, 2, "2015"),
+                (None, 1, 3, "2019"),
+            ],
         },
-    ]
+    ],
 )
+
 
 # COMIENZO DE LOS TESTS
 def test_update_all_one_table():
     update(
         db_path=global_path,
-        params=[
-            {
-            'table':'curso',
-            'name':'date',
-            'data':'2026-03-24'
-            }
-        ],
-        update_all=True
+        params=[{"table": "curso", "name": "date", "data": "2026-03-24"}],
+        update_all=True,
     )
 
     res = Curso.return_all()
-    
+
     assert res == [
-        (1, 'Matematicas', '2026-03-24'),
-        (2, 'Ciencias', '2026-03-24'),
-        (3, 'Quimica', '2026-03-24'),
-        (4, 'Literatura', '2026-03-24'),
-        (5, 'Cocina', '2026-03-24'),
-        (6, 'Fisica', '2026-03-24')
+        (1, "Matematicas", "2026-03-24"),
+        (2, "Ciencias", "2026-03-24"),
+        (3, "Quimica", "2026-03-24"),
+        (4, "Literatura", "2026-03-24"),
+        (5, "Cocina", "2026-03-24"),
+        (6, "Fisica", "2026-03-24"),
     ]
+
 
 def test_update_all_multiple_tables():
     update(
         db_path=global_path,
         params=[
-            {
-            'table':'curso',
-            'name':'date',
-            'data': '2011-Ago-14'
-            },
-            {
-            'table':'curso_estudiante',
-            'name':'fecha',
-            'data': '2011'
-            },
+            {"table": "curso", "name": "date", "data": "2011-Ago-14"},
+            {"table": "curso_estudiante", "name": "fecha", "data": "2011"},
         ],
-        update_all=True
+        update_all=True,
     )
 
     res1 = Curso.return_all()
     res2 = CursoEstudiante.return_all()
 
     assert res1 == [
-        (1, 'Matematicas', '2011-Ago-14'),
-        (2, 'Ciencias', '2011-Ago-14'),
-        (3, 'Quimica', '2011-Ago-14'),
-        (4, 'Literatura', '2011-Ago-14'),
-        (5, 'Cocina', '2011-Ago-14'),
-        (6, 'Fisica', '2011-Ago-14')
+        (1, "Matematicas", "2011-Ago-14"),
+        (2, "Ciencias", "2011-Ago-14"),
+        (3, "Quimica", "2011-Ago-14"),
+        (4, "Literatura", "2011-Ago-14"),
+        (5, "Cocina", "2011-Ago-14"),
+        (6, "Fisica", "2011-Ago-14"),
     ]
     assert res2 == [
-        (1, 1, 1, '2011'),
-        (2, 2, 1, '2011'),
-        (3, 2, 2, '2011'),
-        (4, 4, 1, '2011'),
-        (5, 4, 2, '2011'),
-        (6, 1, 3, '2011')
+        (1, 1, 1, "2011"),
+        (2, 2, 1, "2011"),
+        (3, 2, 2, "2011"),
+        (4, 4, 1, "2011"),
+        (5, 4, 2, "2011"),
+        (6, 1, 3, "2011"),
     ]
+
 
 def test_update_one_register_one_table():
     update(
         db_path=global_path,
         params=[
             {
-            'table':'country',
-            'name':'name',
-            'data':'Canada',
-            'condition':[
+                "table": "country",
+                "name": "name",
+                "data": "Canada",
+                "condition": [
                     {
-                    'column':'name',
-                    'operator':'like',
-                    'value':'%hina',
+                        "column": "name",
+                        "operator": "like",
+                        "value": "%hina",
                     }
-                ]
+                ],
             }
-        ]
+        ],
     )
 
     res = Country.return_all()
 
-    assert res == [
-        (1, 'Mexico'),
-        (2, 'Brasil'),
-        (3, 'Canada')
-    ]
+    assert res == [(1, "Mexico"), (2, "Brasil"), (3, "Canada")]
+
 
 def test_update_one_register_multiple_tables():
     update(
         db_path=global_path,
         params=[
             {
-            'table':'country',
-            'name':'name',
-            'data':'Espanha',
-            'condition':[
+                "table": "country",
+                "name": "name",
+                "data": "Espanha",
+                "condition": [
                     {
-                    'column':'name',
-                    'operator':'=',
-                    'value':'Canada',
+                        "column": "name",
+                        "operator": "=",
+                        "value": "Canada",
                     }
-                ]
+                ],
             },
             {
-            'table':'estudiante',
-            'name':'name',
-            'data':'Enojado',
-            'condition':[
-                    {
-                    'column':'name',
-                    'operator':'in',
-                    'value':['Feliz']
-                    }
-                ]
-            }
-        ]
+                "table": "estudiante",
+                "name": "name",
+                "data": "Enojado",
+                "condition": [
+                    {"column": "name", "operator": "in", "value": ["Feliz"]}
+                ],
+            },
+        ],
     )
     res1 = Country.return_all()
     res2 = Estudiante.return_all()
-    
-    assert res1 == [(1, 'Mexico'), (2, 'Brasil'), (3, 'Espanha')]
+
+    assert res1 == [(1, "Mexico"), (2, "Brasil"), (3, "Espanha")]
     assert res2 == [
-        (1, 'Chanchito', 5, 1, 7, 1),
-        (2, 'Enojado', 10, 0, 7, 1),
-        (3, 'Andres', 30, 0, 7, 2),
-        (4, 'Polar', 6, 1, 4, 2),
-        (5, 'Malteada', 8, 0, 2, 1)
+        (1, "Chanchito", 5, 1, 7, 1),
+        (2, "Enojado", 10, 0, 7, 1),
+        (3, "Andres", 30, 0, 7, 2),
+        (4, "Polar", 6, 1, 4, 2),
+        (5, "Malteada", 8, 0, 2, 1),
     ]
+
 
 def test_update_one_register_one_table_or():
 
@@ -265,123 +254,125 @@ def test_update_one_register_one_table_or():
         db_path=global_path,
         params=[
             {
-            'table':'estudiante',
-            'name':'age',
-            'data':9,
-            'condition':[
+                "table": "estudiante",
+                "name": "age",
+                "data": 9,
+                "condition": [
                     {
-                    'column':'estudiante_id',
-                    'operator':'=',
-                    'value':10,
-                    'logic':'or'
+                        "column": "estudiante_id",
+                        "operator": "=",
+                        "value": 10,
+                        "logic": "or",
                     },
                     {
-                    'column':'estudiante_id',
-                    'operator':'=',
-                    'value':5,
-                    }
-                ]
+                        "column": "estudiante_id",
+                        "operator": "=",
+                        "value": 5,
+                    },
+                ],
             }
-        ]
+        ],
     )
 
     res = Estudiante.return_all()
 
     assert res == [
-        (1, 'Chanchito', 5, 1, 7, 1),
-        (2, 'Enojado', 10, 0, 7, 1),
-        (3, 'Andres', 30, 0, 7, 2),
-        (4, 'Polar', 6, 1, 4, 2),
-        (5, 'Malteada', 9, 0, 2, 1)
+        (1, "Chanchito", 5, 1, 7, 1),
+        (2, "Enojado", 10, 0, 7, 1),
+        (3, "Andres", 30, 0, 7, 2),
+        (4, "Polar", 6, 1, 4, 2),
+        (5, "Malteada", 9, 0, 2, 1),
     ]
+
 
 def test_update_multiple_registers_one_table_and():
     update(
         db_path=global_path,
         params=[
             {
-            'table':'curso_estudiante',
-            'name':'fecha',
-            'data':'2026',
-            'condition':[
+                "table": "curso_estudiante",
+                "name": "fecha",
+                "data": "2026",
+                "condition": [
                     {
-                    'column':'fecha',
-                    'operator':'=',
-                    'value':'2011',
-                    'logic':'and'
+                        "column": "fecha",
+                        "operator": "=",
+                        "value": "2011",
+                        "logic": "and",
                     },
                     {
-                    'column':'curso_estudiante_id',
-                    'operator':'not in',
-                    'value':[1,2,3],
-                    }
-                ]
+                        "column": "curso_estudiante_id",
+                        "operator": "not in",
+                        "value": [1, 2, 3],
+                    },
+                ],
             }
-        ]
+        ],
     )
     res = CursoEstudiante.return_all()
 
     assert res == [
-        (1, 1, 1, '2011'),
-        (2, 2, 1, '2011'),
-        (3, 2, 2, '2011'),
-        (4, 4, 1, '2026'),
-        (5, 4, 2, '2026'),
-        (6, 1, 3, '2026')
+        (1, 1, 1, "2011"),
+        (2, 2, 1, "2011"),
+        (3, 2, 2, "2011"),
+        (4, 4, 1, "2026"),
+        (5, 4, 2, "2026"),
+        (6, 1, 3, "2026"),
     ]
+
 
 def test_update_range_multiples_tables():
     update(
         db_path=global_path,
         params=[
             {
-            'table':'curso',
-            'name':'date',
-            'data':'2010-Enero-01',
-            'condition':[
+                "table": "curso",
+                "name": "date",
+                "data": "2010-Enero-01",
+                "condition": [
                     {
-                    'column':'curso_id',
-                    'operator':'between',
-                    'value':[2,4],
-                    'logic':'and'
+                        "column": "curso_id",
+                        "operator": "between",
+                        "value": [2, 4],
+                        "logic": "and",
                     },
                     {
-                    'column':'name',
-                    'operator':'=',
-                    'value':'Quimica',
-                    'logic':''
-                    }
-                ]
+                        "column": "name",
+                        "operator": "=",
+                        "value": "Quimica",
+                        "logic": "",
+                    },
+                ],
             },
             {
-            'table':'estudiante',
-            'name':'name',
-            'data':'Chancho',
-            'condition':[
+                "table": "estudiante",
+                "name": "name",
+                "data": "Chancho",
+                "condition": [
                     {
-                    'column':'estudiante_id',
-                    'operator':'=',
-                    'value':1,
+                        "column": "estudiante_id",
+                        "operator": "=",
+                        "value": 1,
                     }
-                ]
+                ],
             },
-        ]
+        ],
     )
     res1 = Curso.return_all()
     res2 = Estudiante.return_all()
 
     assert res1 == [
-        (1, 'Matematicas', '2011-Ago-14'),
-        (2, 'Ciencias', '2011-Ago-14'),
-        (3, 'Quimica', '2010-Enero-01'),
-        (4, 'Literatura', '2011-Ago-14'),
-        (5, 'Cocina', '2011-Ago-14'),
-        (6, 'Fisica', '2011-Ago-14')
+        (1, "Matematicas", "2011-Ago-14"),
+        (2, "Ciencias", "2011-Ago-14"),
+        (3, "Quimica", "2010-Enero-01"),
+        (4, "Literatura", "2011-Ago-14"),
+        (5, "Cocina", "2011-Ago-14"),
+        (6, "Fisica", "2011-Ago-14"),
     ]
     assert res2 == [
-        (1, 'Chancho', 5, 1, 7, 1),
-        (2, 'Enojado', 10, 0, 7, 1),
-        (3, 'Andres', 30, 0, 7, 2),
-        (4, 'Polar', 6, 1, 4, 2),
-        (5, 'Malteada', 9, 0, 2, 1)
+        (1, "Chancho", 5, 1, 7, 1),
+        (2, "Enojado", 10, 0, 7, 1),
+        (3, "Andres", 30, 0, 7, 2),
+        (4, "Polar", 6, 1, 4, 2),
+        (5, "Malteada", 9, 0, 2, 1),
     ]

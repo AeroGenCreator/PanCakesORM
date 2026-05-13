@@ -1,193 +1,164 @@
 # Copyright 2026 AeroGenCreator
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at 
+# You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-""" Test Insert -*- PanCakesORM -*- """
+"""Test Insert -*- PanCakesORM -*-"""
 
 # Modulos Propios
-from pancakes.models.model import PanCakesORM
-from pancakes.sql import datatype
-from pancakes.orm.insert import insert
-
 # Modulos Python
 from pathlib import Path
-from datetime import date
 
-# Modulos Desarrollo
-import ipdb
-import pandas as pd
+from pancakes.models.model import PanCakesORM
+from pancakes.orm.insert import insert
+from pancakes.sql import datatype
 
 # GLOBAL PATH para pruebas
-dir_ = Path.cwd() / 'data' / 'test_env'
-file =  dir_ / 'insert.sqlite'
+dir_ = Path.cwd() / "data" / "test_env"
+file = dir_ / "insert.sqlite"
+
 
 # Crear una tablas:
 class Category(PanCakesORM):
-    _table = 'category'
+    _table = "category"
     _db_dir = dir_
     _db_file = file
 
-    name = datatype.Char(comment='Categoria', required=False)
+    name = datatype.Char(comment="Categoria", required=False)
+
 
 class Product(PanCakesORM):
-    _table = 'product'
+    _table = "product"
     _db_dir = dir_
     _db_file = file
 
-    name = datatype.Char(comment='Producto', required=False)
-    price = datatype.Float(comment='Precio', required=False)
+    name = datatype.Char(comment="Producto", required=False)
+    price = datatype.Float(comment="Precio", required=False)
     category_id = datatype.ForeignKey(
-            second_table = 'category',
-            column_id = 'category_id',
-            comment = 'Categoria'
-        )
+        second_table="category", column_id="category_id", comment="Categoria"
+    )
+
 
 class Client(PanCakesORM):
-    _table = 'client'
+    _table = "client"
     _db_dir = dir_
     _db_file = file
 
-    name = datatype.Char(comment='Nombre', required=False)
-    surname = datatype.Char(comment='Apellido', required=False)
+    name = datatype.Char(comment="Nombre", required=False)
+    surname = datatype.Char(comment="Apellido", required=False)
+
 
 class Sale(PanCakesORM):
-    _table = 'sale'
+    _table = "sale"
     _db_dir = dir_
     _db_file = file
 
-    code = datatype.Char(comment='Folio', required=False)
-    date = datatype.Text(comment='Fecha', required=False)
+    code = datatype.Char(comment="Folio", required=False)
+    date = datatype.Text(comment="Fecha", required=False)
+
 
 class SaleLine(PanCakesORM):
-    _table = 'sale_line'
+    _table = "sale_line"
     _db_dir = dir_
     _db_file = file
 
     client_id = datatype.ForeignKey(
-            second_table='client',
-            column_id = 'client_id',
-            comment="Rel1"
-        )
+        second_table="client", column_id="client_id", comment="Rel1"
+    )
     sale_id = datatype.ForeignKey(
-            second_table='sale',
-            column_id='sale_id',
-            comment="Rel2"
-        )
+        second_table="sale", column_id="sale_id", comment="Rel2"
+    )
     product_id = datatype.ForeignKey(
-            second_table='product',
-            column_id='product_id',
-            comment="Rel3"
-        )
-    amount = datatype.Float(comment='Cantidad', required=False)
+        second_table="product", column_id="product_id", comment="Rel3"
+    )
+    amount = datatype.Float(comment="Cantidad", required=False)
+
 
 def test_insert_one_table_one_tuple():
     insert(
         db_path=file,
-        params=[
-            {
-            'table':'category',
-            'data':[
-                    (None, "Lacteos")
-                ]
-            }
-        ]
+        params=[{"table": "category", "data": [(None, "Lacteos")]}],
     )
 
     res = Category.return_all()
-    assert res == [(1, 'Lacteos')]
+    assert res == [(1, "Lacteos")]
+
 
 def test_insert_two_tables_one_tuple():
     insert(
         db_path=file,
         params=[
-            {
-            'table':'category',
-            'data':[
-                    (None, "Harinas")
-                ]
-            },
-            {
-            'table':'product',
-            'data':[
-                    (None, 'Leche', 25.5, 1)
-                ]
-            }
-        ]
+            {"table": "category", "data": [(None, "Harinas")]},
+            {"table": "product", "data": [(None, "Leche", 25.5, 1)]},
+        ],
     )
 
     res1 = Category.return_all()
     res2 = Product.return_all()
 
-    assert res1 == [(1, 'Lacteos'),(2, 'Harinas')]
-    assert res2 == [(1, 'Leche', 25.5, 1)]
+    assert res1 == [(1, "Lacteos"), (2, "Harinas")]
+    assert res2 == [(1, "Leche", 25.5, 1)]
+
 
 def test_insert_one_table_multiple_tuples():
     insert(
         db_path=file,
         params=[
             {
-            'table':'category',
-            'data':[
+                "table": "category",
+                "data": [
                     (None, "Semillas"),
                     (None, "Extras"),
-                    (None, "Moldes")
-                ]
+                    (None, "Moldes"),
+                ],
             }
-        ]
+        ],
     )
 
     res = Category.return_all()
     assert res == [
-        (1, 'Lacteos'),
-        (2, 'Harinas'),
-        (3, 'Semillas'),
-        (4, 'Extras'),
-        (5, 'Moldes')
+        (1, "Lacteos"),
+        (2, "Harinas"),
+        (3, "Semillas"),
+        (4, "Extras"),
+        (5, "Moldes"),
     ]
+
 
 def test_insert_multiple_tables_multiple_tuples():
     insert(
         db_path=file,
         params=[
             {
-            'table':'client',
-            'data':[
-                    (None, "Andres", "Lopez"),
-                    (None, "Polar", "Poo")
-                ]
+                "table": "client",
+                "data": [(None, "Andres", "Lopez"), (None, "Polar", "Poo")],
             },
             {
-            'table':'product',
-            'data':[
-                    (None, 'Mantequilla', 20, 1),
-                    (None, 'Capacillo', 0.50, 5),
-                    (None, 'Ajonjoli', 15, 3),
-                    (None, 'Chispas Chocolate', 20, 4),
-                    (None, 'Harina Trigo', 20, 2),
-                ]
+                "table": "product",
+                "data": [
+                    (None, "Mantequilla", 20, 1),
+                    (None, "Capacillo", 0.50, 5),
+                    (None, "Ajonjoli", 15, 3),
+                    (None, "Chispas Chocolate", 20, 4),
+                    (None, "Harina Trigo", 20, 2),
+                ],
             },
-            {
-            'table':'sale',
-            'data':[
-                    (None, 'F01', '2026-03-27')
-                ]
-            }
-        ]
+            {"table": "sale", "data": [(None, "F01", "2026-03-27")]},
+        ],
     )
 
     res1 = Client.return_all()
     res2 = Product.return_all()
     res3 = Sale.return_all()
 
-    assert res1 == [(1, 'Andres', 'Lopez'), (2, 'Polar', 'Poo')]
+    assert res1 == [(1, "Andres", "Lopez"), (2, "Polar", "Poo")]
     assert res2 == [
-        (1, 'Leche', 25.5, 1),
-        (2, 'Mantequilla', 20.0, 1),
-        (3, 'Capacillo', 0.5, 5),
-        (4, 'Ajonjoli', 15.0, 3),
-        (5, 'Chispas Chocolate', 20.0, 4),
-        (6, 'Harina Trigo', 20.0, 2)
+        (1, "Leche", 25.5, 1),
+        (2, "Mantequilla", 20.0, 1),
+        (3, "Capacillo", 0.5, 5),
+        (4, "Ajonjoli", 15.0, 3),
+        (5, "Chispas Chocolate", 20.0, 4),
+        (6, "Harina Trigo", 20.0, 2),
     ]
-    assert res3 == [(1, 'F01', '2026-03-27')]
+    assert res3 == [(1, "F01", "2026-03-27")]

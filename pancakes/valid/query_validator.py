@@ -422,3 +422,119 @@ class ValidateOrderBy(BaseModel):
 class ValidateLimitOffset(BaseModel):
 
     num: Optional[int] = None
+
+
+class ValidateAdd(BaseModel):
+    """
+    Valida; model.add()
+
+    Estructura del kwarg (Sintaxis):
+
+    tipoUnion__tablaExtra = [foreignKey, tablaOrigen]
+
+    Tipos datos: str__str == [str, str]
+
+    Tipos union:
+
+    in = IN
+    lf = LEFT
+    rg = RIGTH
+    """
+
+    MODEL: ClassVar[Optional[Type]] = None
+
+    JOINS: ClassVar[Set[str]] = {"in", "lf", "rg"}
+
+    added: Optional[Dict[str, Tuple[str, str]]] = {}
+
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_add_(cls, data: dict):
+
+        # Validar data
+        if not data:
+            return data
+
+        # Tablas | Columnas -> Base de datos
+        DB_TABLES = list(cls.MODEL._family.keys())
+        DB_COLUMNS = []
+        for t in DB_TABLES:
+            DB_COLUMNS.extend(cls.MODEL._metadata[t]["columns"])
+
+        # Argumentos
+        KWARGS = data.get("added", {})
+
+        # Validar argumentos
+        for key, value in KWARGS.items():
+
+            # Validar sintaxis "__"
+            if "__" not in key:
+                msg = (
+                    f"Valid separator '__' not found "
+                    f"in passed argument: {key}"
+                )
+                raise ValueError(msg)
+
+            # Separar argumento
+            PARTS = key.split("__")
+
+            # Validar Extension
+            if len(PARTS) != 2:
+                msg = (
+                    f"Invalid length passed for argument {PARTS}. "
+                    "Valid length of two 2 parts are: "
+                    "joinType__extraTable = [foreignKey, originTable]."
+                )
+                raise ValueError(msg)
+
+            join = PARTS[0]
+            extr = PARTS[1]
+
+            # Validar union
+            if join not in cls.JOINS:
+                msg = (
+                    f"Invalid passed 'connector' {join}. "
+                    f"Valid ones are: {cls.JOINS}."
+                    "(in = IN), (lf = LEFT), (rg = RIGTH)."
+                )
+                raise ValueError(msg)
+
+            # Validar tabla extra
+            if extr not in DB_TABLES:
+                msg = (
+                    f"Passed table '{extr}' "
+                    f"does not exist in DATABASE "
+                    f"Valid tables are {DB_TABLES}"
+                )
+                raise ValueError(msg)
+
+            # Validar valores
+            if len(value) != 2:
+                msg = (
+                    "-> 'add' Method depends of a tuple of two values. "
+                    f"(foreignKey, originTable). Passed values are: {value}"
+                )
+                raise ValueError(msg)
+
+            fkid = value[0]
+            orig = value[1]
+
+            # Validar columna ForeignKey
+            if fkid not in DB_COLUMNS:
+                msg = (
+                    f"Passed column name '{fkid}' "
+                    f"does not exist in DATABASE "
+                    f"Valid columns are {DB_COLUMNS}"
+                )
+                raise ValueError(msg)
+
+            # Validar tabla origen
+            if orig not in DB_TABLES:
+                msg = (
+                    f"Passed table '{extr}' "
+                    f"does not exist in DATABASE "
+                    f"Valid tables are {DB_TABLES}"
+                )
+                raise ValueError(msg)
+
+        return data

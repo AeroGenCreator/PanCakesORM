@@ -41,6 +41,7 @@ from ..valid.filter_validator import (
     UpdateFilterValidator,
 )
 from ..valid.query_validator import (
+    ValidateAdd,
     ValidateFilter,
     ValidateGroupBy,
     ValidateLimitOffset,
@@ -123,14 +124,13 @@ class PanCakesORM:
     -> _family: (Atributo Clase) Comunicacion entre clases hermanas.
     -> _metadata: (Atributo Clase) Diccionario de diccionarios;
     Primer nivel -> {tabla: metadata}
-    LLaves Glables -> [
+    LLaves Glables = [
       'depends',
       'group_constraint',
       'fields',
       'comments',
       'columns',
-      'validators'
-    ]
+      'validators']
     -> _db_dir: (Atributo Clase) Ruta directorio para la base de datos.
     -> _db_file: (Atributo Clase) Ruta fichero para la base de datos.
     -> _depends: (Atributo Instancia) Declarar dependencia de tablas.
@@ -790,13 +790,52 @@ class PanCakesORM:
 
                 return api_query
 
+            def make_api_pro_query(model):
+                def api_pro_query(
+                    s: ValidateSelect,
+                    f: ValidateFilter,
+                    ad: ValidateAdd,
+                    g: ValidateGroupBy,
+                    o: ValidateOrderBy,
+                    limit: ValidateLimitOffset,
+                    offset: ValidateLimitOffset,
+                    model=model,
+                ):
+                    select = s.select
+                    filters = f.filters
+                    added = ad.added
+                    groups = g.groups
+                    orders = o.orders
+                    limits = limit.num
+                    offsets = offset.num
+
+                    dicc = (
+                        model.select(*select)
+                        .filter(**filters)
+                        .add(**added)
+                        .gp(**groups)
+                        .sort(**orders)
+                        .lim(limit=limits)
+                        .off(offset=offsets)
+                        .all()
+                        .to_dict(label=True)
+                    )
+                    return dicc
+
+                return api_pro_query
+
             # --*-- EXPOSICION DE ENDPOINTS --*--
 
             router.add_api_route("/", make_read_all(m), methods=["GET"])
             router.add_api_route("/", make_create(m), methods=["POST"])
             router.add_api_route("/", make_update(m), methods=["PUT"])
             router.add_api_route("/", make_delete(m), methods=["DELETE"])
-            router.add_api_route("/query/", make_api_query(m), methods=["POST"])
+            router.add_api_route(
+                "/query/", make_api_query(m), methods=["POST"]
+            )
+            router.add_api_route(
+                "/pquery/", make_api_pro_query(m), methods=["POST"]
+            )
 
             cls.ROUTERS.append(router)
             cls.MODEL_COUNT_ROUTERS.append(n)
@@ -1014,5 +1053,6 @@ ValidateFilter.MODEL = PanCakesORM
 ValidateLink.MODEL = PanCakesORM
 ValidateGroupBy.MODEL = PanCakesORM
 ValidateOrderBy.MODEL = PanCakesORM
+ValidateAdd.MODEL = PanCakesORM
 DeleteFilterValidator.MODEL = PanCakesORM
 UpdateFilterValidator.MODEL = PanCakesORM
