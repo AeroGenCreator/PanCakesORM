@@ -16,9 +16,6 @@ Metodos Modo Basico:
     * lim()
     * off()
 
-Metodos Modo Ids:
-    * id()
-
 Metodos Modo Add:
     * add()
 

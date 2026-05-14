@@ -118,7 +118,18 @@ class PanCakesORM:
     Este loop mantiene el codigo declarado en los .py sincronizado con
     lo que existe en la base de datos.
 
-    #ATRIBUTOS
+    9. _pydantic_validators_:
+    Se generan los esquemas de validacion Pydantic para INSERT y UPDATE.
+
+    10. _expose_validators_:
+    Asigna los modelos de validacion INSERT & UPDATE asi como la metadata
+    de validacion en los atributos de instancia 'CREATE',  'ADAPTER' y
+    'ANNOTATED'.
+
+    11. _routers_:
+    Genera rutas FastAPI (GET, POST, PUT, DELETE) (QUERY & P-QUERY).
+
+    # ATRIBUTOS
 
     -> _table: (Atributo Instancia) Nombre de la tabla.
     -> _family: (Atributo Clase) Comunicacion entre clases hermanas.
@@ -141,7 +152,9 @@ class PanCakesORM:
     -> _order: (Atributo Clase) Guarda el orden de creación de tablas segun.
     -> _depends: (Atributo Instancia) Declarar si la tabla depende
     de otra u otras.
-    -> SCHEMAS: (Atributo Clase) dict {"pydantic modelo": modelo}
+    -> CREATE = (Atributo Instancia) Esquema Pydantic 'INSERT'.
+    -> ADAPTER = (Atributo Instancia) Esquema Pydantic 'UPDATE'.
+    -> ANNOTATED = (Atributo Instancia) Esquemas 'Tabla | Col' Metadata.
     -> ROUTERS: (Atributo Clase) Almacena los endpoints de TODOS los modelos
     por routers.
     -> MODEL_COUNT_ROUTERS: (Atributo Clase) [] -> Compara;
@@ -153,7 +166,6 @@ class PanCakesORM:
     _db_dir = DEFAULT_DIR
     _db_file = DEFAULT_DB_FILE
     _order = []
-    SCHEMAS = {}
     ROUTERS = []
     MODEL_COUNT_ROUTERS = []
 
@@ -475,6 +487,7 @@ class PanCakesORM:
         """
         Esta función contruye los esquemas de tablas en tiempo real.
         Importante:
+
         1. Construye esquemas segun la dependencia de tablas.
         2. Mantiene los datos siempre y cuando no se borren columnas.
         3. Se ejecuta para todas las tablas, por tanto la primera
@@ -1045,7 +1058,6 @@ class PanCakesORM:
     @classmethod  # noqa: W191
     def d(cls, **kwargs):
         return cls.manager().d(**kwargs)
-
 
 # Despues de carga: Inyectar "Clase Modelo" -> Validadores Pydantic
 ValidateSelect.MODEL = PanCakesORM

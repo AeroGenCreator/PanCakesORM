@@ -22,14 +22,17 @@ PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLi
 Obtener PanCakesORM es tan sencillo como un comando. Disponible directamente en **PyPI**:
 
 ```bash
+# Con tu entorno virtual activado:
+
 pip install pancakes-orm
+
 ```
 
 **Agrega tus rutas**
 
 En la raiz de proyecto agrega el archivo .env "De esta manera controlas `directorio` base de datos y fichero `Sqlite3` -> Base de Datos."
 
-```
+```env
 LOG=INFO
 DB_DIR=data
 DB_FILE=database.sqlite3
@@ -51,6 +54,9 @@ class User(PanCakesORM):  # Tu fichero .env carga las rutas
 # ¡Insertar!
 User.i(user=[(None, "Omar", 30)])  # <- El primer elemento de tupla es el "id"
 # ¡Sqlit3 Lo maneja por ti!
+
+# ¡Actualiza!
+User.u(user__user_name__user_id__same=["Juan", 1])
 
 # ¡Listo para consultar!
 users = User.filter(user__age__gt=18).all().to_dict()
@@ -120,3 +126,7 @@ El corazón de PanCakesORM es el QueryBox, que permite realizar operaciones comp
     fastapi[standard]
 
     python-dotenv
+
+### ⚠️ Limitaciones
+
+A pesar de la integración con FastAPI el funcionamiento de PanCakesORM es sincrónico. Por tanto la estructura no esta pensada para manejar corrutinas.

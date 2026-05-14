@@ -34,14 +34,14 @@ logger = logging.getLogger(__name__)
 def query(
     select: str | list,
     _from: str,
-    db_path: str = None,
-    sp_select: list = None,
-    join: list = None,
-    condition: list = None,
-    group_by: list = None,
-    order_by: list = None,
-    limit: int = None,
-    offset: int = None
+    db_path: str | None = None,
+    sp_select: list | None = None,
+    join: list | None = None,
+    condition: list | None = None,
+    group_by: list | None = None,
+    order_by: list | None = None,
+    limit: int | None = None,
+    offset: int | None = None
 ):
     """
     Ejecuta una consulta SQL avanzada, sanitizada y dinámica.
