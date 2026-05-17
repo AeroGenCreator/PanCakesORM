@@ -11,9 +11,11 @@
 
 # PanCakesORM 🥞
 
-**Simplify Your Data Layer**
+**Simplifica tu manejo de bases de datos**
 
 PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLite3 que prioriza la legibilidad y la velocidad de desarrollo. Si buscas la potencia de SQL con la elegancia de una sintaxis declarativa y moderna, PanCakesORM es para ti.
+
+Pancakes ORM se integra con facilidad con `pandas, streamlit, flet, fastapi` asi como con el framework modular ERP tambien desarrollado por el autor AeroGenCreator `ClayPy`.
 
 ---
 
@@ -22,8 +24,15 @@ PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLi
 Obtener PanCakesORM es tan sencillo como un comando. Disponible directamente en **PyPI**:
 
 ```bash
-# Con tu entorno virtual activado:
+# En tu directoriod e proyecto
 
+# Crea entorno de desarrollo
+python3 -m venv .venv
+
+# Activa entorno
+source .venv/bin/activate
+
+# Instala PanCakesORM
 pip install pancakes-orm
 
 ```
@@ -62,7 +71,9 @@ User.u(user__user_name__user_id__same=["Juan", 1])
 users = User.filter(user__age__gt=18).all().to_dict()
 ```
 
-# [Link a PyPI](https://pypi.org/project/pancakes-orm/) | [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
+# [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
+
+# [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
 
 ### 💪 Fortalezas y Robustez
 

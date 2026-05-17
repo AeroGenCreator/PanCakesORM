@@ -169,8 +169,8 @@ def test_method_d_multi_table():
     res1 = User.all().to_dict()
     res2 = Product.all().to_dict()
 
-    assert res1 == []
-    assert res2 == []
+    assert res1 == [{"user__user_id": None, "user__name": None}]
+    assert res2 == [{"product__product_id": None, "product__name": None}]
 
 
 # --*-- HELPERS COMO METODO() --*--
@@ -196,7 +196,7 @@ def test_classmethod_d():
 
     api = User.all().to_dict()
 
-    assert api == []
+    assert api == [{"user__user_id": None, "user__name": None}]
 
 
 # --*-- TEST NOMBRES REPETIDOS --*--
@@ -261,7 +261,7 @@ def test_duplicated_name_when_output():
 
 def test_error_queries_relaciones():
     dicc = Category.link("user").all().to_dict()
-    assert dicc == []
+    assert dicc == [{"category__category_id": None, "category__name": None}]
 
 
 def test_vacios():
@@ -271,5 +271,5 @@ def test_vacios():
 
     assert row == []
     assert col == ["category__category_id", "category__name"]
-    assert dicc == []
-    assert api == {}
+    assert dicc == [{"category__category_id": None, "category__name": None}]
+    assert api == {"category": {"category_id": [], "name": []}}

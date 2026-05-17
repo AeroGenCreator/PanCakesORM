@@ -75,7 +75,7 @@ class QueryBox:
         con las etiquetas de frontend.
         """
 
-        if not self.row or not self.col:
+        if not self.row and not self.col:
             return self.row, self.col
 
         row = self.row
@@ -142,7 +142,7 @@ class QueryBox:
         """
 
         # Validacion de data
-        if not self.row or not self.col:
+        if not self.row and not self.col:
             return {}
 
         # Extraccion de data, extraccion de respaldo 'columnas'
@@ -162,14 +162,6 @@ class QueryBox:
             if isinstance(lab, dict):
                 chart = [lab.get(c) for c in col]
                 col = chart
-
-        # Validar alineación antes de la transpocisión:
-        if len(row[0]) != len(col):
-            msg = (
-                f"Length mismatch for query output {row}, {col}"
-            )
-            logger.critical(msg)
-            raise ValueError
 
         # Validar nombres únicos, sino; numerar.
         if len(set(col)) != len(col):
@@ -197,8 +189,7 @@ class QueryBox:
                 count += 1
             col = cache
 
-        # Transposción; obtener (tabla, columna)
-        trans = list(zip(*row))
+        # Cabeceras de tabla
         tabls = [b.split("__", 1)[0] for b in backup]
         if label:
             heads = col
@@ -206,15 +197,39 @@ class QueryBox:
         else:
             heads = [b.split("__", 1)[1] for b in backup]
 
-        # Fabricación de diccionario
-        res = {}
-        count = 0
-        for count, (t, h) in enumerate(zip(tabls, heads)):
-            tab_dicc = res.setdefault(t, {})
-            tab_dicc[h] = list(trans[count])
+        # Si hay columnas y filas
+        if row:
 
-        self.reset()
-        return res
+            # Validar alineación antes de la transpocisión:
+            if len(row[0]) != len(col):
+                msg = (
+                    f"Length mismatch for query output {row}, {col}"
+                )
+                logger.critical(msg)
+                raise ValueError
+
+            # Transposción; obtener (tabla, columna)
+            trans = list(zip(*row))
+
+            # Fabricación de diccionario
+            res = {}
+            count = 0
+            for count, (t, h) in enumerate(zip(tabls, heads)):
+                tab_dicc = res.setdefault(t, {})
+                tab_dicc[h] = list(trans[count])
+
+            self.reset()
+            return res
+
+        else:
+            res = {}
+            count = 0
+            for count, (t, h) in enumerate(zip(tabls, heads)):
+                tab_dicc = res.setdefault(t, {})
+                tab_dicc[h] = row
+
+            self.reset()
+            return res
 
     def to_dict(self, label=False):
         """
@@ -231,7 +246,7 @@ class QueryBox:
         con las etiquetas de frontend.
         """
 
-        if not self.row or not self.col:
+        if not self.row and not self.col:
             return []
 
         col = self.col
@@ -276,16 +291,22 @@ class QueryBox:
                 count += 1
             col = cache
 
+        # Lista diccionarios si: 'filas' y 'nombres unicos'
+        if row:
             dicc = [dict(zip(col, r)) for r in row]
 
             self.reset()
             return dicc
 
-        # Lista diccionarios si nombres únicos
-        dicc = [dict(zip(col, r)) for r in row]
+        # Listar diccionarios si: 'nombres unicos'
+        else:
+            nones = []
+            for c in col:
+                nones.append(None)
+            dicc = [dict(zip(col, nones))]
 
-        self.reset()
-        return dicc
+            self.reset()
+            return dicc
 
     def _if_no_select(self) -> None:
 
