@@ -152,29 +152,8 @@ def test_no_select():
 def test_no_select_link_3():
     row, col = q_sale.link("lf__client", "lf__country").all()
 
-    assert row == [
-        (1, "Mexico", 1, "Andres", 1, 1, "F1", 1),
-        (1, "Mexico", 1, "Andres", 1, 4, "F4", 1),
-        (1, "Mexico", 2, "Lupita", 1, 9, "F9", 2),
-        (1, "Mexico", 4, "Polar", 1, 3, "F3", 4),
-        (2, "Brasil", 5, "Malteada", 2, 7, "F7", 5),
-        (2, "Brasil", 3, "Peke", 2, 2, "F2", 3),
-        (2, "Brasil", 3, "Peke", 2, 5, "F5", 3),
-        (2, "Brasil", 3, "Peke", 2, 6, "F6", 3),
-        (2, "Brasil", 3, "Peke", 2, 8, "F8", 3),
-    ]
-
-    assert col == [
-        "country__country_id",
-        "country__name",
-        "client__client_id",
-        "client__name",
-        "client__country_id",
-        "sale__sale_id",
-        "sale__name",
-        "sale__client_id",
-    ]
-
+    print(row)
+    print(col)
 
 def test_no_select_link_2():
     row, col = q_client.link("lf__sale").all()

@@ -323,71 +323,60 @@ class QueryBox:
             )
 
         # MAP TABLAS Y SUS DEPENDENCIAS Y UNIONES
-        MAP_DEPN = [{t: d} for t, d in zip(TABLAS, DEPENDENCIES)]
+        MAP_DEPN = {}
+        for t, dep in zip(TABLAS, DEPENDENCIES):
+            MAP_DEPN.update({t: dep})
         MAP_LINK = {}
         for t, link in zip(TABLAS, LINKERS):
             MAP_LINK.update({t: link})
 
-        # CORREGIR LOOP
+        # Si A == self -> B.add(A)
+        # Si C subconjunto de B -> B.(C)
+        # Si A != self and A is not subjconjunto de B -> B.(A)
         ORDEN = []
-        COPIA = MAP_DEPN.copy()
+        TABLS = list(MAP_DEPN.keys())
+        COPIA = list(MAP_DEPN.values())
         while len(COPIA) > 0:
-            for index, dicc in enumerate(COPIA):
-                tupla = list(dicc.items())[0]
-                tabla = tupla[0]
-                depen = tupla[1]
-
-                try:
-                    tupla2 = list(COPIA[index + 1].items())[0]
-                    tabla2 = tupla2[0]
-                    depen2 = tupla2[1]
-
-                    if tabla == depen2[0]:
-                        ORDEN.append(tabla)
-                        COPIA.pop(index + 1)
-
-                    elif depen[0] == tabla2:
-                        ORDEN.append(tabla2)
-                        COPIA.pop(index)
-                except Exception:
-                    pass
-
-                finally:
-                    if depen == ["self"]:
-                        ORDEN.append(tabla)
-                        COPIA.pop(index)
-
-                    elif set(depen).issubset(set(ORDEN)):
-                        ORDEN.append(tabla)
-                        COPIA.pop(index)
+            for tabla, depend in MAP_DEPN.items():
+                if depend == ["self"]:
+                    ORDEN.append(tabla)
+                    COPIA.remove(depend)
+                elif set(depend).issubset(set(ORDEN)):
+                    ORDEN.append(tabla)
+                    COPIA.remove(depend)
+                else:
+                    ORDEN.append(tabla)
+                    COPIA.remove(depend)
 
         RESULT = []
-        PADRES = ORDEN[0]
+        ORDEN.sort(reverse=False)
+        FROM = ORDEN.pop()
+
         for TABLA in ORDEN:
 
             CAMPOS = MODEL._family[TABLA]._metadata[TABLA]["fields"]
 
             for CAMP in CAMPOS:
                 if isinstance(CAMP, ForeignKey):
-                    THIJA = TABLA
-                    COL_HIJA = CAMP._name
-                    SECOND_TABLE=getattr(CAMP, "second_table")
-                    APUNTA_A=getattr(CAMP, "column_id")
-
-                    if SECOND_TABLE == PADRES:
-                        self.FROM = SECOND_TABLE
+                    ORIGEN = TABLA
+                    COLLINKS = CAMP._name
+                    SECTABLE=getattr(CAMP, "second_table")
+                    REFERENS=getattr(CAMP, "column_id")
 
                     RESULT.append(
                         {
-                        "join": JOINS[MAP_LINK[SECOND_TABLE]],
-                        "tab1": THIJA,
-                        "id1": COL_HIJA,
-                        "tab2": SECOND_TABLE,
-                        "id2": APUNTA_A
+                        "join": JOINS[MAP_LINK[SECTABLE]],
+                        "tab1": SECTABLE,
+                        "id1": REFERENS,
+                        "tab2": ORIGEN,
+                        "id2": COLLINKS
                         }
                     )
 
+        import ipdb; ipdb.set_trace()
+        self.FROM = FROM
         self.JOIN = RESULT
+
         return self
 
     def all(self):
