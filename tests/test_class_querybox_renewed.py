@@ -231,8 +231,8 @@ def test_add_3_filter():
         .all()
     )
 
-    assert row == [(7, "Malteada", "Brasil")]
-    assert col == ["sale__sale_id", "client__name", "country__name"]
+    assert row == [("Malteada", "Brasil")]
+    assert col == ["client__name", "country__name"]
 
 
 def test_filter_strings():
@@ -242,5 +242,77 @@ def test_filter_strings():
         .all()
     )
 
-    assert row == [(5, 'Malteada')]
-    assert col == ['client__client_id', 'client__name']
+    assert row == [(5, "Malteada")]
+    assert col == ["client__client_id", "client__name"]
+
+
+def test_seleccion_exacta():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select("client__name")
+        .add(client__inner__country="country_id")
+        .filter("client__name__=__'Malteada'")
+        .all()
+    )
+
+    assert row == [("Malteada",)]
+    assert col == ["client__name"]
+
+
+def test_filter_iterables():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select("client__name")
+        .add(client__inner__country="country_id")
+        .filter(
+            "client__name__in__['Malteada', 'Polar']@&&@client__client_id__=__5"
+        )
+        .all()
+    )
+    assert row == [('Malteada',)]
+    assert col == ['client__name']
+
+
+def test_add_full_control():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .all()
+    )
+
+    assert row == [
+        (1, "Andres", "F1", "Mexico"),
+        (3, "Peke", "F2", "Brasil"),
+        (4, "Polar", "F3", "Mexico"),
+        (1, "Andres", "F4", "Mexico"),
+        (3, "Peke", "F5", "Brasil"),
+        (3, "Peke", "F6", "Brasil"),
+        (5, "Malteada", "F7", "Brasil"),
+        (3, "Peke", "F8", "Brasil"),
+        (2, "Lupita", "F9", "Mexico"),
+    ]
+    assert col == [
+        "client__client_id",
+        "client__name",
+        "sale__name",
+        "country__name",
+    ]
+
+
+def test_select_agg_1():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select("country__name__dcount")
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .all()
+    )
+
+    print(row)
+    print(col)

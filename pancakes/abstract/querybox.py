@@ -8,7 +8,7 @@ import ast
 # Modulos Propios
 import logging
 
-from ..orm.query import query
+from ..orm.consulta import query
 from ..tools.functions import environment
 
 # .envs; log, dir, db
@@ -34,9 +34,8 @@ class QueryBox:
     def reset(self):
         self.DC_LABEL = {}
         self.SE_LABEL = []
-        self.SP_LABEL = []
         self.SE_SELECT = []
-        self.SP_SELECT = []
+        self.FROM = None
         self.JOIN = None
         self.FILTER = None
         self.GROUP = None
@@ -62,7 +61,11 @@ class QueryBox:
             "sum": "SUM",
             "count": "COUNT",
             "avg": "AVG",
-            "": "",
+            "dsum": "DSUM",
+            "davg": "DAVG",
+            "dcount": "DCOUNT",
+            "distinct": "DISTINCT",
+            "": ""
         }
         """
 
@@ -73,7 +76,11 @@ class QueryBox:
             "sum": "SUM",
             "count": "COUNT",
             "avg": "AVG",
-            "": "",
+            "dsum": "DSUM",
+            "davg": "DAVG",
+            "dcount": "DCOUNT",
+            "distinct": "DISTINCT",
+            "": ""
         }
 
         # Modelo
@@ -144,11 +151,10 @@ class QueryBox:
                 self.SE_LABEL.append(" ".join(f"{LAB} {AGG.upper()}".split()))
 
                 # Seleccion simple resultado
-                self.SE_SELECT.append({"name": COL, "agg": AGG})
-                continue
+                self.SE_SELECT.append({"table": TAB, "name": COL, "agg": AGG})
 
             # SELECCION ESPECIAL
-            if TAB in DB_TABLES:
+            elif TAB in DB_TABLES:
                 # Obtener etiquetas frontend
                 MAPPED = dict(
                     zip(
@@ -157,10 +163,10 @@ class QueryBox:
                     )
                 )
                 LAB = MAPPED[COL]
-                self.SP_LABEL.append(" ".join(f"{LAB} {AGG.upper()}".split()))
+                self.SE_LABEL.append(" ".join(f"{LAB} {AGG.upper()}".split()))
 
                 # Seleccion especial resultado
-                self.SP_SELECT.append({"table": TAB, "name": COL, "agg": AGG})
+                self.SE_SELECT.append({"table": TAB, "name": COL, "agg": AGG})
 
             # TAB no existe en la base de datos
             else:
@@ -170,13 +176,6 @@ class QueryBox:
                     "using '__' as separator."
                 )
                 raise ValueError
-
-        # Validar: NO SE_SELECT, SI SP_SELECT
-        if not self.SE_SELECT:
-            FIRST_COL = MODEL._family[ACTUAL_TB]._metadata[ACTUAL_TB][
-                "columns"
-            ][0]
-            self.SE_SELECT.append({"name": FIRST_COL, "agg": ""})
 
         return self
 
@@ -199,7 +198,7 @@ class QueryBox:
         self.SE_LABEL.extend(COMMENTS)
 
         for COL in COLUMNS:
-            self.SE_SELECT.append({"name": COL})
+            self.SE_SELECT.append({"table": MAINT, "name": COL})
 
         # OBTENER TODO DE UN JOIN
         CACHE = []
@@ -226,8 +225,8 @@ class QueryBox:
                     for COL in COLS1:
                         listado1.append({"table": TAB1, "name": COL})
 
-                    self.SP_LABEL.extend(LABS1)
-                    self.SP_SELECT.extend(listado1)
+                    self.SE_LABEL.extend(LABS1)
+                    self.SE_SELECT.extend(listado1)
 
                 if TAB2 not in CACHE and TAB2 != MAINT:
                     CACHE.append(TAB2)
@@ -246,16 +245,22 @@ class QueryBox:
                     for COL in COLS2:
                         listado2.append({"table": TAB2, "name": COL})
 
-                    self.SP_LABEL.extend(LABS2)
-                    self.SP_SELECT.extend(listado2)
+                    self.SE_LABEL.extend(LABS2)
+                    self.SE_SELECT.extend(listado2)
 
     def add(self, **kwargs):
         """
         SINTAXIS:
 
-        El modelo desde el cual es invocado el metodo sera tomado como
-        el argumento FROM, cualquier encadenamiento se tomara de izquierda
-        a derecha, ejemplo:
+        EL modelo desde el cual se invoca el metodo add() NO SERA TOMADO,
+        por tanto es necesario especificar union usando una sintaxis SQL
+
+        EJ;
+        SELECT * FROM sale INNER JOIN client ... requiere de;
+        modeloX.add(sale__inner__client=client_id).
+
+        De esta manera de izquierda a derecha la primera tabla pasada
+        se tomara como el FROM.
 
         Metodo add()
         User(user__left__sale=sale_id, ...)
@@ -334,7 +339,9 @@ class QueryBox:
             }
             RESULT.append(dicc)
 
+        self.FROM = RESULT[0]["tab2"]
         self.JOIN = RESULT
+
         return self
 
     def filter(self, string):
@@ -379,7 +386,7 @@ class QueryBox:
         sale__sale_id__in__[1, 2, 3]
 
         Filtro con logicos
-        user__name__=__'Omar'@||@sale.name__=__'snoopy'
+        user__name__=__'Omar'@||@sale__name__=__'snoopy'
 
         Filtro logico complejo
         user__name__like__'%mar'
@@ -389,7 +396,7 @@ class QueryBox:
         client__age__>__18
 
         Sintaxis:
-        Separar con '.' tabla.columna.comparador.valor
+        Separar con '__' tabla__columna__comparador__valor
         Separar con '@' (clausula ||/&& clausula)
 
         METODO-> CASE SENSITIVE
@@ -605,18 +612,17 @@ class QueryBox:
 
     def all(self):
 
-        # Obtencion de argumentos
+        # RUTA DB
         PATH = self.model._db_file
 
-        # Tabla FROM
-        FROM = self.model._table
+        # FROM
+        FROM = self.model._table if not self.FROM else self.FROM
 
-        # VALIDAR NO SELECCION
-        if not self.SE_SELECT and not self.SP_SELECT:
+        # VALIDAR SELECCION
+        if not self.SE_SELECT:
             self._NO_SELECT_()
 
         # VALIDAR OPCIONALES
-        SPECIAL = None if not self.SP_SELECT else self.SP_SELECT
         JOIN = None if not self.JOIN else self.JOIN
         FILTER = None if not self.FILTER else self.FILTER
 
@@ -624,7 +630,6 @@ class QueryBox:
             db_path=PATH,
             select=self.SE_SELECT,
             _from=FROM,
-            sp_select=SPECIAL,
             join=JOIN,
             condition=FILTER
         )
