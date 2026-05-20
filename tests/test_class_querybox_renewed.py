@@ -149,14 +149,98 @@ def test_no_select():
     assert col == ["sale__sale_id", "sale__name", "sale__client_id"]
 
 
-def test_no_select_link_3():
-    row, col = q_sale.link("lf__client", "lf__country").all()
+def test_no_select_add_3():
+    row, col = q_sale.add(
+        sale__left__client="client_id", client__right__country="country_id"
+    ).all()
 
-    print(row)
-    print(col)
+    assert row == [
+        (1, "F1", 1, 1, "Andres", 1, 1, "Mexico"),
+        (2, "F2", 3, 3, "Peke", 2, 2, "Brasil"),
+        (3, "F3", 4, 4, "Polar", 1, 1, "Mexico"),
+        (4, "F4", 1, 1, "Andres", 1, 1, "Mexico"),
+        (5, "F5", 3, 3, "Peke", 2, 2, "Brasil"),
+        (6, "F6", 3, 3, "Peke", 2, 2, "Brasil"),
+        (7, "F7", 5, 5, "Malteada", 2, 2, "Brasil"),
+        (8, "F8", 3, 3, "Peke", 2, 2, "Brasil"),
+        (9, "F9", 2, 2, "Lupita", 1, 1, "Mexico"),
+    ]
 
-def test_no_select_link_2():
-    row, col = q_client.link("lf__sale").all()
+    assert col == [
+        "sale__sale_id",
+        "sale__name",
+        "sale__client_id",
+        "client__client_id",
+        "client__name",
+        "client__country_id",
+        "country__country_id",
+        "country__name",
+    ]
 
-    print(row)
-    print(col)
+
+def test_no_select_add_2():
+    row, col = q_country.add(country__left__client="country_id").all()
+
+    assert row == [
+        (1, "Mexico", 1, "Andres", 1),
+        (1, "Mexico", 2, "Lupita", 1),
+        (1, "Mexico", 4, "Polar", 1),
+        (2, "Brasil", 5, "Malteada", 2),
+        (2, "Brasil", 3, "Peke", 2),
+    ]
+    assert col == [
+        "country__country_id",
+        "country__name",
+        "client__client_id",
+        "client__name",
+        "client__country_id",
+    ]
+
+
+def test_select_special_add():
+    row, col = (
+        q_sale.select("sale__name", "client__name", "country__name")
+        .add(
+            sale__right__client="client_id", client__right__country="country_id"
+        )
+        .all()
+    )
+
+    assert row == [
+        ("F1", "Andres", "Mexico"),
+        ("F2", "Peke", "Brasil"),
+        ("F3", "Polar", "Mexico"),
+        ("F4", "Andres", "Mexico"),
+        ("F5", "Peke", "Brasil"),
+        ("F6", "Peke", "Brasil"),
+        ("F7", "Malteada", "Brasil"),
+        ("F8", "Peke", "Brasil"),
+        ("F9", "Lupita", "Mexico"),
+    ]
+    assert col == ["sale__name", "client__name", "country__name"]
+
+
+def test_add_3_filter():
+    # Ejemplo Many2One para el pais de Malteada
+    row, col = (
+        q_sale.select("client__name", "country__name")
+        .add(
+            sale__right__client="client_id", client__right__country="country_id"
+        )
+        .filter("client__name__like__'%alteada'")
+        .all()
+    )
+
+    assert row == [(7, "Malteada", "Brasil")]
+    assert col == ["sale__sale_id", "client__name", "country__name"]
+
+
+def test_filter_strings():
+    row, col = (
+        q_client.select("client__client_id", "client__name")
+        .filter("client__name__=__'Malteada'")
+        .all()
+    )
+
+    assert row == [(5, 'Malteada')]
+    assert col == ['client__client_id', 'client__name']

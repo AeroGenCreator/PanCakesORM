@@ -3,11 +3,12 @@ Declaracion De Clase QueryBox() Queries declarativos a traves
 de **kwargs y encadenamiento de metodos.
 """
 
+import ast
+
 # Modulos Propios
 import logging
 
 from ..orm.query import query
-from ..sql.datatype import ForeignKey
 from ..tools.functions import environment
 
 # .envs; log, dir, db
@@ -36,9 +37,8 @@ class QueryBox:
         self.SP_LABEL = []
         self.SE_SELECT = []
         self.SP_SELECT = []
-        self.FROM = None
         self.JOIN = None
-        self.CONDITION = None
+        self.FILTER = None
         self.GROUP = None
         self.ORDER = None
         self.LIMIT = None
@@ -249,161 +249,384 @@ class QueryBox:
                     self.SP_LABEL.extend(LABS2)
                     self.SP_SELECT.extend(listado2)
 
-    def link(self, *unions):
+    def add(self, **kwargs):
         """
         SINTAXIS:
 
-        'UNION__TABLE', ...
+        El modelo desde el cual es invocado el metodo sera tomado como
+        el argumento FROM, cualquier encadenamiento se tomara de izquierda
+        a derecha, ejemplo:
+
+        Metodo add()
+        User(user__left__sale=sale_id, ...)
+
+        SQL
+        SELECT * FROM user LEFT JOIN sale ON user.sale_id = sale.sale_id
+
+        'tablaOrigen__unionType__secondTable=sharedColumn', ...
+        'client__inner__country=country_id'
 
         UNIONES VALIDAS:
 
-        in = INNER
-        rg = RIGHT
-        lf = LEFT
+        inner = INNER
+        right = RIGHT
+        left = LEFT
         """
 
         # UNIONES VALIDAS
-        JOINS = {"in": "INNER", "rg": "RIGHT", "lf": "LEFT"}
+        UNIONES = {"inner": "INNER", "right": "RIGHT", "left": "LEFT"}
+        VALIDUN = list(UNIONES.keys())
 
-        MODEL = self.model
-        MAINT = self.model._table
-
-        # CACHEAR TABLAS, LINKERS y DEPENDENCIAS
-        TABLAS = [MAINT]
-        LINKERS = ["in"]
-        DEPENDENCIES = [MODEL._family[MAINT]._metadata[MAINT]["depends"]]
-
-        # ITERACION DE UNIONES
-        for union in unions:
-            union = union.lower()
-
-            # Validar oracion de union
-            validate = (not isinstance(union, str), ("__" not in union))
-            if any(validate):
-                logger.critical(
-                    "Invalid syntax, every union declaration depends "
-                    "on specifying union nature and separator '__' "
-                    "', example: in__table; INNER JOIN table. "
-                    "Valid datatype: Only strings."
-                )
-                raise ValueError
-
-            # Extraccion de datos de la union
-            PARTS = union.split("__")
-
-            LINKER = PARTS[0]
-            EXTRAT = PARTS[1]
-
-            # Validar LINKER
-            if LINKER not in list(JOINS.keys()):
-                logger.critical(
-                    f"Invalid type of join: {LINKER}. Valid ones are {JOINS}."
-                )
-                raise ValueError
-            # Validar que exista la tabla
-            DB_TABLES = list(MODEL._family.keys())
-            if EXTRAT not in DB_TABLES:
-                logger.critical(
-                    "Passed table does not exist in DATABASE. "
-                    f"Passed tables: {EXTRAT}. "
-                    f"DATABSE tables: {DB_TABLES}"
-                )
-
-            if EXTRAT in TABLAS:
-                logger.critical(
-                    "Duplicated table passed. Your model is itself a table. "
-                    "Any repeated table in your sentence will raise this error."
-                )
-                raise ValueError
-
-            TABLAS.append(EXTRAT)
-            LINKERS.append(LINKER)
-            DEPENDENCIES.append(
-                MODEL._family[EXTRAT]._metadata[EXTRAT]["depends"]
-            )
-
-        # MAP TABLAS Y SUS DEPENDENCIAS Y UNIONES
-        MAP_DEPN = {}
-        for t, dep in zip(TABLAS, DEPENDENCIES):
-            MAP_DEPN.update({t: dep})
-        MAP_LINK = {}
-        for t, link in zip(TABLAS, LINKERS):
-            MAP_LINK.update({t: link})
-
-        # Si A == self -> B.add(A)
-        # Si C subconjunto de B -> B.(C)
-        # Si A != self and A is not subjconjunto de B -> B.(A)
-        ORDEN = []
-        TABLS = list(MAP_DEPN.keys())
-        COPIA = list(MAP_DEPN.values())
-        while len(COPIA) > 0:
-            for tabla, depend in MAP_DEPN.items():
-                if depend == ["self"]:
-                    ORDEN.append(tabla)
-                    COPIA.remove(depend)
-                elif set(depend).issubset(set(ORDEN)):
-                    ORDEN.append(tabla)
-                    COPIA.remove(depend)
-                else:
-                    ORDEN.append(tabla)
-                    COPIA.remove(depend)
+        DB_TABLES = list(self.model._family.keys())
 
         RESULT = []
-        ORDEN.sort(reverse=False)
-        FROM = ORDEN.pop()
+        # Iteracion de argumentos
+        for llave, valor in kwargs.items():
+            # Validar sintaxis:
+            validate = (("__" not in llave), (not isinstance(valor, str)))
+            if any(validate):
+                logger.critical(
+                    "Make sure to separate clauses using '__'. "
+                    "Also consider 'string' as the only valid argument. "
+                    f"Passed data; {llave}={valor}."
+                )
+                raise ValueError
 
-        for TABLA in ORDEN:
+            # Separar y validar
+            PARTS = llave.split("__")
+            if len(PARTS) != 3:
+                logger.critical(
+                    "Invalid quantity of clauses passed. "
+                    "Valid syntax: "
+                    "tablaOrigen__unionType__secondTable=sharedColumn. "
+                    f"Passed {llave}"
+                )
+                raise ValueError
 
-            CAMPOS = MODEL._family[TABLA]._metadata[TABLA]["fields"]
+            # EXTRACCION DE ARGUMENTOS
+            ORIGEN = PARTS[0].lower()
+            UNIONT = PARTS[1].lower()
+            SECONT = PARTS[2].lower()
+            SHARED = valor.lower()
 
-            for CAMP in CAMPOS:
-                if isinstance(CAMP, ForeignKey):
-                    ORIGEN = TABLA
-                    COLLINKS = CAMP._name
-                    SECTABLE=getattr(CAMP, "second_table")
-                    REFERENS=getattr(CAMP, "column_id")
+            # VALIDAR DATOS
+            valid_data = (
+                (ORIGEN not in DB_TABLES),
+                (SECONT not in DB_TABLES),
+                (UNIONT not in VALIDUN),
+            )
 
-                    RESULT.append(
-                        {
-                        "join": JOINS[MAP_LINK[SECTABLE]],
-                        "tab1": SECTABLE,
-                        "id1": REFERENS,
-                        "tab2": ORIGEN,
-                        "id2": COLLINKS
-                        }
+            if any(valid_data):
+                logger.critical(
+                    f"Make sure tables exist in DATABASE. Valid {DB_TABLES}. "
+                    f"Passed tables: {ORIGEN}, {SECONT}. "
+                    f"Make sure passed a valid union type. "
+                    f"Passed union {UNIONT}, valid ones are {VALIDUN}."
+                )
+
+            # Diccionario de uniones
+            dicc = {
+                "join": UNIONT,
+                "tab1": SECONT,
+                "id1": SHARED,
+                "tab2": ORIGEN,
+                "id2": SHARED,
+            }
+            RESULT.append(dicc)
+
+        self.JOIN = RESULT
+        return self
+
+    def filter(self, string):
+        """
+        Un solo string que permite pasar;
+
+        1. Operadores comparativos
+        2. Operadores logicos
+
+        COMPARATIVOS
+        {
+        "=",
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "<>",
+        "IN",
+        "NOT IN",
+        "BETWEEN",
+        "IS",
+        "IS NOT",
+        "LIKE",
+        "NOT LIKE"
+        }
+
+        LOGICOS
+        {'&&': 'AND', '||', 'OR'}
+
+        Filtro basico:
+
+        Valores string deben llevar comillas;
+
+        - Si usas "" entonces string ''
+        - Si usas '' entonces string ""
+
+        Esto porque se valida a traves de la libreria 'ast'
+
+        sale__name__=__'omar'
+
+        Filtro con iterables:
+        sale__sale_id__in__[1, 2, 3]
+
+        Filtro con logicos
+        user__name__=__'Omar'@||@sale.name__=__'snoopy'
+
+        Filtro logico complejo
+        user__name__like__'%mar'
+        @||@
+        sale__sale_id__in__[1, 2, 3, 5]
+        @&&@
+        client__age__>__18
+
+        Sintaxis:
+        Separar con '.' tabla.columna.comparador.valor
+        Separar con '@' (clausula ||/&& clausula)
+
+        METODO-> CASE SENSITIVE
+        """
+
+        # WHITE LISTS
+        DB_TABLES = list(self.model._family.keys())
+        OPERATORS = {
+            "=",
+            "<",
+            "<=",
+            ">",
+            ">=",
+            "<>",
+            "in",
+            "not in",
+            "between",
+            "is",
+            "is not",
+            "like",
+            "not like",
+        }
+        LOGICALS = {"||", "&&", ""}
+        PARSE_LOGICS = {"||": "or", "&&": "and", "": ""}
+
+        # Preparar el string
+        if "__" not in string or not isinstance(string, str):
+            logger.critical(
+                "Make sure to passed a valid separator '__'. "
+                "Make sure you passed only one string. "
+                f"Passed string: {string}"
+            )
+            raise ValueError(type(string))
+        CLAUSES = string.split("__")
+
+        SENTENCE = []
+        for DATO in CLAUSES:
+            if "@" not in DATO:
+                SENTENCE.append(DATO)
+            else:
+                COMPRESS = DATO.split("@")
+                SENTENCE.extend(COMPRESS)
+
+        # Anidar grupos de condicion
+        SEGMENTOS = []
+        COPIA = SENTENCE.copy()
+        while COPIA:
+            if len(COPIA) >= 5:
+                segmento = COPIA[:5]
+                if segmento[-1] in LOGICALS:
+                    SEGMENTOS.append(segmento)
+                    for element in segmento:
+                        COPIA.remove(element)
+                else:
+                    segmento = COPIA[:4]
+                    for element in segmento:
+                        COPIA.remove(element)
+            elif len(COPIA) >= 4:
+                segmento = COPIA[:4]
+                SEGMENTOS.append(segmento)
+                for element in segmento:
+                    COPIA.remove(element)
+            else:
+                logger.critical(
+                    "Invalid quantity of elements passed. "
+                    f"error found in {COPIA}."
+                )
+                raise ValueError
+
+        # Armar diccionario | validar data
+        RESULT = []
+        for condition in SEGMENTOS:
+            if len(condition) == 5:
+                TAB = condition[0]
+                COL = condition[1]
+                OPR = condition[2]
+                DAT = condition[3]
+                LOG = condition[4]
+
+                try:
+                    VAL = ast.literal_eval(DAT)
+                except Exception as e:
+                    logger.critical(e)
+                    raise ValueError
+
+                if TAB not in DB_TABLES:
+                    logger.critical(
+                        f"Following table: {TAB} does not esist. "
+                        f"Passed condition: {condition}."
+                    )
+                    raise ValueError
+
+                COLUMNS = self.model._family[TAB]._metadata[TAB]["columns"]
+
+                if COL not in COLUMNS:
+                    logger.critical(
+                        f"Following column {COL} does not exist in {TAB}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError
+
+                if OPR not in OPERATORS:
+                    logger.critical(
+                        f"Invalid operator: {OPR}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError
+
+                if LOG not in LOGICALS:
+                    logger.critical(
+                        f"Invalid logical operator found in {LOG}. "
+                        f"Passed condition {condition}"
                     )
 
-        import ipdb; ipdb.set_trace()
-        self.FROM = FROM
-        self.JOIN = RESULT
+                validdate_iters = (
+                    (OPR in {"in", "not in", "between"}),
+                    (not isinstance(VAL, list)),
+                )
+                if all(validdate_iters):
+                    logger.critical(
+                        f"Following operators {'in', 'not in', 'between'} "
+                        "must receive an iterable. 'List'. "
+                        f"Passed value: {VAL}, operator: {OPR}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError(type(VAL))
 
+                RESULT.append(
+                    {
+                        "table": TAB,
+                        "column": COL,
+                        "operator": OPR,
+                        "value": VAL,
+                        "logic": PARSE_LOGICS[LOG],
+                    }
+                )
+
+            elif len(condition) == 4:
+                TAB = condition[0]
+                COL = condition[1]
+                OPR = condition[2]
+                DAT = condition[3]
+                LOG = ""
+
+                try:
+                    VAL = ast.literal_eval(DAT)
+                except Exception as e:
+                    logger.critical(e)
+                    raise ValueError
+
+                if TAB not in DB_TABLES:
+                    logger.critical(
+                        f"Following table: {TAB} does not esist. "
+                        f"Passed condition: {condition}."
+                    )
+                    raise ValueError
+
+                COLUMNS = self.model._family[TAB]._metadata[TAB]["columns"]
+
+                if COL not in COLUMNS:
+                    logger.critical(
+                        f"Following column {COL} does not exist in {TAB}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError
+
+                if OPR not in OPERATORS:
+                    logger.critical(
+                        f"Invalid operator: {OPR}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError
+
+                if LOG not in LOGICALS:
+                    logger.critical(
+                        f"Invalid logical operator found in {LOG}. "
+                        f"Passed condition {condition}"
+                    )
+
+                validdate_iters = (
+                    (OPR in {"in", "not in", "between"}),
+                    (not isinstance(VAL, list)),
+                )
+                if all(validdate_iters):
+                    logger.critical(
+                        f"Following operators {'in', 'not in', 'between'} "
+                        "must receive an iterable. 'List'. "
+                        f"Passed value: {VAL}, operator: {OPR}. "
+                        f"Passed condition: {condition}"
+                    )
+                    raise ValueError(type(VAL))
+
+                RESULT.append(
+                    {
+                        "table": TAB,
+                        "column": COL,
+                        "operator": OPR,
+                        "value": VAL,
+                        "logic": PARSE_LOGICS[LOG],
+                    }
+                )
+
+            else:
+                logger.critical(
+                    "Dimension of expression passed does not match. "
+                    "To create a filter you must specify (5 or 4) "
+                    "arguments. Following the next syntax."
+                    "table__column__operator__value / "
+                    "table__column__operator__value@logical@"
+                )
+        self.FILTER = RESULT
         return self
 
     def all(self):
 
-        # REASIGNAR VALOR FROM -> SEGUN JOINS
-        if self.FROM:
-            FROM = self.FROM
-            self.model = self.model._family[self.FROM]
-            self._NO_SELECT_()
-        else:
-            FROM = self.model._table
+        # Obtencion de argumentos
+        PATH = self.model._db_file
+
+        # Tabla FROM
+        FROM = self.model._table
 
         # VALIDAR NO SELECCION
         if not self.SE_SELECT and not self.SP_SELECT:
             self._NO_SELECT_()
 
-        # Obtencion de argumentos
-        PATH = self.model._db_file
+        # VALIDAR OPCIONALES
         SPECIAL = None if not self.SP_SELECT else self.SP_SELECT
         JOIN = None if not self.JOIN else self.JOIN
+        FILTER = None if not self.FILTER else self.FILTER
 
         row, col = query(
             db_path=PATH,
             select=self.SE_SELECT,
             _from=FROM,
             sp_select=SPECIAL,
-            join=JOIN
+            join=JOIN,
+            condition=FILTER
         )
 
         self.reset()
