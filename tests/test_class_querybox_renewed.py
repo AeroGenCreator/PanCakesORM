@@ -103,37 +103,41 @@ q_sale = QueryBox(Sale)
 
 
 def test_select_uno():
-    row, col = q_country.select("country__country_id").all()
+    row, col = q_country.select("country__country_id").all().raw()
 
     assert row == [(1,), (2,)]
     assert col == ["country__country_id"]
 
 
 def test_select_varios():
-    row, col = q_country.select("country__country_id", "country__name").all()
+    row, col = (
+        q_country.select("country__country_id", "country__name").all().raw()
+    )
 
     assert row == [(1, "Mexico"), (2, "Brasil")]
     assert col == ["country__country_id", "country__name"]
 
 
 def test_select_uno_agg():
-    row, col = q_client.select("client__client_id__count").all()
+    row, col = q_client.select("client__client_id__count").all().raw()
 
     assert row == [(5,)]
     assert col == ["client__client_id__count"]
 
 
 def test_select_varios_agg():
-    row, col = q_client.select(
-        "client__client_id__count", "client__client_id__sum"
-    ).all()
+    row, col = (
+        q_client.select("client__client_id__count", "client__client_id__sum")
+        .all()
+        .raw()
+    )
 
     assert row == [(5, 15)]
     assert col == ["client__client_id__count", "client__client_id__sum"]
 
 
 def test_no_select():
-    row, col = q_sale.select().all()
+    row, col = q_sale.select().all().raw()
 
     assert row == [
         (1, "F1", 1),
@@ -150,9 +154,13 @@ def test_no_select():
 
 
 def test_no_select_add_3():
-    row, col = q_sale.add(
-        sale__left__client="client_id", client__right__country="country_id"
-    ).all()
+    row, col = (
+        q_sale.add(
+            sale__left__client="client_id", client__right__country="country_id"
+        )
+        .all()
+        .raw()
+    )
 
     assert row == [
         (1, "F1", 1, 1, "Andres", 1, 1, "Mexico"),
@@ -179,14 +187,14 @@ def test_no_select_add_3():
 
 
 def test_no_select_add_2():
-    row, col = q_country.add(country__left__client="country_id").all()
+    row, col = q_country.add(country__left__client="country_id").all().raw()
 
     assert row == [
-        (1, 'Mexico', 1, 'Andres', 1),
-        (1, 'Mexico', 2, 'Lupita', 1),
-        (1, 'Mexico', 4, 'Polar', 1),
-        (2, 'Brasil', 3, 'Peke', 2),
-        (2, 'Brasil', 5, 'Malteada', 2)
+        (1, "Mexico", 1, "Andres", 1),
+        (1, "Mexico", 2, "Lupita", 1),
+        (1, "Mexico", 4, "Polar", 1),
+        (2, "Brasil", 3, "Peke", 2),
+        (2, "Brasil", 5, "Malteada", 2),
     ]
     assert col == [
         "country__country_id",
@@ -204,6 +212,7 @@ def test_select_special_add():
             sale__right__client="client_id", client__right__country="country_id"
         )
         .all()
+        .raw()
     )
 
     assert row == [
@@ -227,8 +236,9 @@ def test_add_3_filter():
         .add(
             sale__right__client="client_id", client__right__country="country_id"
         )
-        .filter("client__name__like__'%alteada'")
+        .filter(client__name__like="%malteada")
         .all()
+        .raw()
     )
 
     assert row == [("Malteada", "Brasil")]
@@ -238,8 +248,9 @@ def test_add_3_filter():
 def test_filter_strings():
     row, col = (
         q_client.select("client__client_id", "client__name")
-        .filter("client__name__=__'Malteada'")
+        .filter(client__name__same="Malteada")
         .all()
+        .raw()
     )
 
     assert row == [(5, "Malteada")]
@@ -251,8 +262,9 @@ def test_seleccion_exacta():
     row, col = (
         m.select("client__name")
         .add(client__inner__country="country_id")
-        .filter("client__name__=__'Malteada'")
+        .filter(client__name__same="Malteada")
         .all()
+        .raw()
     )
 
     assert row == [("Malteada",)]
@@ -264,13 +276,12 @@ def test_filter_iterables():
     row, col = (
         m.select("client__name")
         .add(client__inner__country="country_id")
-        .filter(
-            "client__name__in__['Malteada', 'Polar']^&&^client__client_id__=__5"
-        )
+        .filter(client__name__in__and=["Malteada"], client__client_id__same=5)
         .all()
+        .raw()
     )
-    assert row == [('Malteada',)]
-    assert col == ['client__name']
+    assert row == [("Malteada",)]
+    assert col == ["client__name"]
 
 
 def test_add_full_control():
@@ -283,18 +294,19 @@ def test_add_full_control():
             client__inner__country="country_id", client__inner__sale="client_id"
         )
         .all()
+        .raw()
     )
 
     assert row == [
-        (1, 'Andres', 'F1', 'Mexico'),
-        (1, 'Andres', 'F4', 'Mexico'),
-        (2, 'Lupita', 'F9', 'Mexico'),
-        (3, 'Peke', 'F2', 'Brasil'),
-        (3, 'Peke', 'F5', 'Brasil'),
-        (3, 'Peke', 'F6', 'Brasil'),
-        (3, 'Peke', 'F8', 'Brasil'),
-        (4, 'Polar', 'F3', 'Mexico'),
-        (5, 'Malteada', 'F7', 'Brasil')
+        (1, "Andres", "F1", "Mexico"),
+        (1, "Andres", "F4", "Mexico"),
+        (2, "Lupita", "F9", "Mexico"),
+        (3, "Peke", "F2", "Brasil"),
+        (3, "Peke", "F5", "Brasil"),
+        (3, "Peke", "F6", "Brasil"),
+        (3, "Peke", "F8", "Brasil"),
+        (4, "Polar", "F3", "Mexico"),
+        (5, "Malteada", "F7", "Brasil"),
     ]
     assert col == [
         "client__client_id",
@@ -312,24 +324,26 @@ def test_select_agg_distincti_count_group_by():
             client__inner__country="country_id", client__inner__sale="client_id"
         )
         .all()
+        .raw()
     )
 
-    assert row == [('Brasil', 2), ('Mexico', 3)]
-    assert col == ['country__name', 'client__name__dcount']
+    assert row == [("Brasil", 2), ("Mexico", 3)]
+    assert col == ["country__name", "client__name__dcount"]
+
 
 def test_order_by_add_select_agg():
-    row, col = q_country.select(
-        "country__name","client__name__dcount"
-    ).add(
-        country__left__client="country_id"
-    ).filter(
-        "country__country_id__in__[1, 2]^||^country__country_id__=__3"
-    ).sort(
-        "country__name__desc"
-    ).all()
+    row, col = (
+        q_country.select("country__name", "client__name__dcount")
+        .add(country__left__client="country_id")
+        .filter(country__country_id__in__or=[1, 2], country__country_id__same=3)
+        .sort("country__name__desc")
+        .all()
+        .raw()
+    )
 
-    assert row == [('Mexico', 3), ('Brasil', 2)]
-    assert col == ['country__name', 'client__name__dcount']
+    assert row == [("Mexico", 3), ("Brasil", 2)]
+    assert col == ["country__name", "client__name__dcount"]
+
 
 def test_add_full_control_limit():
     m = QueryBox(model=Country)
@@ -340,22 +354,19 @@ def test_add_full_control_limit():
         .add(
             client__inner__country="country_id", client__inner__sale="client_id"
         )
-        .chunk(
-            limit=2
-        )
+        .chunk(limit=2)
         .all()
+        .raw()
     )
 
-    assert row == [
-        (1, 'Andres', 'F1', 'Mexico'), 
-        (1, 'Andres', 'F4', 'Mexico')
-    ]
+    assert row == [(1, "Andres", "F1", "Mexico"), (1, "Andres", "F4", "Mexico")]
     assert col == [
-        'client__client_id',
-        'client__name',
-        'sale__name',
-        'country__name'
+        "client__client_id",
+        "client__name",
+        "sale__name",
+        "country__name",
     ]
+
 
 def test_add_full_control_limit_offset():
     m = QueryBox(model=Country)
@@ -366,19 +377,19 @@ def test_add_full_control_limit_offset():
         .add(
             client__inner__country="country_id", client__inner__sale="client_id"
         )
-        .chunk(
-            limit=2, offset=2
-        )
+        .chunk(limit=2, offset=2)
         .all()
+        .raw()
     )
 
-    assert row == [(2, 'Lupita', 'F9', 'Mexico'), (3, 'Peke', 'F2', 'Brasil')]
+    assert row == [(2, "Lupita", "F9", "Mexico"), (3, "Peke", "F2", "Brasil")]
     assert col == [
-        'client__client_id',
-        'client__name',
-        'sale__name',
-        'country__name'
+        "client__client_id",
+        "client__name",
+        "sale__name",
+        "country__name",
     ]
+
 
 def test_select_ids():
     m = QueryBox(model=Country)
@@ -390,7 +401,49 @@ def test_select_ids():
             client__inner__country="country_id", client__inner__sale="client_id"
         )
         .all(ids=True)
+        .raw()
     )
 
     assert row == [(1,), (2,), (3,), (4,), (5,)]
-    assert col == ['client__client_id__distinct']
+    assert col == ["client__client_id__distinct"]
+
+
+def test_btwn_filter_align_label():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .filter(client__client_id__btwn=[2, 5])
+        .all(ids=True)
+        .raw(label=True, align=True)
+    )
+
+    assert row == [(2, 3, 4, 5)]
+    assert col == ["CLIENT ID"]
+
+
+def test_align_multiple_columns():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .filter(client__client_id__btwn=[2, 5])
+        .all()
+        .raw(label=True, align=True)
+    )
+
+    assert row == [
+        (2, 3, 3, 3, 3, 4, 5),
+        ("Lupita", "Peke", "Peke", "Peke", "Peke", "Polar", "Malteada"),
+        ("F9", "F2", "F5", "F6", "F8", "F3", "F7"),
+        ("Mexico", "Brasil", "Brasil", "Brasil", "Brasil", "Mexico", "Brasil"),
+    ]
+    assert col == ["CLIENT ID", "Client Name", "Sale Code", "Country"]

@@ -3,15 +3,13 @@ Declaracion De Clase QueryBox() Queries declarativos a traves
 de **kwargs y encadenamiento de metodos.
 """
 
-import ast
-
 # Modulos Propios
 import logging
 
 from ..orm.consulta import query
 from ..tools.functions import environment
 
-# .envs; log, dir, db
+# .envs; LOGS, Directory, Database file
 envs = environment()
 LOG = envs.get("log", "WARNING")
 
@@ -37,6 +35,7 @@ class QueryBox:
     Una sola función para LIMIT y OFFSET
     Ids obtenidos desde el ejecutable
     """
+
     # Pasar MODELO "instanciado" es obligatorio
     def __init__(self, model):
         self.model = model
@@ -46,12 +45,14 @@ class QueryBox:
         self.SE_LABEL = []
         self.SE_SELECT = []
         self.FROM = None
-        self.JOIN = None
-        self.FILTER = None
-        self.GROUP = None
-        self.ORDER = None
+        self.JOIN = []
+        self.FILTER = []
+        self.GROUP = []
+        self.ORDER = []
         self.LIMIT = None
         self.OFFSET = None
+        self.ROW = []
+        self.COL = []
 
     def select(self, *select):
         """
@@ -87,7 +88,7 @@ class QueryBox:
             "davg": "DAVG",
             "dcount": "DCOUNT",
             "distinct": "DISTINCT",
-            "": ""
+            "": "",
         }
 
         # Modelo
@@ -189,11 +190,19 @@ class QueryBox:
     def _IDS_(self, main_table) -> None:
 
         COLUMN_ID = f"{main_table}_id".lower()
-        
+        LABELS_LIST = (
+            self
+            .model
+            ._family[main_table]
+            ._metadata[main_table]["comments"]
+            .copy()
+        )
+        INDEX = LABELS_LIST.index(f"{main_table} id".upper())
         self.SE_SELECT = [
             {"table": main_table, "name": COLUMN_ID, "agg": "DISTINCT"}
         ]
         self.ORDER = [{"table": main_table, "name": COLUMN_ID, "order": "ASC"}]
+        self.SE_LABEL = [LABELS_LIST[INDEX]]
 
         return
 
@@ -269,11 +278,10 @@ class QueryBox:
     def _DYNAMIC_GROUP_(self):
 
         SELECT = self.SE_SELECT.copy()
-        
+
         # VALIDACION COLUMNAS DE SELECT
         GROUP = []
         for dicc in SELECT:
-
             AGG = dicc.get("agg", "")
             if not AGG:
                 TAB = dicc.get("table")
@@ -380,278 +388,169 @@ class QueryBox:
 
         return self
 
-    def filter(self, string):
+    def filter(self, **kwargs):
         """
-        Un solo string que permite pasar;
+        SINTAXIS:
 
-        1. Operadores comparativos
-        2. Operadores logicos
+        tabla__columna__operador = data
+        tabla__columna__operador__logico = data
 
-        COMPARATIVOS
-        {
-        "=",
-        "<",
-        "<=",
-        ">",
-        ">=",
-        "<>",
-        "IN",
-        "NOT IN",
-        "BETWEEN",
-        "IS",
-        "IS NOT",
-        "LIKE",
-        "NOT LIKE"
-        }
+        EJEMPLO:
+        client__name__same = "Omar"
+        country__name__in = ["Mexico", "France"]
 
-        LOGICOS
-        {'&&': 'AND', '||', 'OR'}
+        COMPLEJO:
+        filter.(client__name__same__and = "Omar", client__age__btwn = [10, 20])
 
-        Filtro basico:
+        SQL:
+        WHERE client.name = "Omar" AND client.age BETWEEN 10 AND 20;
 
-        Valores string deben llevar comillas;
+        Comparadores Validos:
 
-        - Si usas "" entonces string ''
-        - Si usas '' entonces string ""
+        OPERATOR = {same: "=", lt: "<", ltsm: "<=", gt: ">", gtsm: ">=",
+        diff:"<>", in: "IN", notin: "NOT IN", btwn: "BETWEEN",
+        is: "IS", isnot: "IS NOT", like: "LIKE", notlike: "NOT LIKE"}
 
-        Esto porque se valida a traves de la libreria 'ast'
-
-        sale__name__=__'omar'
-
-        Filtro con iterables:
-        sale__sale_id__in__[1, 2, 3]
-
-        Filtro con logicos
-        user__name__=__'Omar'^||^sale__name__=__'snoopy'
-
-        Filtro logico complejo
-        user__name__like__'%mar'
-        ^||^
-        sale__sale_id__in__[1, 2, 3, 5]
-        ^&&^
-        client__age__>__18
-
-        Sintaxis:
-        Separar con '__' tabla__columna__comparador__valor
-        Separar con '^' (clausula ^||/&&^ clausula)
-
-        METODO-> CASE SENSITIVE
+        LOGICS = {'AND', 'OR', ''}
         """
 
-        # WHITE LISTS
-        DB_TABLES = list(self.model._family.keys())
+        MODEL = self.model
+
+        DB_TABLES = list(MODEL._family.keys())
+
         OPERATORS = {
-            "=",
-            "<",
-            "<=",
-            ">",
-            ">=",
-            "<>",
-            "in",
-            "not in",
-            "between",
-            "is",
-            "is not",
-            "like",
-            "not like",
+            "same": "=",
+            "lt": "<",
+            "ltsm": "<=",
+            "gt": ">",
+            "gtsm": ">=",
+            "diff": "<>",
+            "in": "IN",
+            "notin": "NOT IN",
+            "btwn": "BETWEEN",
+            "is": "IS",
+            "isnot": "IS NOT",
+            "like": "LIKE",
+            "notlike": "NOT LIKE",
         }
-        LOGICALS = {"||", "&&", ""}
-        PARSE_LOGICS = {"||": "or", "&&": "and", "": ""}
 
-        # Preparar el string
-        if "__" not in string or not isinstance(string, str):
-            logger.critical(
-                "Make sure to passed a valid separator '__'. "
-                "Make sure you passed only one string. "
-                f"Passed string: {string}"
-            )
-            raise ValueError(type(string))
-        CLAUSES = string.split("__")
+        LOGICS = {"AND", "OR", ""}
 
-        SENTENCE = []
-        for DATO in CLAUSES:
-            if "^" not in DATO:
-                SENTENCE.append(DATO)
-            else:
-                COMPRESS = DATO.split("^")
-                SENTENCE.extend(COMPRESS)
+        DATATYPES = (list, tuple, str, int, float, bool)
 
-        # Anidar grupos de condicion
-        SEGMENTOS = []
-        COPIA = SENTENCE.copy()
-        while COPIA:
-            if len(COPIA) >= 5:
-                segmento = COPIA[:5]
-                if segmento[-1] in LOGICALS:
-                    SEGMENTOS.append(segmento)
-                    for element in segmento:
-                        COPIA.remove(element)
-                else:
-                    segmento = COPIA[:4]
-                    for element in segmento:
-                        COPIA.remove(element)
-            elif len(COPIA) >= 4:
-                segmento = COPIA[:4]
-                SEGMENTOS.append(segmento)
-                for element in segmento:
-                    COPIA.remove(element)
-            else:
+        if not kwargs:
+            return self
+
+        RESULT = []
+
+        for ARGUMENT, VALUE in kwargs.items():
+            if "__" not in ARGUMENT:
                 logger.critical(
-                    "Invalid quantity of elements passed. "
-                    f"error found in {COPIA}."
+                    f"Invalid separator in argument {ARGUMENT}. "
+                    "Valid separator '__'."
                 )
                 raise ValueError
 
-        # Armar diccionario | validar data
-        RESULT = []
-        for condition in SEGMENTOS:
-            if len(condition) == 5:
-                TAB = condition[0]
-                COL = condition[1]
-                OPR = condition[2]
-                DAT = condition[3]
-                LOG = condition[4]
-
-                try:
-                    VAL = ast.literal_eval(DAT)
-                except Exception as e:
-                    logger.critical(e)
-                    raise ValueError
-
-                if TAB not in DB_TABLES:
-                    logger.critical(
-                        f"Following table: {TAB} does not esist. "
-                        f"Passed condition: {condition}."
-                    )
-                    raise ValueError
-
-                COLUMNS = self.model._family[TAB]._metadata[TAB]["columns"]
-
-                if COL not in COLUMNS:
-                    logger.critical(
-                        f"Following column {COL} does not exist in {TAB}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError
-
-                if OPR not in OPERATORS:
-                    logger.critical(
-                        f"Invalid operator: {OPR}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError
-
-                if LOG not in LOGICALS:
-                    logger.critical(
-                        f"Invalid logical operator found in {LOG}. "
-                        f"Passed condition {condition}"
-                    )
-
-                validdate_iters = (
-                    (OPR in {"in", "not in", "between"}),
-                    (not isinstance(VAL, list)),
+            if not isinstance(VALUE, DATATYPES):
+                logger.critical(
+                    f"Invalid datatype passed {VALUE}. "
+                    f"Valid datatypes are {DATATYPES}."
                 )
-                if all(validdate_iters):
-                    logger.critical(
-                        f"Following operators {'in', 'not in', 'between'} "
-                        "must receive an iterable. 'List'. "
-                        f"Passed value: {VAL}, operator: {OPR}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError(type(VAL))
+                raise TypeError(type(VALUE))
 
-                RESULT.append(
-                    {
-                        "table": TAB,
-                        "column": COL,
-                        "operator": OPR,
-                        "value": VAL,
-                        "logic": PARSE_LOGICS[LOG],
-                    }
+            PARTS = ARGUMENT.split("__")
+
+            if len(PARTS) not in (3, 4):
+                logger.critical(
+                    "Invalid parts passed in argument. "
+                    "Valid lenght: '3' or '4' elements. "
+                    f"Passed parts are {PARTS}."
                 )
 
-            elif len(condition) == 4:
-                TAB = condition[0]
-                COL = condition[1]
-                OPR = condition[2]
-                DAT = condition[3]
+            # EXTRACCION DE ARGUMENTOS
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            OPR = PARTS[2]
+            try:
+                LOG = PARTS[3].upper()
+            except IndexError:
                 LOG = ""
 
-                try:
-                    VAL = ast.literal_eval(DAT)
-                except Exception as e:
-                    logger.critical(e)
-                    raise ValueError
-
-                if TAB not in DB_TABLES:
-                    logger.critical(
-                        f"Following table: {TAB} does not esist. "
-                        f"Passed condition: {condition}."
-                    )
-                    raise ValueError
-
-                COLUMNS = self.model._family[TAB]._metadata[TAB]["columns"]
-
-                if COL not in COLUMNS:
-                    logger.critical(
-                        f"Following column {COL} does not exist in {TAB}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError
-
-                if OPR not in OPERATORS:
-                    logger.critical(
-                        f"Invalid operator: {OPR}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError
-
-                if LOG not in LOGICALS:
-                    logger.critical(
-                        f"Invalid logical operator found in {LOG}. "
-                        f"Passed condition {condition}"
-                    )
-
-                validdate_iters = (
-                    (OPR in {"in", "not in", "between"}),
-                    (not isinstance(VAL, list)),
+            # VALIDAR ARGUMENTOS
+            if TAB not in DB_TABLES:
+                logger.critical(
+                    f"Invalid table passed in argument {ARGUMENT}. "
+                    f"Valid tables are: {DB_TABLES}"
                 )
-                if all(validdate_iters):
-                    logger.critical(
-                        f"Following operators {'in', 'not in', 'between'} "
-                        "must receive an iterable. 'List'. "
-                        f"Passed value: {VAL}, operator: {OPR}. "
-                        f"Passed condition: {condition}"
-                    )
-                    raise ValueError(type(VAL))
+                raise ValueError
 
+            COLUMNS = MODEL._family[TAB]._metadata[TAB]["columns"]
+            validate = (
+                (COL not in COLUMNS),
+                (OPR not in OPERATORS),
+                (LOG not in LOGICS),
+            )
+
+            if any(validate):
+                logger.critical(
+                    "Make sure passed arguments are validated. "
+                    f"Passed column: {COL}, valid ones: {COLUMNS}. "
+                    f"Passed operator: {OPR}, valid ones: {OPERATORS}. "
+                    f"Passed logic: {LOG}, valid ones: {LOGICS}."
+                )
+                raise ValueError
+
+            iterables = (
+                (OPR in {"in", "notin", "btwn"}),
+                (isinstance(VALUE, (list, tuple))),
+            )
+
+            if all(iterables):
+                if OPR == "btwn" and len(VALUE) == 2:
+                    RESULT.append(
+                        {
+                            "table": TAB,
+                            "column": COL,
+                            "operator": OPERATORS[OPR],
+                            "value": VALUE,
+                            "logic": LOG,
+                        }
+                    )
+                    continue
+                elif OPR in {"in", "notin"}:
+                    RESULT.append(
+                        {
+                            "table": TAB,
+                            "column": COL,
+                            "operator": OPERATORS[OPR],
+                            "value": VALUE,
+                            "logic": LOG,
+                        }
+                    )
+                    continue
+                else:
+                    logger.critical(
+                        f"Passed argument: {ARGUMENT} "
+                        "requires an iterable of 2 elements for data. "
+                        f"Passed data: {VALUE}"
+                    )
+            else:
                 RESULT.append(
                     {
                         "table": TAB,
                         "column": COL,
-                        "operator": OPR,
-                        "value": VAL,
-                        "logic": PARSE_LOGICS[LOG],
+                        "operator": OPERATORS[OPR],
+                        "value": VALUE,
+                        "logic": LOG,
                     }
                 )
 
-            else:
-                logger.critical(
-                    "Dimension of expression passed does not match. "
-                    "To create a filter you must specify (5 or 4) "
-                    "arguments. Following the next syntax."
-                    "table__column__operator__value / "
-                    "table__column__operator__value^logical^"
-                )
         self.FILTER = RESULT
         return self
 
     def sort(self, *sort):
 
-        VALID_ORDERS = {
-            "desc": "DESC",
-            "asc": "ASC"
-        }
+        VALID_ORDERS = {"desc": "DESC", "asc": "ASC"}
 
         MODEL = self.model
         DB_TABLES = list(MODEL._family.keys())
@@ -662,11 +561,7 @@ class QueryBox:
         RESULT = []
         # VALIDANDO ARGUMENTOS
         for ARG in sort:
-
-            validate = (
-                (not isinstance(ARG, str)),
-                ("__" not in ARG)
-            )
+            validate = ((not isinstance(ARG, str)), ("__" not in ARG))
 
             if any(validate):
                 logger.critical(
@@ -717,9 +612,7 @@ class QueryBox:
 
         if limit and not offset:
             if not isinstance(limit, int):
-                logger.critical(
-                    "Passed argument 'limit' must be an integer."
-                )
+                logger.critical("Passed argument 'limit' must be an integer.")
                 raise TypeError(type(limit))
 
             self.LIMIT = limit
@@ -781,9 +674,57 @@ class QueryBox:
             group_by=GROUP,
             order_by=ORDER,
             limit=LIMIT,
-            offset=OFFSET
+            offset=OFFSET,
         )
 
-        self.reset()
+        self.ROW = row
+        self.COL = col
 
-        return row, col
+        return self
+
+    def raw(self, label=False, align=False):
+
+        if not self.ROW and not self.COL:
+            return self.ROW, self.COL
+
+        ROWS = self.ROW
+        COLUMNS = self.COL
+
+        if label:
+            LABELS = self.SE_LABEL.copy()
+
+            # VALIDAR ETIQUETAS UNICAS
+            if len(set(LABELS)) != len(LABELS):
+                logger.warning(
+                    f"Possible duplicate column names. {LABELS}"
+                    "If you are using label=True, "
+                    "ensure you are not repeating "
+                    "the same name for the 'comment' argument "
+                    "when declaring table."
+                )
+                FIXED = []
+                COUNT = 0
+                for COL in COLUMNS:
+                    FIXED.append(
+                        f"{COL.split('__', 1)[0]}__"
+                        f"{COL.split('__', 1)[1]}__{COUNT}"
+                    )
+                    COUNT += 1
+                COLUMNS = FIXED
+            else:
+                COLUMNS = LABELS
+
+        if align:
+            ROWS = list(zip(*ROWS))
+
+        self.reset()
+        return ROWS, COLUMNS
+
+    def vector():
+        pass
+
+    def dictionary():
+        pass
+
+    def container():
+        pass
