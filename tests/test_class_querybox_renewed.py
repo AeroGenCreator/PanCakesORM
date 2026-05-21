@@ -447,3 +447,19 @@ def test_align_multiple_columns():
         ("Mexico", "Brasil", "Brasil", "Brasil", "Brasil", "Mexico", "Brasil"),
     ]
     assert col == ["CLIENT ID", "Client Name", "Sale Code", "Country"]
+
+
+def test_dictionary_output():
+    dicc = q_sale.all().dictionary(label=True)
+    
+    assert dicc == [
+        {'SALE ID': 1, 'Sale Code': 'F1', 'Cliente Rel': 1},
+        {'SALE ID': 2, 'Sale Code': 'F2', 'Cliente Rel': 3},
+        {'SALE ID': 3, 'Sale Code': 'F3', 'Cliente Rel': 4},
+        {'SALE ID': 4, 'Sale Code': 'F4', 'Cliente Rel': 1},
+        {'SALE ID': 5, 'Sale Code': 'F5', 'Cliente Rel': 3},
+        {'SALE ID': 6, 'Sale Code': 'F6', 'Cliente Rel': 3},
+        {'SALE ID': 7, 'Sale Code': 'F7', 'Cliente Rel': 5},
+        {'SALE ID': 8, 'Sale Code': 'F8', 'Cliente Rel': 3},
+        {'SALE ID': 9, 'Sale Code': 'F9', 'Cliente Rel': 2}
+    ]

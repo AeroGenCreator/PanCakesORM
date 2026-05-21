@@ -22,6 +22,31 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
+
+    # VALIDAR ETIQUETAS UNICAS
+    if len(set(labels)) != len(labels):
+        logger.warning(
+            f"Possible duplicate column names. {labels}"
+            "If you are using label=True, "
+            "ensure you are not repeating "
+            "the same name for the 'comment' argument "
+            "when declaring table."
+        )
+        FIXED = []
+        COUNT = 0
+        for COL in columns:
+            FIXED.append(
+                f"{COL.split('__', 1)[0]}__"
+                f"{COL.split('__', 1)[1]}__{COUNT}"
+            )
+            COUNT += 1
+        columns = FIXED
+        return columns
+    else:
+        columns = labels
+        return columns
+
 
 class QueryBox:
     """
@@ -688,42 +713,50 @@ class QueryBox:
             return self.ROW, self.COL
 
         ROWS = self.ROW
-        COLUMNS = self.COL
+        COLS = self.COL
 
         if label:
             LABELS = self.SE_LABEL.copy()
 
-            # VALIDAR ETIQUETAS UNICAS
-            if len(set(LABELS)) != len(LABELS):
-                logger.warning(
-                    f"Possible duplicate column names. {LABELS}"
-                    "If you are using label=True, "
-                    "ensure you are not repeating "
-                    "the same name for the 'comment' argument "
-                    "when declaring table."
-                )
-                FIXED = []
-                COUNT = 0
-                for COL in COLUMNS:
-                    FIXED.append(
-                        f"{COL.split('__', 1)[0]}__"
-                        f"{COL.split('__', 1)[1]}__{COUNT}"
-                    )
-                    COUNT += 1
-                COLUMNS = FIXED
-            else:
-                COLUMNS = LABELS
+            COLS = _NOT_DUPLICATED_LABELS_(
+                labels=LABELS,
+                columns=COLS
+            )
 
         if align:
             ROWS = list(zip(*ROWS))
 
         self.reset()
-        return ROWS, COLUMNS
+        return ROWS, COLS
+
+    def dictionary(self, label=False):
+
+        if not self.ROW and not self.COL:
+            return []
+
+        ROWS = self.ROW
+        COLS = self.COL
+
+        if label:
+            LABELS = self.SE_LABEL.copy()
+
+            COLS = _NOT_DUPLICATED_LABELS_(
+                labels=LABELS,
+                columns=COLS
+            )
+
+        if ROWS:
+            dicc = [dict(zip(COLS, r)) for r in ROWS]
+            self.reset()
+            return dicc
+        
+        else:
+            NONES = [None for C in COLS]
+            dicc = [dict(zip(COLS, NONES))]
+            self.reset()
+            return dicc
 
     def vector():
-        pass
-
-    def dictionary():
         pass
 
     def container():
