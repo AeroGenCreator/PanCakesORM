@@ -133,7 +133,7 @@ def query(
         "DSUM": "SUM(DISTINCT",
         "DAVG": "AVG(DISTINCT",
         "DCOUNT": "COUNT(DISTINCT",
-        "DISTINCT": "DISTINCT"
+        "DISTINCT": "DISTINCT("
     }
     LOGICS = {"AND", "OR", ""}
 

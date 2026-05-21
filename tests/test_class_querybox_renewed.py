@@ -182,11 +182,11 @@ def test_no_select_add_2():
     row, col = q_country.add(country__left__client="country_id").all()
 
     assert row == [
-        (1, "Mexico", 1, "Andres", 1),
-        (1, "Mexico", 2, "Lupita", 1),
-        (1, "Mexico", 4, "Polar", 1),
-        (2, "Brasil", 5, "Malteada", 2),
-        (2, "Brasil", 3, "Peke", 2),
+        (1, 'Mexico', 1, 'Andres', 1),
+        (1, 'Mexico', 2, 'Lupita', 1),
+        (1, 'Mexico', 4, 'Polar', 1),
+        (2, 'Brasil', 3, 'Peke', 2),
+        (2, 'Brasil', 5, 'Malteada', 2)
     ]
     assert col == [
         "country__country_id",
@@ -265,7 +265,7 @@ def test_filter_iterables():
         m.select("client__name")
         .add(client__inner__country="country_id")
         .filter(
-            "client__name__in__['Malteada', 'Polar']@&&@client__client_id__=__5"
+            "client__name__in__['Malteada', 'Polar']^&&^client__client_id__=__5"
         )
         .all()
     )
@@ -286,15 +286,15 @@ def test_add_full_control():
     )
 
     assert row == [
-        (1, "Andres", "F1", "Mexico"),
-        (3, "Peke", "F2", "Brasil"),
-        (4, "Polar", "F3", "Mexico"),
-        (1, "Andres", "F4", "Mexico"),
-        (3, "Peke", "F5", "Brasil"),
-        (3, "Peke", "F6", "Brasil"),
-        (5, "Malteada", "F7", "Brasil"),
-        (3, "Peke", "F8", "Brasil"),
-        (2, "Lupita", "F9", "Mexico"),
+        (1, 'Andres', 'F1', 'Mexico'),
+        (1, 'Andres', 'F4', 'Mexico'),
+        (2, 'Lupita', 'F9', 'Mexico'),
+        (3, 'Peke', 'F2', 'Brasil'),
+        (3, 'Peke', 'F5', 'Brasil'),
+        (3, 'Peke', 'F6', 'Brasil'),
+        (3, 'Peke', 'F8', 'Brasil'),
+        (4, 'Polar', 'F3', 'Mexico'),
+        (5, 'Malteada', 'F7', 'Brasil')
     ]
     assert col == [
         "client__client_id",
@@ -304,15 +304,93 @@ def test_add_full_control():
     ]
 
 
-def test_select_agg_1():
+def test_select_agg_distincti_count_group_by():
     m = QueryBox(model=Country)
     row, col = (
-        m.select("country__name__dcount")
+        m.select("country__name", "client__name__dcount")
         .add(
             client__inner__country="country_id", client__inner__sale="client_id"
         )
         .all()
     )
 
-    print(row)
-    print(col)
+    assert row == [('Brasil', 2), ('Mexico', 3)]
+    assert col == ['country__name', 'client__name__dcount']
+
+def test_order_by_add_select_agg():
+    row, col = q_country.select(
+        "country__name","client__name__dcount"
+    ).add(
+        country__left__client="country_id"
+    ).filter(
+        "country__country_id__in__[1, 2]^||^country__country_id__=__3"
+    ).sort(
+        "country__name__desc"
+    ).all()
+
+    assert row == [('Mexico', 3), ('Brasil', 2)]
+    assert col == ['country__name', 'client__name__dcount']
+
+def test_add_full_control_limit():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .chunk(
+            limit=2
+        )
+        .all()
+    )
+
+    assert row == [
+        (1, 'Andres', 'F1', 'Mexico'), 
+        (1, 'Andres', 'F4', 'Mexico')
+    ]
+    assert col == [
+        'client__client_id',
+        'client__name',
+        'sale__name',
+        'country__name'
+    ]
+
+def test_add_full_control_limit_offset():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .chunk(
+            limit=2, offset=2
+        )
+        .all()
+    )
+
+    assert row == [(2, 'Lupita', 'F9', 'Mexico'), (3, 'Peke', 'F2', 'Brasil')]
+    assert col == [
+        'client__client_id',
+        'client__name',
+        'sale__name',
+        'country__name'
+    ]
+
+def test_select_ids():
+    m = QueryBox(model=Country)
+    row, col = (
+        m.select(
+            "client__client_id", "client__name", "sale__name", "country__name"
+        )
+        .add(
+            client__inner__country="country_id", client__inner__sale="client_id"
+        )
+        .all(ids=True)
+    )
+
+    assert row == [(1,), (2,), (3,), (4,), (5,)]
+    assert col == ['client__client_id__distinct']

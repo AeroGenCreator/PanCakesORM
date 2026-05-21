@@ -26,13 +26,23 @@ logger = logging.getLogger(__name__)
 
 
 class QueryBox:
+    """
+    QueryBox v2.
+    Mejora en la declaracion de queries.
+    Ahora se permite DISTINCT
+    Filtros declarativos
+    Joins declarativos
+    Manejo de NO SELECT
+    Manejo dinamico de GROUP BY
+    Una sola función para LIMIT y OFFSET
+    Ids obtenidos desde el ejecutable
+    """
     # Pasar MODELO "instanciado" es obligatorio
     def __init__(self, model):
         self.model = model
         self.reset()
 
     def reset(self):
-        self.DC_LABEL = {}
         self.SE_LABEL = []
         self.SE_SELECT = []
         self.FROM = None
@@ -41,10 +51,7 @@ class QueryBox:
         self.GROUP = None
         self.ORDER = None
         self.LIMIT = None
-        self.OFF = None
-        self.IDS = False
-        self.ROW = None
-        self.COL = None
+        self.OFFSET = None
 
     def select(self, *select):
         """
@@ -179,7 +186,18 @@ class QueryBox:
 
         return self
 
-    def _NO_SELECT_(self) -> None:
+    def _IDS_(self, main_table) -> None:
+
+        COLUMN_ID = f"{main_table}_id".lower()
+        
+        self.SE_SELECT = [
+            {"table": main_table, "name": COLUMN_ID, "agg": "DISTINCT"}
+        ]
+        self.ORDER = [{"table": main_table, "name": COLUMN_ID, "order": "ASC"}]
+
+        return
+
+    def _NO_SELECT_(self):
 
         MODEL = self.model
         MAINT = self.model._table
@@ -247,6 +265,24 @@ class QueryBox:
 
                     self.SE_LABEL.extend(LABS2)
                     self.SE_SELECT.extend(listado2)
+
+    def _DYNAMIC_GROUP_(self):
+
+        SELECT = self.SE_SELECT.copy()
+        
+        # VALIDACION COLUMNAS DE SELECT
+        GROUP = []
+        for dicc in SELECT:
+
+            AGG = dicc.get("agg", "")
+            if not AGG:
+                TAB = dicc.get("table")
+                COL = dicc.get("name")
+
+                GROUP.append({"table": TAB, "name": COL})
+
+        self.GROUP = GROUP
+        return
 
     def add(self, **kwargs):
         """
@@ -386,18 +422,18 @@ class QueryBox:
         sale__sale_id__in__[1, 2, 3]
 
         Filtro con logicos
-        user__name__=__'Omar'@||@sale__name__=__'snoopy'
+        user__name__=__'Omar'^||^sale__name__=__'snoopy'
 
         Filtro logico complejo
         user__name__like__'%mar'
-        @||@
+        ^||^
         sale__sale_id__in__[1, 2, 3, 5]
-        @&&@
+        ^&&^
         client__age__>__18
 
         Sintaxis:
         Separar con '__' tabla__columna__comparador__valor
-        Separar con '@' (clausula ||/&& clausula)
+        Separar con '^' (clausula ^||/&&^ clausula)
 
         METODO-> CASE SENSITIVE
         """
@@ -434,10 +470,10 @@ class QueryBox:
 
         SENTENCE = []
         for DATO in CLAUSES:
-            if "@" not in DATO:
+            if "^" not in DATO:
                 SENTENCE.append(DATO)
             else:
-                COMPRESS = DATO.split("@")
+                COMPRESS = DATO.split("^")
                 SENTENCE.extend(COMPRESS)
 
         # Anidar grupos de condicion
@@ -605,12 +641,111 @@ class QueryBox:
                     "To create a filter you must specify (5 or 4) "
                     "arguments. Following the next syntax."
                     "table__column__operator__value / "
-                    "table__column__operator__value@logical@"
+                    "table__column__operator__value^logical^"
                 )
         self.FILTER = RESULT
         return self
 
-    def all(self):
+    def sort(self, *sort):
+
+        VALID_ORDERS = {
+            "desc": "DESC",
+            "asc": "ASC"
+        }
+
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
+
+        if not sort:
+            return self
+
+        RESULT = []
+        # VALIDANDO ARGUMENTOS
+        for ARG in sort:
+
+            validate = (
+                (not isinstance(ARG, str)),
+                ("__" not in ARG)
+            )
+
+            if any(validate):
+                logger.critical(
+                    f"Make sure passed arguments are strings {ARG} "
+                    f"and the usage of proper separator '__'."
+                )
+                raise ValueError(type(ARG))
+
+            PARTS = ARG.split("__")
+            if len(PARTS) != 3:
+                logger.critical(
+                    "You must specify: "
+                    f"table__column__order. Passed pattern: {PARTS}"
+                )
+                raise ValueError
+
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            DIR = PARTS[2]
+
+            if TAB not in DB_TABLES:
+                logger.critical(
+                    f"The following passed table {TAB} does not exist "
+                    f"in DATABASE. Valid tables are: {DB_TABLES}"
+                )
+                raise ValueError
+
+            COLUMNS = MODEL._family[TAB]._metadata[TAB]["columns"]
+
+            purge = ((COL not in COLUMNS), (DIR not in VALID_ORDERS))
+            if any(purge):
+                logger.critical(
+                    f"Make sure column {COL} exists. "
+                    f"Make sure order value is valid {DIR}. "
+                    f"Valid columns are: {COLUMNS}. Valid orders are: "
+                    f"{VALID_ORDERS}."
+                )
+
+            RESULT.append({"table": TAB, "name": COL, "order": DIR})
+
+        self.ORDER = RESULT
+        return self
+
+    def chunk(self, offset=None, limit=None):
+
+        if not offset and not limit:
+            return self
+
+        if limit and not offset:
+            if not isinstance(limit, int):
+                logger.critical(
+                    "Passed argument 'limit' must be an integer."
+                )
+                raise TypeError(type(limit))
+
+            self.LIMIT = limit
+            self.OFFSET = None
+
+        elif offset and not limit:
+            logger.critical(
+                "Invalid structure. When invokin a segmented query "
+                "you can pass only 'limit' argument but it is not valid"
+                "passin 'offset' without 'limit'."
+            )
+            raise ValueError
+
+        else:
+            if not isinstance(limit, int) or not isinstance(offset, int):
+                logger.critical(
+                    "Make sure both passed arguments are integers. "
+                    f"Limit {limit}. Offset {offset}."
+                )
+                raise TypeError
+            self.LIMIT = limit
+            self.OFFSET = offset
+
+        return self
+
+    def all(self, ids=False):
 
         # RUTA DB
         PATH = self.model._db_file
@@ -622,16 +757,31 @@ class QueryBox:
         if not self.SE_SELECT:
             self._NO_SELECT_()
 
+        # OBTNER IDS DE MAIN TABLE DEL QUERY (Prioridad de select)
+        if ids:
+            self._IDS_(main_table=FROM)
+
+        # OBTENCION DE AGRUPACIÓN
+        self._DYNAMIC_GROUP_()
+
         # VALIDAR OPCIONALES
         JOIN = None if not self.JOIN else self.JOIN
         FILTER = None if not self.FILTER else self.FILTER
+        GROUP = None if not self.GROUP else self.GROUP
+        ORDER = None if not self.ORDER else self.ORDER
+        LIMIT = None if not self.LIMIT else self.LIMIT
+        OFFSET = None if not self.OFFSET else self.OFFSET
 
         row, col = query(
             db_path=PATH,
             select=self.SE_SELECT,
             _from=FROM,
             join=JOIN,
-            condition=FILTER
+            condition=FILTER,
+            group_by=GROUP,
+            order_by=ORDER,
+            limit=LIMIT,
+            offset=OFFSET
         )
 
         self.reset()
