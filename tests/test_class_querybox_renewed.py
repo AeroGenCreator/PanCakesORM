@@ -64,6 +64,17 @@ class Sale(PanCakesORM):
     )
 
 
+class Empty(PanCakesORM):
+    _db_dir = dir_
+    _db_file = file
+
+    _table = "empty"
+    _depends = "self"
+
+    name1 = datatype.Char(comment="Empty Col 1")
+    name2 = datatype.Char(comment="Empty Col 2")
+
+
 insert(
     db_path=file,
     params=[
@@ -451,15 +462,107 @@ def test_align_multiple_columns():
 
 def test_dictionary_output():
     dicc = q_sale.all().dictionary(label=True)
-    
+
     assert dicc == [
-        {'SALE ID': 1, 'Sale Code': 'F1', 'Cliente Rel': 1},
-        {'SALE ID': 2, 'Sale Code': 'F2', 'Cliente Rel': 3},
-        {'SALE ID': 3, 'Sale Code': 'F3', 'Cliente Rel': 4},
-        {'SALE ID': 4, 'Sale Code': 'F4', 'Cliente Rel': 1},
-        {'SALE ID': 5, 'Sale Code': 'F5', 'Cliente Rel': 3},
-        {'SALE ID': 6, 'Sale Code': 'F6', 'Cliente Rel': 3},
-        {'SALE ID': 7, 'Sale Code': 'F7', 'Cliente Rel': 5},
-        {'SALE ID': 8, 'Sale Code': 'F8', 'Cliente Rel': 3},
-        {'SALE ID': 9, 'Sale Code': 'F9', 'Cliente Rel': 2}
+        {"SALE ID": 1, "Sale Code": "F1", "Cliente Rel": 1},
+        {"SALE ID": 2, "Sale Code": "F2", "Cliente Rel": 3},
+        {"SALE ID": 3, "Sale Code": "F3", "Cliente Rel": 4},
+        {"SALE ID": 4, "Sale Code": "F4", "Cliente Rel": 1},
+        {"SALE ID": 5, "Sale Code": "F5", "Cliente Rel": 3},
+        {"SALE ID": 6, "Sale Code": "F6", "Cliente Rel": 3},
+        {"SALE ID": 7, "Sale Code": "F7", "Cliente Rel": 5},
+        {"SALE ID": 8, "Sale Code": "F8", "Cliente Rel": 3},
+        {"SALE ID": 9, "Sale Code": "F9", "Cliente Rel": 2},
+    ]
+
+
+def test_container_output_si_label():
+    container = (
+        q_sale.add(sale__inner__client="client_id").all().container(label=True)
+    )
+
+    assert container == [
+        {
+            "sale": {
+                "SALE ID": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "Sale Code": [
+                    "F1",
+                    "F2",
+                    "F3",
+                    "F4",
+                    "F5",
+                    "F6",
+                    "F7",
+                    "F8",
+                    "F9",
+                ],
+                "Cliente Rel": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            },
+            "client": {
+                "CLIENT ID": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "Client Name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "Country Rel": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            },
+            "positions": {
+                "sale": {"SALE ID": 0, "Sale Code": 1, "Cliente Rel": 2},
+                "client": {"Client Name": 1, "CLIENT ID": 0, "Country Rel": 2},
+            },
+        }
+    ]
+
+
+def test_container_output_no_label():
+    container = (
+        q_sale.add(sale__inner__client="client_id").all().container(label=False)
+    )
+
+    assert container == [
+        {
+            "client": {
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            },
+            "sale": {
+                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            },
+            "positions": {
+                "client": {"name": 1, "client_id": 0, "country_id": 2},
+                "sale": {"sale_id": 0, "name": 1, "client_id": 2},
+            },
+        }
+    ]
+
+
+def test_container_empty_table():
+    m = QueryBox(Empty)
+    container = m.all().container()
+
+    assert container == [
+        {
+            "empty": {"empty_id": [None], "name1": [None], "name2": [None]},
+            "positions": {"empty": {"empty_id": 0, "name1": 1, "name2": 2}},
+        }
     ]

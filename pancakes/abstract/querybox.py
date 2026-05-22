@@ -22,6 +22,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
 
     # VALIDAR ETIQUETAS UNICAS
@@ -37,8 +38,7 @@ def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
         COUNT = 0
         for COL in columns:
             FIXED.append(
-                f"{COL.split('__', 1)[0]}__"
-                f"{COL.split('__', 1)[1]}__{COUNT}"
+                f"{COL.split('__', 1)[0]}__{COL.split('__', 1)[1]}__{COUNT}"
             )
             COUNT += 1
         columns = FIXED
@@ -46,6 +46,34 @@ def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
     else:
         columns = labels
         return columns
+
+
+def _TRANSPOSITION_(tables, columns, rows, positions, chart, label):
+
+    # Validar alineacion de datos
+    if len(rows[0]) != len(columns):
+        logger.critical(
+            "Unexpected received data while transposition. "
+            "Lenght missmatch. Posible bug when query DATABASE. "
+            f"Column lenght: {len(columns)}, row lenght {len(rows[0])}"
+        )
+        raise ValueError
+
+    TRANS = list(zip(*rows))
+    MDICC = {}
+    SETTAB = set(tables)
+
+    for TAB in SETTAB:
+        MDICC[TAB] = {}
+    for index, (TAB, COL) in enumerate(zip(tables, columns)):
+        if label:
+            CURCOL = chart[COL]
+            MDICC[TAB].update({CURCOL: list(TRANS[index])})
+        else:
+            MDICC[TAB].update({COL.split("__", 1)[1]: list(TRANS[index])})
+    MDICC["positions"] = positions
+
+    return [MDICC]
 
 
 class QueryBox:
@@ -59,6 +87,10 @@ class QueryBox:
     Manejo dinamico de GROUP BY
     Una sola función para LIMIT y OFFSET
     Ids obtenidos desde el ejecutable
+    SALIDAS:
+    - raw
+    - dictionary
+    - container (Perfecta integracion con flet)
     """
 
     # Pasar MODELO "instanciado" es obligatorio
@@ -216,9 +248,7 @@ class QueryBox:
 
         COLUMN_ID = f"{main_table}_id".lower()
         LABELS_LIST = (
-            self
-            .model
-            ._family[main_table]
+            self.model._family[main_table]
             ._metadata[main_table]["comments"]
             .copy()
         )
@@ -712,16 +742,13 @@ class QueryBox:
         if not self.ROW and not self.COL:
             return self.ROW, self.COL
 
-        ROWS = self.ROW
-        COLS = self.COL
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
 
         if label:
             LABELS = self.SE_LABEL.copy()
 
-            COLS = _NOT_DUPLICATED_LABELS_(
-                labels=LABELS,
-                columns=COLS
-            )
+            COLS = _NOT_DUPLICATED_LABELS_(labels=LABELS, columns=COLS)
 
         if align:
             ROWS = list(zip(*ROWS))
@@ -734,30 +761,77 @@ class QueryBox:
         if not self.ROW and not self.COL:
             return []
 
-        ROWS = self.ROW
-        COLS = self.COL
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
 
         if label:
             LABELS = self.SE_LABEL.copy()
 
-            COLS = _NOT_DUPLICATED_LABELS_(
-                labels=LABELS,
-                columns=COLS
-            )
+            COLS = _NOT_DUPLICATED_LABELS_(labels=LABELS, columns=COLS)
 
         if ROWS:
             dicc = [dict(zip(COLS, r)) for r in ROWS]
             self.reset()
             return dicc
-        
+
         else:
             NONES = [None for C in COLS]
             dicc = [dict(zip(COLS, NONES))]
             self.reset()
             return dicc
 
-    def vector():
-        pass
+    def container(self, label=False):
 
-    def container():
-        pass
+        if not self.ROW and not self.COL:
+            return []
+
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
+        LABELS = self.SE_LABEL.copy()
+
+        # OBTENCION DE TABLAS PARA TODO EL QUERY
+        TABLES = [C.split("__", 1)[0] for C in COLS]
+        SETTAB = set(TABLES)
+        # COLUMNAS SIN SUFIJO "tabla__"
+        SLT_COLS = [C.split("__", 1)[1] for C in COLS]
+        # MAPA {tabla__columna: frontend}
+        MAP = dict(zip(COLS, LABELS))
+        # MAPA DE POSICION DE COLUMNA POR TABLA DEL QUERY
+        POSITIONS = {}
+
+        for TAB in SETTAB:
+            POSITIONS[TAB] = {}
+            ORDER = self.model._family[TAB]._metadata[TAB]["columns"]
+            for COL in SLT_COLS:
+                try:
+                    index = ORDER.index(COL)
+                    if label:
+                        POSITIONS[TAB].update(
+                            {MAP[TAB + "__" + COL]: index}
+                        )
+                    else:
+                        POSITIONS[TAB].update({COL: index})
+                except ValueError:
+                    continue
+        if ROWS:
+            RESULT = _TRANSPOSITION_(
+                tables=TABLES,
+                columns=COLS,
+                rows=ROWS,
+                positions=POSITIONS,
+                chart=MAP,
+                label=label,
+            )
+            return RESULT
+
+        else:
+            TUPLA = tuple([None for C in COLS])
+            RESULT = _TRANSPOSITION_(
+                    tables=TABLES,
+                    columns=COLS,
+                    rows=[TUPLA],
+                    positions=POSITIONS,
+                    chart=MAP,
+                    label=label
+                )
+            return RESULT
