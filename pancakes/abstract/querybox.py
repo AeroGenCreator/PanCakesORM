@@ -491,7 +491,7 @@ class QueryBox:
                     match_found = True
                     break
 
-                # Caso B: tab_b ya es conocida, pero tab_a es NUEVA (Invertimos para SQL)
+                # Caso B: tab_b ya es conocida, pero tab_a es NUEVA - Invertir
                 elif (
                     tab_b in available_tables and tab_a not in available_tables
                 ):
@@ -502,8 +502,7 @@ class QueryBox:
                     match_found = True
                     break
 
-                # Caso C: Ambas tablas ya están en la consulta.
-                # Esto significa que es una relación redundante para esta estructura lineal.
+                # Caso C: Ambas tablas ya están en la consulta. (Redundancia)
                 elif tab_a in available_tables and tab_b in available_tables:
                     possible_edges.remove(edge)
                     match_found = (
@@ -678,7 +677,63 @@ class QueryBox:
         self.FILTER = RESULT
         return self
 
+    def group(self, **kwargs):
+        """
+        Agrupar pasando el nombre de la tabla como argumento
+        y el nombre de la columna como valor:
+
+        Ej: category="name"
+
+        """
+
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
+        DB_COLUMNS = []
+        for TAB in DB_TABLES:
+            columns =MODEL._family[TAB]._metadata[TAB]["columns"]
+            DB_COLUMNS.extend(columns)
+
+        if not kwargs:
+            return self
+
+        RESULT = []
+
+        for TAB, COL in kwargs.items():
+
+            validate = (
+                (TAB not in DB_TABLES),
+                (not isinstance(COL, str)),
+                (COL not in DB_COLUMNS)
+            )
+
+            if any(validate):
+                logger.critical(
+                    "Make sure the following contidions are True: "
+                    f"Valid tables {DB_TABLES}, you passed {TAB}. "
+                    f"Valid columns {DB_COLUMNS}, you passed {COL}"
+                )
+                raise ValueError
+
+            dicc = {
+                "table": TAB,
+                "name": COL
+            }
+
+            RESULT.append(dicc)
+
+        self.group = RESULT
+        return self
+
     def sort(self, *sort):
+        """
+        Ordenar pasando strings, ...
+
+        Sintaxis
+        tabla__columna__order
+
+        Ordenes:
+        {"desc": "DESC", "asc": "ASC"}
+        """
 
         VALID_ORDERS = {"desc": "DESC", "asc": "ASC"}
 

@@ -808,3 +808,18 @@ def test_final_link():
             "Recipe Ingredient": "Salt",
         },
     ]
+
+
+def test_group_by():
+    m = QueryBox(Product)
+    dicc = (
+        m.link("recipe", "category", "recipe_product_line")
+        .select("recipe__recipe_ingredient__dcount",
+            "category__category"
+        )
+        .group(category="category")
+        .all()
+        .dictionary(label=True)
+    )
+
+    assert dicc == [{'Recipe Ingredient DCOUNT': 3, 'Category': 'Dessert'}]

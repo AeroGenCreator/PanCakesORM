@@ -8,4 +8,3 @@ from . import insert
 from . import update
 from . import delete
 from . import query
-from . import consulta
