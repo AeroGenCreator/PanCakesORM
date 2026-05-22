@@ -513,7 +513,7 @@ def test_container_output_si_label():
                 ],
                 "Country Rel": [1, 2, 1, 1, 2, 2, 2, 2, 1],
             },
-            "positions": {
+            "@positions@": {
                 "sale": {"SALE ID": 0, "Sale Code": 1, "Cliente Rel": 2},
                 "client": {"Client Name": 1, "CLIENT ID": 0, "Country Rel": 2},
             },
@@ -548,7 +548,7 @@ def test_container_output_no_label():
                 "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
                 "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
             },
-            "positions": {
+            "@positions@": {
                 "client": {"name": 1, "client_id": 0, "country_id": 2},
                 "sale": {"sale_id": 0, "name": 1, "client_id": 2},
             },
@@ -563,6 +563,248 @@ def test_container_empty_table():
     assert container == [
         {
             "empty": {"empty_id": [None], "name1": [None], "name2": [None]},
-            "positions": {"empty": {"empty_id": 0, "name1": 1, "name2": 2}},
+            "@positions@": {"empty": {"empty_id": 0, "name1": 1, "name2": 2}},
         }
+    ]
+
+
+def test_link_one_table():
+    m = QueryBox(Client)
+
+    container = m.link("country").all().container()
+
+    assert container == [
+        {
+            "country": {
+                "country_id": [1, 1, 2, 1, 2],
+                "name": ["Mexico", "Mexico", "Brasil", "Mexico", "Brasil"],
+            },
+            "client": {
+                "client_id": [1, 2, 3, 4, 5],
+                "name": ["Andres", "Lupita", "Peke", "Polar", "Malteada"],
+                "country_id": [1, 1, 2, 1, 2],
+            },
+            "@positions@": {
+                "country": {"name": 1, "country_id": 0},
+                "client": {"client_id": 0, "name": 1, "country_id": 2},
+            },
+        }
+    ]
+
+
+def test_link_two_tables():
+    m = QueryBox(Client)
+
+    container = m.link("country", "sale").all().container()
+
+    assert container == [
+        {
+            "sale": {
+                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            },
+            "country": {
+                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "name": [
+                    "Mexico",
+                    "Brasil",
+                    "Mexico",
+                    "Mexico",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Mexico",
+                ],
+            },
+            "client": {
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            },
+            "@positions@": {
+                "sale": {"client_id": 2, "name": 1, "sale_id": 0},
+                "country": {"name": 1, "country_id": 0},
+                "client": {"client_id": 0, "name": 1, "country_id": 2},
+            },
+        }
+    ]
+
+
+# ----------------------------------------------------
+# ESTA SECCION TESTE EL METODO LINK SOBRE UN CASO REAL
+# ----------------------------------------------------
+
+# ----------------------------------------------------
+
+"""-*- Test Self oriented link -*-"""
+
+
+class Category(PanCakesORM):
+    _table = "category"
+    _depends = "self"
+    _db_dir = dir_
+    _db_file = file
+
+    category = datatype.Char(comment="Category", unique=True)
+
+
+class Product(PanCakesORM):
+    _table = "product"
+    _depends = ["category"]
+    _group_constraint = ("product_name", "category_id")
+    _db_dir = dir_
+    _db_file = file
+
+    product_name = datatype.Char(comment="Product Name", unique=True)
+    category_id = datatype.ForeignKey(
+        comment="Product Category Rel",
+        second_table="category",
+        column_id="category_id",
+    )
+
+
+class Recipe(PanCakesORM):
+    _table = "recipe"
+    _depends = ["self"]
+    _db_dir = dir_
+    _db_file = file
+
+    recipe_ingredient = datatype.Char(comment="Recipe Ingredient", unique=True)
+
+
+class RecipeProductLine(PanCakesORM):
+    _table = "recipe_product_line"
+    _depends = ["recipe", "product", "category"]
+    _group_constraint = ("recipe_id", "product_id", "category_id")
+    _db_dir = dir_
+    _db_file = file
+
+    recipe_id = datatype.ForeignKey(
+        comment="Recipe Line Rel", second_table="recipe", column_id="recipe_id"
+    )
+    product_id = datatype.ForeignKey(
+        comment="Product Line Rel",
+        second_table="product",
+        column_id="product_id",
+    )
+    category_id = datatype.ForeignKey(
+        comment="Category Line Rel",
+        second_table="category",
+        column_id="category_id",
+    )
+
+
+Category.i(category=[(None, "Dessert")])
+Product.i(product=[(None, "Concha", 1)])
+Recipe.i(recipe=[(None, "Sugar"), (None, "Milk"), (None, "Salt")])
+RecipeProductLine.i(
+    recipe_product_line=[(None, 1, 1, 1), (None, 2, 1, 1), (None, 3, 1, 1)]
+)
+
+
+def test_real_1():
+    m = QueryBox(Category)
+    dicc = m.all().dictionary(label=True)
+
+    assert dicc == [{"CATEGORY ID": 1, "Category": "Dessert"}]
+
+
+def test_real_2():
+    m = QueryBox(Product)
+    dicc2 = (
+        m.select("product__product_name", "category__category")
+        .link("category")
+        .all()
+        .dictionary(label=True)
+    )
+    assert dicc2 == [{"Product Name": "Concha", "Category": "Dessert"}]
+
+
+def test_real_3():
+    m = QueryBox(Recipe)
+    dicc3 = m.all().dictionary(label=True)
+    assert dicc3 == [
+        {"RECIPE ID": 1, "Recipe Ingredient": "Sugar"},
+        {"RECIPE ID": 2, "Recipe Ingredient": "Milk"},
+        {"RECIPE ID": 3, "Recipe Ingredient": "Salt"},
+    ]
+
+
+def test_real_4():
+    m = QueryBox(RecipeProductLine)
+    dicc4 = (
+        m.link("product", "category", "recipe")
+        .select(
+            "category__category",
+            "product__product_name",
+            "recipe__recipe_ingredient",
+        )
+        .all()
+        .dictionary(label=True)
+    )
+
+    assert dicc4 == [
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Milk",
+        },
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Salt",
+        },
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Sugar",
+        },
+    ]
+
+
+def test_final_link():
+    m = QueryBox(Product)
+    dicc5 = (
+        m.link("recipe", "category", "recipe_product_line")
+        .select(
+            "recipe_product_line__recipe_product_line_id",
+            "category__category",
+            "product__product_name",
+            "recipe__recipe_ingredient",
+        )
+        .all()
+        .dictionary(label=True)
+    )
+
+    assert dicc5 == [
+        {
+            "RECIPE_PRODUCT_LINE ID": 1,
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Sugar",
+        },
+        {
+            "RECIPE_PRODUCT_LINE ID": 2,
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Milk",
+        },
+        {
+            "RECIPE_PRODUCT_LINE ID": 3,
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Salt",
+        },
     ]

@@ -7,6 +7,7 @@ de **kwargs y encadenamiento de metodos.
 import logging
 
 from ..orm.consulta import query
+from ..sql.datatype import ForeignKey
 from ..tools.functions import environment
 
 # .envs; LOGS, Directory, Database file
@@ -71,7 +72,7 @@ def _TRANSPOSITION_(tables, columns, rows, positions, chart, label):
             MDICC[TAB].update({CURCOL: list(TRANS[index])})
         else:
             MDICC[TAB].update({COL.split("__", 1)[1]: list(TRANS[index])})
-    MDICC["positions"] = positions
+    MDICC["@positions@"] = positions
 
     return [MDICC]
 
@@ -443,6 +444,80 @@ class QueryBox:
 
         return self
 
+    def link(self, *tables):
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
+        MAIN = MODEL._table
+
+        if not tables:
+            return self
+
+        # 1. Validar que todas las tablas solicitadas existan
+        RELATIONS = list(tables)
+        for TAB in RELATIONS:
+            if TAB not in DB_TABLES:
+                logger.critical(f"La tabla {TAB} no existe en el modelo.")
+                raise ValueError(f"Tabla inválida: {TAB}")
+
+        # Incluimos MAIN para analizar sus relaciones
+        ALL_TABLES = RELATIONS + [MAIN]
+
+        # 2. Extraer TODAS las relaciones posibles entre estas tablas
+        possible_edges = []
+        for TAB in ALL_TABLES:
+            FIELDS = MODEL._family[TAB]._metadata[TAB]["fields"]
+            for field in FIELDS:
+                if isinstance(field, ForeignKey):
+                    second_table = getattr(field, "second_table")
+                    if second_table in ALL_TABLES:
+                        name = field._name
+                        possible_edges.append((TAB, second_table, name))
+
+        # 3. Ordenar las relaciones evitando caminos redundantes
+        available_tables = {MAIN}
+        ordered_kwargs = {}
+
+        while possible_edges:
+            match_found = False
+            for edge in list(possible_edges):
+                tab_a, tab_b, field_name = edge
+
+                # Caso A: tab_a ya es conocida, pero tab_b es NUEVA
+                if tab_a in available_tables and tab_b not in available_tables:
+                    arg = f"{tab_a}__inner__{tab_b}"
+                    ordered_kwargs[arg] = field_name
+                    available_tables.add(tab_b)
+                    possible_edges.remove(edge)
+                    match_found = True
+                    break
+
+                # Caso B: tab_b ya es conocida, pero tab_a es NUEVA (Invertimos para SQL)
+                elif (
+                    tab_b in available_tables and tab_a not in available_tables
+                ):
+                    arg = f"{tab_b}__inner__{tab_a}"
+                    ordered_kwargs[arg] = field_name
+                    available_tables.add(tab_a)
+                    possible_edges.remove(edge)
+                    match_found = True
+                    break
+
+                # Caso C: Ambas tablas ya están en la consulta.
+                # Esto significa que es una relación redundante para esta estructura lineal.
+                elif tab_a in available_tables and tab_b in available_tables:
+                    possible_edges.remove(edge)
+                    match_found = (
+                        True  # Marcamos progreso para que continúe el bucle
+                    )
+                    break
+
+            if not match_found:
+                break
+
+        # 4. Enviar los kwargs limpios y ordenados
+        self.add(**ordered_kwargs)
+        return self
+
     def filter(self, **kwargs):
         """
         SINTAXIS:
@@ -693,6 +768,11 @@ class QueryBox:
 
         return self
 
+    def count(self):
+        QUERY = f"{self.model._table}__{self.model._table}_id__count"
+        row, col = self.select(QUERY).all().raw()
+        return row[0]
+
     def all(self, ids=False):
 
         # RUTA DB
@@ -806,9 +886,7 @@ class QueryBox:
                 try:
                     index = ORDER.index(COL)
                     if label:
-                        POSITIONS[TAB].update(
-                            {MAP[TAB + "__" + COL]: index}
-                        )
+                        POSITIONS[TAB].update({MAP[TAB + "__" + COL]: index})
                     else:
                         POSITIONS[TAB].update({COL: index})
                 except ValueError:
@@ -827,11 +905,11 @@ class QueryBox:
         else:
             TUPLA = tuple([None for C in COLS])
             RESULT = _TRANSPOSITION_(
-                    tables=TABLES,
-                    columns=COLS,
-                    rows=[TUPLA],
-                    positions=POSITIONS,
-                    chart=MAP,
-                    label=label
-                )
+                tables=TABLES,
+                columns=COLS,
+                rows=[TUPLA],
+                positions=POSITIONS,
+                chart=MAP,
+                label=label,
+            )
             return RESULT
