@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pancakes.models.model import PanCakesORM
 from pancakes.sql import datatype
+from pancakes.abstract.query_box import QueryBox
 
 # GLOBAL PATH para pruebas
 dir_ = Path.cwd() / "data" / "test_env"
@@ -80,22 +81,26 @@ RecipeProductLine.i(
 
 
 def test_real_1():
-    dicc = Category.all().to_dict(label=True)
+    m = QueryBox(Category)
+    dicc = m.all().dictionary(label=True)
+
     assert dicc == [{"CATEGORY ID": 1, "Category": "Dessert"}]
 
 
 def test_real_2():
+    m = QueryBox(Product)
     dicc2 = (
-        Product.select("product__product_name", "category__category")
+        m.select("product__product_name", "category__category")
         .link("category")
         .all()
-        .to_dict(label=True)
+        .dictionary(label=True)
     )
     assert dicc2 == [{"Product Name": "Concha", "Category": "Dessert"}]
 
 
 def test_real_3():
-    dicc3 = Recipe.all().to_dict(label=True)
+    m = QueryBox(Recipe)
+    dicc3 = m.all().dictionary(label=True)
     assert dicc3 == [
         {"RECIPE ID": 1, "Recipe Ingredient": "Sugar"},
         {"RECIPE ID": 2, "Recipe Ingredient": "Milk"},
@@ -104,65 +109,66 @@ def test_real_3():
 
 
 def test_real_4():
+    m = QueryBox(RecipeProductLine)
     dicc4 = (
-        RecipeProductLine.link("product", "category", "recipe")
+        m.link("product", "category", "recipe")
         .select(
             "category__category",
             "product__product_name",
             "recipe__recipe_ingredient",
         )
         .all()
-        .to_dict(label=True)
+        .dictionary(label=True)
     )
+
     assert dicc4 == [
         {
-            "RECIPE PRODUCT LINE ID": 1,
-            "Category": "Dessert",
-            "Product Name": "Concha",
-            "Recipe Ingredient": "Sugar",
-        },
-        {
-            "RECIPE PRODUCT LINE ID": 2,
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Milk",
         },
         {
-            "RECIPE PRODUCT LINE ID": 3,
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Salt",
+        },
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
+            "Recipe Ingredient": "Sugar",
         },
     ]
 
 
 def test_final_link():
+    m = QueryBox(Product)
     dicc5 = (
-        Product.link("recipe", "category", "recipe_product_line")
+        m.link("recipe", "category", "recipe_product_line")
         .select(
+            "recipe_product_line__recipe_product_line_id",
             "category__category",
             "product__product_name",
             "recipe__recipe_ingredient",
         )
         .all()
-        .to_dict(label=True)
+        .dictionary(label=True)
     )
 
     assert dicc5 == [
         {
-            "RECIPE PRODUCT LINE ID": 1,
+            "RECIPE_PRODUCT_LINE ID": 1,
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Sugar",
         },
         {
-            "RECIPE PRODUCT LINE ID": 2,
+            "RECIPE_PRODUCT_LINE ID": 2,
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Milk",
         },
         {
-            "RECIPE PRODUCT LINE ID": 3,
+            "RECIPE_PRODUCT_LINE ID": 3,
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Salt",

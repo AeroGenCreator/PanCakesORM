@@ -140,7 +140,15 @@ def test_select_star():
 
     row, col = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"},
+        ],
         _from="country",
         join=[
             {
@@ -162,7 +170,7 @@ def test_select_star():
     )
 
     # Salida:
-    assert row == [(1, "Mexico", 1, "Chanchito", 5, 1, 7, 1)]
+    assert row == [(1, 'Mexico', 'Chanchito', 5, 1, 7, 1)]
 
 
 def test_select_str():
@@ -171,7 +179,7 @@ def test_select_str():
 
     row, col = query(
         db_path=global_path,
-        select=[{"name": "name"}],
+        select=[{"table": "country", "name": "name"}],
         _from="country",
         join=[
             {
@@ -202,9 +210,9 @@ def test_select_list():
     row, col = query(
         db_path=global_path,
         select=[
-            {"name": "name"},
-            {"name": "age"},
-            {"name": "is_student"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
         ],
         _from="estudiante",
         join=[
@@ -248,8 +256,12 @@ def test_sp_select_str():
 
     row, col = query(
         db_path=global_path,
-        select=[{"name": "name"}, {"name": "age"}, {"name": "is_student"}],
-        sp_select=[{"table": "curso", "name": "name"}],
+        select=[
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "curso", "name": "name"}
+        ],
         _from="estudiante",
         join=[
             {
@@ -293,16 +305,12 @@ def test_sp_select_list():
 
     result, cols = query(
         db_path=global_path,
-        select=[{"name": "name"}, {"name": "age"}, {"name": "is_student"}],
-        sp_select=[
-            {
-                "table": "curso",
-                "name": "name",
-            },
-            {
-                "table": "curso",
-                "name": "date",
-            },
+        select=[
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "curso", "name": "name"},
+            {"table": "curso", "name": "date"}
         ],
         _from="estudiante",
         join=[
@@ -352,7 +360,16 @@ def test_many_to_one():
 
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"},
+        ],
         _from="country",
         join=[
             {
@@ -387,7 +404,16 @@ def test_one_to_many():
 
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"},
+        ],
         _from="country",
         join=[
             {
@@ -426,7 +452,22 @@ def test_many_to_many():
 
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"},
+            {"table": "curso", "name": "curso_id"},
+            {"table": "curso", "name": "name"},
+            {"table": "curso", "name": "date"},
+            {"table": "curso_estudiante", "name": "curso_estudiante_id"},
+            {"table": "curso_estudiante", "name": "curso_id"},
+            {"table": "curso_estudiante", "name": "estudiante_id"},
+            {"table": "curso_estudiante", "name": "fecha"}
+
+        ],
         _from="estudiante",
         join=[
             {
@@ -447,104 +488,27 @@ def test_many_to_many():
     )
 
     assert result == [
-        (
-            1,
-            "Chanchito",
-            5,
-            1,
-            7,
-            1,
-            1,
-            1,
-            1,
-            "2018",
-            1,
-            "Matematicas",
-            "2020-06-22T00:00:00",
-        ),
-        (
-            1,
-            "Chanchito",
-            5,
-            1,
-            7,
-            1,
-            2,
-            2,
-            1,
-            "2019",
-            2,
-            "Ciencias",
-            "2021-08-15T00:00:00",
-        ),
-        (
-            1,
-            "Chanchito",
-            5,
-            1,
-            7,
-            1,
-            4,
-            4,
-            1,
-            "2014",
-            4,
-            "Literatura",
-            "2010-06-20T00:00:00",
-        ),
-        (
-            2,
-            "Feliz",
-            10,
-            0,
-            7,
-            1,
-            3,
-            2,
-            2,
-            "2018",
-            2,
-            "Ciencias",
-            "2021-08-15T00:00:00",
-        ),
-        (
-            2,
-            "Feliz",
-            10,
-            0,
-            7,
-            1,
-            5,
-            4,
-            2,
-            "2015",
-            4,
-            "Literatura",
-            "2010-06-20T00:00:00",
-        ),
-        (
-            3,
-            "Andres",
-            30,
-            0,
-            7,
-            2,
-            6,
-            1,
-            3,
-            "2019",
-            1,
-            "Matematicas",
-            "2020-06-22T00:00:00",
-        ),
-        (4, "Polar", 6, 1, 4, 2, None, None, None, None, None, None, None),
-        (5, "Malteada", 8, 0, 2, 1, None, None, None, None, None, None, None),
+        (1, 'Chanchito', 5, 1, 7, 1, 1, 'Matematicas', '2020-06-22T00:00:00', 1, 1, 1, '2018'),
+        (1, 'Chanchito', 5, 1, 7, 1, 2, 'Ciencias', '2021-08-15T00:00:00', 2, 2, 1, '2019'),
+        (1, 'Chanchito', 5, 1, 7, 1, 4, 'Literatura', '2010-06-20T00:00:00', 4, 4, 1, '2014'),
+        (2, 'Feliz', 10, 0, 7, 1, 2, 'Ciencias', '2021-08-15T00:00:00', 3, 2, 2, '2018'),
+        (2, 'Feliz', 10, 0, 7, 1, 4, 'Literatura', '2010-06-20T00:00:00', 5, 4, 2, '2015'),
+        (3, 'Andres', 30, 0, 7, 2, 1, 'Matematicas', '2020-06-22T00:00:00', 6, 1, 3, '2019'),
+        (4, 'Polar', 6, 1, 4, 2, None, None, None, None, None, None, None),
+        (5, 'Malteada', 8, 0, 2, 1, None, None, None, None, None, None, None)
     ]
 
 
 # -*- TEST NO JOINS | NO CONDITIONS | (SIMPLE QUERY) RETURNS ALL -*-
 def test_no_join():
-    result, cols = query(db_path=global_path, select="*", _from="country")
+    result, cols = query(
+        db_path=global_path,
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"}
+        ],
+        _from="country"
+    )
 
     # Salida:
     assert result == [(1, "Mexico"), (2, "Brasil"), (3, "China")]
@@ -555,7 +519,14 @@ def test_one_condition():
     # Notar que para este test no paso el argumento join de la condicion:
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
         _from="estudiante",
         condition=[
             {
@@ -574,7 +545,14 @@ def test_one_condition():
 def test_multiple_condition_and():
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
         _from="estudiante",
         condition=[
             {
@@ -596,11 +574,17 @@ def test_multiple_condition_and():
     # Salida:
     assert result == [(3, "Andres", 30, 0, 7, 2), (5, "Malteada", 8, 0, 2, 1)]
 
-
 def test_multiple_condition_and_or():
     result, cols = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
         _from="estudiante",
         condition=[
             {
@@ -638,7 +622,7 @@ def test_multiple_condition_and_or():
 def test_simple_agg_func():
     result, cols = query(
         db_path=global_path,
-        select=[{"agg": "count", "name": "name"}],
+        select=[{"agg": "count","table":"estudiante" ,"name": "name"}],
         _from="estudiante",
     )
 
@@ -649,8 +633,10 @@ def test_sp_select_agg_func():
 
     result, cols = query(
         db_path=global_path,
-        select=[{"name": "name"}],
-        sp_select=[{"agg": "count", "table": "country", "name": "name"}],
+        select=[
+            {"table": "estudiante", "name": "name"},
+            {"agg": "count", "table": "country", "name": "name"}
+        ],
         _from="estudiante",
         join=[
             {
@@ -674,8 +660,10 @@ def test_group_by():
     # Agrupados por pais
     result, cols = query(
         db_path=global_path,
-        select=[{"agg": "count", "name": "name"}],
-        sp_select=[{"table": "country", "name": "name"}],
+        select=[
+            {"agg": "count", "table":"estudiante", "name": "name"},
+            {"table": "country", "name": "name"}
+        ],
         _from="estudiante",
         join=[
             {
@@ -695,8 +683,10 @@ def test_group_by():
 def test_group_by_multiple():
     result, cols = query(
         db_path=global_path,
-        select=[{"name": "fecha"}],
-        sp_select=[{"agg": "count", "table": "estudiante", "name": "name"}],
+        select=[
+            {"table": "curso_estudiante", "name": "fecha"},
+            {"agg": "count", "table": "estudiante", "name": "name"}
+        ],
         _from="curso_estudiante",
         join=[
             {
@@ -731,8 +721,10 @@ def test_order_by_clause():
     # Agrupados por pais
     result, cols = query(
         db_path=global_path,
-        select=[{"agg": "count", "name": "name"}],
-        sp_select=[{"table": "country", "name": "name"}],
+        select=[
+            {"agg": "count", "table":"estudiante", "name": "name"},
+            {"table": "country", "name": "name"}
+        ],
         _from="estudiante",
         join=[
             {
@@ -762,8 +754,16 @@ def test_s_start_and_sp_star():
 
     result, cols = query(
         db_path=global_path,
-        select="*",
-        sp_select=[{"table": "estudiante", "name": "*"}],
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
         _from="country",
         join=[
             {
@@ -795,8 +795,11 @@ def test_t1_all_and_t2_columns():
 
     result, cols = query(
         db_path=global_path,
-        select=[{"all": True}],
-        sp_select=[{"agg": "sum", "table": "estudiante", "name": "age"}],
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"agg": "sum", "table": "estudiante", "name": "age"}
+        ],
         _from="country",
         join=[
             {
@@ -825,8 +828,11 @@ def test_t1_all_and_t2_columns():
 def test_limit_in_query():
     result, cols = query(
         db_path=global_path,
-        select=[{"all": True}],
-        sp_select=[{"agg": "sum", "table": "estudiante", "name": "age"}],
+        select=[
+            {"table": "country", "name": "country_id"},
+            {"table": "country", "name": "name"},
+            {"agg": "sum", "table": "estudiante", "name": "age"}
+        ],
         _from="country",
         join=[
             {
@@ -855,7 +861,16 @@ def test_limit_in_query():
 
 
 def test_query_direct_in_class():
-    result, cols = Estudiante.query()
+    result, cols = Estudiante.query(
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ]
+    )
 
     assert result == [
         (1, "Chanchito", 5, 1, 7, 1),
@@ -872,12 +887,14 @@ def test_query_direct_in_class():
 def test_query_multi_table_one_all_one():
     res, col = query(
         db_path=global_path,
-        select=[{"name": "fecha"}],
-        _from="curso_estudiante",
-        sp_select=[
-            {"table": "curso", "name": "*"},
-            {"table": "estudiante", "name": "name"},
+        select=[
+            {"table": "curso_estudiante","name": "fecha"},
+            {"table": "curso", "name": "curso_id"},
+            {"table": "curso", "name": "name"},
+            {"table": "curso", "name": "date"},
+            {"table": "estudiante", "name": "name"}
         ],
+        _from="curso_estudiante",
         join=[
             {
                 "join": "left",
@@ -911,7 +928,18 @@ def test_query_multi_table_one_all_one():
 
 def test_limit_offset():
     res, col = query(
-        db_path=global_path, select="*", _from="estudiante", limit=2, offset=2
+        db_path=global_path,
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
+        _from="estudiante",
+        limit=2,
+        offset=2
     )
 
     assert res == [(3, "Andres", 30, 0, 7, 2), (4, "Polar", 6, 1, 4, 2)]
@@ -920,7 +948,14 @@ def test_limit_offset():
 def test_limit_offset_order_by():
     res, col = query(
         db_path=global_path,
-        select="*",
+        select=[
+            {"table": "estudiante", "name": "estudiante_id"},
+            {"table": "estudiante", "name": "name"},
+            {"table": "estudiante", "name": "age"},
+            {"table": "estudiante", "name": "is_student"},
+            {"table": "estudiante", "name": "stature"},
+            {"table": "estudiante", "name": "country_id"}
+        ],
         _from="estudiante",
         order_by=[{"table": "estudiante", "name": "name", "order": "desc"}],
         limit=2,

@@ -10,7 +10,7 @@
 # Modulos Python
 from pathlib import Path
 
-from pancakes.abstract.querybox import QueryBox
+from pancakes.abstract.query_box import QueryBox
 from pancakes.models.model import PanCakesORM
 from pancakes.orm.insert import insert
 from pancakes.sql import datatype

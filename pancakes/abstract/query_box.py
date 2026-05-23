@@ -1,578 +1,556 @@
-# Copyright 2026 AeroGenCreator
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
-
 """
 Declaracion De Clase QueryBox() Queries declarativos a traves
-de **kwargs y encadenamiento de metodes.
+de **kwargs y encadenamiento de metodos.
 """
+
 # Modulos Propios
 import logging
 
-# Modulos Python
-import warnings
-
 from ..orm.query import query
+from ..sql.datatype import ForeignKey
 from ..tools.functions import environment
 
-# .envs; log, dir, db
+# .envs; LOGS, Directory, Database file
 envs = environment()
 LOG = envs.get("log", "WARNING")
 
 log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
-    force=True
+    format="%(asctime)s [%(levelname)s] "
+    "%(name)s.%(funcName)s:%(lineno)d - %(message)s",
+    force=True,
 )
 logger = logging.getLogger(__name__)
 
 
-class QueryBox:
+def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
 
-    def __init__(self, model=None):
+    # VALIDAR ETIQUETAS UNICAS
+    if len(set(labels)) != len(labels):
+        logger.warning(
+            f"Possible duplicate column names. {labels}"
+            "If you are using label=True, "
+            "ensure you are not repeating "
+            "the same name for the 'comment' argument "
+            "when declaring table."
+        )
+        FIXED = []
+        COUNT = 0
+        for COL in columns:
+            FIXED.append(
+                f"{COL.split('__', 1)[0]}__{COL.split('__', 1)[1]}__{COUNT}"
+            )
+            COUNT += 1
+        columns = FIXED
+        return columns
+    else:
+        columns = labels
+        return columns
+
+
+def _TRANSPOSITION_(tables, columns, rows, positions, chart, label):
+
+    # Validar alineacion de datos
+    if len(rows[0]) != len(columns):
+        logger.critical(
+            "Unexpected received data while transposition. "
+            "Lenght missmatch. Posible bug when query DATABASE. "
+            f"Column lenght: {len(columns)}, row lenght {len(rows[0])}"
+        )
+        raise ValueError
+
+    TRANS = list(zip(*rows))
+    MDICC = {}
+    SETTAB = set(tables)
+
+    for TAB in SETTAB:
+        MDICC[TAB] = {}
+    for index, (TAB, COL) in enumerate(zip(tables, columns)):
+        if label:
+            CURCOL = chart[COL]
+            MDICC[TAB].update({CURCOL: list(TRANS[index])})
+        else:
+            MDICC[TAB].update({COL.split("__", 1)[1]: list(TRANS[index])})
+    MDICC["@positions@"] = positions
+
+    return [MDICC]
+
+
+class QueryBox:
+    """
+    QueryBox v2.
+    Mejora en la declaracion de queries.
+    Ahora se permite DISTINCT
+    Filtros declarativos
+    Joins declarativos
+    Manejo de NO SELECT
+    Manejo dinamico de GROUP BY
+    Una sola función para LIMIT y OFFSET
+    Ids obtenidos desde el ejecutable
+    SALIDAS:
+    - raw
+    - dictionary
+    - container (Perfecta integracion con flet)
+    """
+
+    # Pasar MODELO "instanciado" es obligatorio
+    def __init__(self, model):
         self.model = model
         self.reset()
 
     def reset(self):
-        self.label_dicc = {}
-        self.s_label = []
-        self.sp_label = []
-        self.s_select = []
-        self.sp_select = []
-        self.join = None
-        self.condition = None
-        self.group = None
-        self.order = None
-        self.limit = None
-        self.offset = None
-        self.ids = False
-        self.row = None
-        self.col = None
+        self.SE_LABEL = []
+        self.SE_SELECT = []
+        self.FROM = None
+        self.JOIN = []
+        self.FILTER = []
+        self.GROUP = []
+        self.ORDER = []
+        self.LIMIT = None
+        self.OFFSET = None
+        self.ROW = []
+        self.COL = []
 
-    def raw(self, line_up: bool = False, label=False):
+    def select(self, *select):
         """
-        Devuelve una tupla de dos elementos; la data en crudo de un query:
+        Sintaxis de seleccion:
 
-        row, col = ...raw()
+        1. 'tabla__columna', ...
+        2. 'tabla__columna__Agregacion', ...
 
-        Forzoso para obtner una salida de datos usando QueryBox.
+        Agregaciones validas:
 
-        Paramestros:
-
-        line_up: bool = False -> Alinea la salida de las filas;
-
-        en lugar de una lista de filas:
-        [(fila), (fila), (fila)]
-
-        devuelve una lista de data de columna:
-        [(columna), (columna), (columna)]
-
-        label: bool = False -> Si es True; se devuelven las columnas
-        con las etiquetas de frontend.
+        {
+            "min": "MIN",
+            "max": "MAX",
+            "sum": "SUM",
+            "count": "COUNT",
+            "avg": "AVG",
+            "dsum": "DSUM",
+            "davg": "DAVG",
+            "dcount": "DCOUNT",
+            "distinct": "DISTINCT",
+            "": ""
+        }
         """
 
-        if not self.row and not self.col:
-            return self.row, self.col
+        # Agregaciones validas
+        AGGS = {
+            "min": "MIN",
+            "max": "MAX",
+            "sum": "SUM",
+            "count": "COUNT",
+            "avg": "AVG",
+            "dsum": "DSUM",
+            "davg": "DAVG",
+            "dcount": "DCOUNT",
+            "distinct": "DISTINCT",
+            "": "",
+        }
 
-        row = self.row
-        col = self.col
+        # Modelo
+        MODEL = self.model
 
-        # Obtencion de etiquetas frontend
-        if label:
-            comments = self.s_label + self.sp_label
-            if comments:
-                lab = comments
-            if self.label_dicc:
-                lab = self.label_dicc
-            if isinstance(lab, list):
-                col = comments
-            if isinstance(lab, dict):
-                chart = [lab.get(c) for c in col]
-                col = chart
+        # Validar select:
+        if not select:
+            return self
 
-        # Validar nombres únicos, sino; numerar.
-        if len(set(col)) != len(col):
-            warnings.warn(
-                f"Possible duplicate column names. {col}"
-                "If you are using label=True, "
-                "ensure you are not repeating "
-                "the same name for the 'comment' argument "
-                "when declaring table.",
-                UserWarning
-            )
-            cache = []
-            count = 0
-            if not label:
-                for c in col:
-                    line = (
-                        f"{c.split('__', 1)[0]}"
-                        f"__{c.split('__', 1)[1]}__{count}"
-                    )
-                    cache.append(line)
-                    count += 1
-                col = cache
-            for et in col:
-                cache.append(f"{et} {count}")
-                count += 1
-            col = cache
+        # Tablas en base de datos
+        DB_TABLES = list(MODEL._family.keys())
+        ACTUAL_TB = MODEL._table
 
-        if line_up:
-            row = list(zip(*row))
+        # Iterar select
+        for col in select:
+            col = col.lower()
 
-        self.reset()
-        return row, col
-
-    def to_json(self, label=False):
-        """
-        Convierte la salida defecto de un query SQLite3:
-
-        listas de tuplas a -> JSON
-        dict 'query': dict 'tabla': dict 'column': list[any]
-
-        Forzoso para obtner una salida de datos usando QueryBox.
-
-        Paramestros:
-
-        label: bool = False -> Si es True; se devuelve el JSON
-        con las etiquetas de frontend.
-        """
-
-        # Validacion de data
-        if not self.row and not self.col:
-            return {}
-
-        # Extraccion de data, extraccion de respaldo 'columnas'
-        row = self.row
-        col = self.col
-        backup = self.col
-
-        # Obtencion de etiquetas frontend
-        if label:
-            comments = self.s_label + self.sp_label
-            if comments:
-                lab = comments
-            if self.label_dicc:
-                lab = self.label_dicc
-            if isinstance(lab, list):
-                col = comments
-            if isinstance(lab, dict):
-                chart = [lab.get(c) for c in col]
-                col = chart
-
-        # Validar nombres únicos, sino; numerar.
-        if len(set(col)) != len(col):
-            warnings.warn(
-                f"Possible duplicate column names. {col}"
-                "If you are using label=True, "
-                "ensure you are not repeating "
-                "the same name for the 'comment' argument "
-                "when declaring table.",
-                UserWarning
-            )
-            cache = []
-            count = 0
-            if not label:
-                for c in col:
-                    line = (
-                        f"{c.split('__', 1)[0]}"
-                        f"__{c.split('__', 1)[1]}__{count}"
-                    )
-                    cache.append(line)
-                    count += 1
-                col = cache
-            for et in col:
-                cache.append(f"{et} {count}")
-                count += 1
-            col = cache
-
-        # Cabeceras de tabla
-        tabls = [b.split("__", 1)[0] for b in backup]
-        if label:
-            heads = col
-        # Sino etiquetas frontend; iterar sobre el respaldo
-        else:
-            heads = [b.split("__", 1)[1] for b in backup]
-
-        # Si hay columnas y filas
-        if row:
-
-            # Validar alineación antes de la transpocisión:
-            if len(row[0]) != len(col):
-                msg = (
-                    f"Length mismatch for query output {row}, {col}"
+            # Validar estructura de select
+            validate = (not isinstance(col, str), ("__" not in col))
+            if any(validate):
+                logger.critical(
+                    "Invalid syntax passed in selection. "
+                    "To declara a selection you must specify: "
+                    "table__column__aggregation. "
+                    f"Error found in {col}"
                 )
-                logger.critical(msg)
                 raise ValueError
 
-            # Transposción; obtener (tabla, columna)
-            trans = list(zip(*row))
+            # Partir select en segmentos
+            PARTS = col.split("__")
 
-            # Fabricación de diccionario
-            res = {}
-            count = 0
-            for count, (t, h) in enumerate(zip(tabls, heads)):
-                tab_dicc = res.setdefault(t, {})
-                tab_dicc[h] = list(trans[count])
+            # Validar cantidad de partes
+            if len(PARTS) not in (2, 3):
+                logger.critical(
+                    "Invalid quantity of arguments passed in select. "
+                    "You must separate arguments with '__'. "
+                    "Syntax: TABLE__COLUMN__AGGREGATION or "
+                    "TABLE__COLUMN"
+                )
+                raise ValueError
 
-            self.reset()
-            return res
-
-        else:
-            res = {}
-            count = 0
-            for count, (t, h) in enumerate(zip(tabls, heads)):
-                tab_dicc = res.setdefault(t, {})
-                tab_dicc[h] = row
-
-            self.reset()
-            return res
-
-    def to_dict(self, label=False):
-        """
-        Convierte la salida defecto de un query SQLite3:
-
-        listas de tuplas a -> llave: valor; para cada celda de la tabla.
-        list 'query': dict 'fila': llave 'columna': valor 'celda'
-
-        Forzoso para obtner una salida de datos usando QueryBox.
-
-        Paramestros:
-
-        label: bool = False -> Si es True; se devuelve el JSON
-        con las etiquetas de frontend.
-        """
-
-        if not self.row and not self.col:
-            return []
-
-        col = self.col
-        row = self.row
-
-        # Obtencion de etiquetas frontend
-        if label:
-            comments = self.s_label + self.sp_label
-            if comments:
-                lab = comments
-            if self.label_dicc:
-                lab = self.label_dicc
-            if isinstance(lab, list):
-                col = comments
-            if isinstance(lab, dict):
-                chart = [lab.get(c) for c in col]
-                col = chart
-
-        # Validar nombres únicos, sino; numerar.
-        if len(set(col)) != len(col):
-            warnings.warn(
-                f"Possible duplicate column names. {col}"
-                "If you are using label=True, "
-                "ensure you are not repeating "
-                "the same name for the 'comment' argument "
-                "when declaring table.",
-                UserWarning
-            )
-            cache = []
-            count = 0
-            if not label:
-                for c in col:
-                    line = (
-                        f"{c.split('__', 1)[0]}"
-                        f"__{c.split('__', 1)[1]}__{count}"
+            # Extraer y validar agregacion, sino ""
+            AGG = ""
+            if len(PARTS) == 3:
+                AGG = PARTS[2]
+                if AGG not in AGGS:
+                    logger.critical(
+                        "Invalid aggregation function passed in select. "
+                        f"Column: {col}, agregation: {AGG}"
                     )
-                    cache.append(line)
-                    count += 1
-                col = cache
-            for et in col:
-                cache.append(f"{et} {count}")
-                count += 1
-            col = cache
+                    raise ValueError
+                AGG = AGGS[AGG]
 
-        # Lista diccionarios si: 'filas' y 'nombres unicos'
-        if row:
-            dicc = [dict(zip(col, r)) for r in row]
+            # Extraccion de TABLA y COLUMNA
+            TAB = PARTS[0]
+            COL = PARTS[1]
 
-            self.reset()
-            return dicc
+            # SELECCION SIMPLE
+            if TAB == ACTUAL_TB:
+                # Obtener etiquetas frontend
+                MAPPED = dict(
+                    zip(
+                        MODEL._family[TAB]._metadata[TAB]["columns"],
+                        MODEL._family[TAB]._metadata[TAB]["comments"],
+                    )
+                )
+                LAB = MAPPED[COL]
+                self.SE_LABEL.append(" ".join(f"{LAB} {AGG.upper()}".split()))
 
-        # Listar diccionarios si: 'nombres unicos'
-        else:
-            nones = []
-            for c in col:
-                nones.append(None)
-            dicc = [dict(zip(col, nones))]
+                # Seleccion simple resultado
+                self.SE_SELECT.append({"table": TAB, "name": COL, "agg": AGG})
 
-            self.reset()
-            return dicc
+            # SELECCION ESPECIAL
+            elif TAB in DB_TABLES:
+                # Obtener etiquetas frontend
+                MAPPED = dict(
+                    zip(
+                        MODEL._family[TAB]._metadata[TAB]["columns"],
+                        MODEL._family[TAB]._metadata[TAB]["comments"],
+                    )
+                )
+                LAB = MAPPED[COL]
+                self.SE_LABEL.append(" ".join(f"{LAB} {AGG.upper()}".split()))
 
-    def _if_no_select(self) -> None:
+                # Seleccion especial resultado
+                self.SE_SELECT.append({"table": TAB, "name": COL, "agg": AGG})
 
-        # Lista de kwargs para 'seleccion' y 'seleccion especial'
-        s_res = []
-        sp_res = None
+            # TAB no existe en la base de datos
+            else:
+                logger.critical(
+                    f"The following table: {TAB} does not exist in Database. "
+                    "Make sure passed arguments exist and proper syntax "
+                    "using '__' as separator."
+                )
+                raise ValueError
 
-        # Siempre: select simple
-        for col in self.model._fields:
+        return self
 
-            # Mapeamos todas las etiquetas de tabla 'main' e 'id'
-            id_key = f"{self.model._table}__{self.model._table}_id"
-            if id_key not in self.label_dicc.keys():
-                self.label_dicc[id_key] = f"{self.model._table.upper()} ID"
-            lab = col.comment
-            s_lab_key = f"{self.model._table}__{col._name}"
-            self.label_dicc[s_lab_key] = lab
+    def _IDS_(self, main_table) -> None:
 
-            # Insertamos dicc de query simple (todas las columnas):
-            dicc = {
-                "name": col._name
-            }
-            s_res.append(dicc)
-        s_res = [{"name": f"{self.model._table}_id"}] + s_res
-
-        # Nombres compuestos de la tabla main:
-        names = []
-        for dicc in s_res:
-            line = f"{self.model._table}__{dicc["name"]}"
-            names.append(line)
-
-        # Validar uniones; selección de columnas 'join'.
-        if self.join:
-            # Obtencion de tablas 'join'.
-            e_tabs = []
-            for e in self.join:
-                t1 = e.get("tab1", "")
-                t2 = e.get("tab2", "")
-                # Limpiamos manual repetidos.
-                if t1 not in e_tabs and t1 != self.model._table:
-                    e_tabs.append(t1)
-                if t2 not in e_tabs and t2 != self.model._table:
-                    e_tabs.append(t2)
-
-            # Forzamos orden constante de aparición
-            e_tabs.sort(reverse=False)
-
-            # Validar existencia de tablas en la base de datos.
-            s_tabs = set(e_tabs)
-            t_tabs = set(self.model._family.keys())
-
-            if s_tabs.issubset(t_tabs):
-
-                sp_res = []
-                for e in e_tabs:
-                    # Cache fuerza a que columna 'id' siempre sea 1ra.
-                    sp_cache = []
-
-                    # Objeto PanCakesORM identificada por 'nombre tabla'
-                    obj = self.model._family[e]
-
-                    # Itera cada objeto columna de la tabla 'e'
-                    for col in obj._fields:
-
-                        # Etiquetas de comment mapeadas
-                        sp_id_key = f"{e}__{e}_id"
-                        if sp_id_key not in self.label_dicc.keys():
-                            self.label_dicc[sp_id_key] = f"{e.upper()} ID"
-                        lab = col.comment
-                        sp_lab_key = f"{e}__{col._name}"
-                        if sp_lab_key not in self.label_dicc.keys():
-                            self.label_dicc[sp_lab_key] = lab
-
-                        # Usamos 'names' para validar únicos
-                        if f"{e}__{col._name}" in names:
-                            continue
-
-                        # Nombre compuesto de tablas "join"
-                        if f"{e}__{e}_id" not in names:
-                            sp_cache = (
-                                [{"table": e, "name": f"{e}_id"}] + sp_cache
-                            )
-                            names.append(f"{e}__{e}_id")
-                        dicc = {
-                            "table": e,
-                            "name": col._name,
-                        }
-                        sp_cache.append(dicc)
-                        names.append(f"{e}__{col._name}")
-                    sp_res.extend(sp_cache)
-
-        self.s_select = s_res
-        self.sp_select = sp_res
+        COLUMN_ID = f"{main_table}_id".lower()
+        LABELS_LIST = (
+            self.model._family[main_table]
+            ._metadata[main_table]["comments"]
+            .copy()
+        )
+        INDEX = LABELS_LIST.index(f"{main_table} id".upper())
+        self.SE_SELECT = [
+            {"table": main_table, "name": COLUMN_ID, "agg": "DISTINCT"}
+        ]
+        self.ORDER = [{"table": main_table, "name": COLUMN_ID, "order": "ASC"}]
+        self.SE_LABEL = [LABELS_LIST[INDEX]]
 
         return
 
-    def select(self, *columns):
+    def _NO_SELECT_(self):
 
-        if not columns:
+        MODEL = self.model
+        MAINT = self.model._table
+
+        # OBTENER TODAS LAS ETIQUETAS Y COLUMNAS SELECT SIMPLE
+        SE_MAPPED = dict(
+            zip(
+                MODEL._family[MAINT]._metadata[MAINT]["columns"],
+                MODEL._family[MAINT]._metadata[MAINT]["comments"],
+            )
+        )
+
+        COLUMNS = list(SE_MAPPED.keys())
+        COMMENTS = list(SE_MAPPED.values())
+
+        self.SE_LABEL.extend(COMMENTS)
+
+        for COL in COLUMNS:
+            self.SE_SELECT.append({"table": MAINT, "name": COL})
+
+        # OBTENER TODO DE UN JOIN
+        CACHE = []
+        if self.JOIN:
+            # TABLAS EXTRAS EN ARGUMENTOS DE JOIN
+            for join in self.JOIN:
+                TAB1 = join.get("tab1", "")
+                TAB2 = join.get("tab2", "")
+
+                if TAB1 not in CACHE and TAB1 != MAINT:
+                    CACHE.append(TAB1)
+
+                    CHART1 = dict(
+                        zip(
+                            MODEL._family[TAB1]._metadata[TAB1]["columns"],
+                            MODEL._family[TAB1]._metadata[TAB1]["comments"],
+                        )
+                    )
+
+                    COLS1 = list(CHART1.keys())
+                    LABS1 = list(CHART1.values())
+
+                    listado1 = []
+                    for COL in COLS1:
+                        listado1.append({"table": TAB1, "name": COL})
+
+                    self.SE_LABEL.extend(LABS1)
+                    self.SE_SELECT.extend(listado1)
+
+                if TAB2 not in CACHE and TAB2 != MAINT:
+                    CACHE.append(TAB2)
+
+                    CHART2 = dict(
+                        zip(
+                            MODEL._family[TAB2]._metadata[TAB2]["columns"],
+                            MODEL._family[TAB2]._metadata[TAB2]["comments"],
+                        )
+                    )
+
+                    COLS2 = list(CHART2.keys())
+                    LABS2 = list(CHART2.values())
+
+                    listado2 = []
+                    for COL in COLS2:
+                        listado2.append({"table": TAB2, "name": COL})
+
+                    self.SE_LABEL.extend(LABS2)
+                    self.SE_SELECT.extend(listado2)
+
+    def _DYNAMIC_GROUP_(self):
+
+        SELECT = self.SE_SELECT.copy()
+
+        # VALIDACION COLUMNAS DE SELECT
+        GROUP = []
+        for dicc in SELECT:
+            AGG = dicc.get("agg", "")
+            if not AGG:
+                TAB = dicc.get("table")
+                COL = dicc.get("name")
+
+                GROUP.append({"table": TAB, "name": COL})
+
+        self.GROUP = GROUP
+        return
+
+    def add(self, **kwargs):
+        """
+        SINTAXIS:
+
+        EL modelo desde el cual se invoca el metodo add() NO SERA TOMADO,
+        por tanto es necesario especificar union usando una sintaxis SQL
+
+        EJ;
+        SELECT * FROM sale INNER JOIN client ... requiere de;
+        modeloX.add(sale__inner__client=client_id).
+
+        De esta manera de izquierda a derecha la primera tabla pasada
+        se tomara como el FROM.
+
+        Metodo add()
+        User(user__left__sale=sale_id, ...)
+
+        SQL
+        SELECT * FROM user LEFT JOIN sale ON user.sale_id = sale.sale_id
+
+        'tablaOrigen__unionType__secondTable=sharedColumn', ...
+        'client__inner__country=country_id'
+
+        UNIONES VALIDAS:
+
+        inner = INNER
+        right = RIGHT
+        left = LEFT
+        """
+
+        # UNIONES VALIDAS
+        UNIONES = {"inner": "INNER", "right": "RIGHT", "left": "LEFT"}
+        VALIDUN = list(UNIONES.keys())
+
+        DB_TABLES = list(self.model._family.keys())
+
+        RESULT = []
+        # Iteracion de argumentos
+        for llave, valor in kwargs.items():
+            # Validar sintaxis:
+            validate = (("__" not in llave), (not isinstance(valor, str)))
+            if any(validate):
+                logger.critical(
+                    "Make sure to separate clauses using '__'. "
+                    "Also consider 'string' as the only valid argument. "
+                    f"Passed data; {llave}={valor}."
+                )
+                raise ValueError
+
+            # Separar y validar
+            PARTS = llave.split("__")
+            if len(PARTS) != 3:
+                logger.critical(
+                    "Invalid quantity of clauses passed. "
+                    "Valid syntax: "
+                    "tablaOrigen__unionType__secondTable=sharedColumn. "
+                    f"Passed {llave}"
+                )
+                raise ValueError
+
+            # EXTRACCION DE ARGUMENTOS
+            ORIGEN = PARTS[0].lower()
+            UNIONT = PARTS[1].lower()
+            SECONT = PARTS[2].lower()
+            SHARED = valor.lower()
+
+            # VALIDAR DATOS
+            valid_data = (
+                (ORIGEN not in DB_TABLES),
+                (SECONT not in DB_TABLES),
+                (UNIONT not in VALIDUN),
+            )
+
+            if any(valid_data):
+                logger.critical(
+                    f"Make sure tables exist in DATABASE. Valid {DB_TABLES}. "
+                    f"Passed tables: {ORIGEN}, {SECONT}. "
+                    f"Make sure passed a valid union type. "
+                    f"Passed union {UNIONT}, valid ones are {VALIDUN}."
+                )
+
+            # Diccionario de uniones
+            dicc = {
+                "join": UNIONT,
+                "tab1": SECONT,
+                "id1": SHARED,
+                "tab2": ORIGEN,
+                "id2": SHARED,
+            }
+            RESULT.append(dicc)
+
+        try:
+            self.FROM = RESULT[0]["tab2"]
+        except IndexError:
+            self.FROM = self.model._table
+        self.JOIN = RESULT
+
+        return self
+
+    def link(self, *tables):
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
+        MAIN = MODEL._table
+
+        if not tables:
             return self
 
-        AGGS = {
-            "min": 'MIN',
-            "max": 'MAX',
-            "sum": 'SUM',
-            "count": 'COUNT',
-            "avg": 'AVG',
-            "": ""
-        }
+        # 1. Validar que todas las tablas solicitadas existan
+        RELATIONS = list(tables)
+        for TAB in RELATIONS:
+            if TAB not in DB_TABLES:
+                logger.critical(f"La tabla {TAB} no existe en el modelo.")
+                raise ValueError(f"Tabla inválida: {TAB}")
 
-        for c in columns:
+        # Incluimos MAIN para analizar sus relaciones
+        ALL_TABLES = RELATIONS + [MAIN]
 
-            if not isinstance(c, str):
-                msg = (
-                    f"Invalid datatype: {c}. "
-                    "Column names must be strings; sintax: "
-                    "table__column__aggregation"
-                )
-                logger.critical(msg)
-                raise TypeError(type(c))
+        # 2. Extraer TODAS las relaciones posibles entre estas tablas
+        possible_edges = []
+        for TAB in ALL_TABLES:
+            FIELDS = MODEL._family[TAB]._metadata[TAB]["fields"]
+            for field in FIELDS:
+                if isinstance(field, ForeignKey):
+                    second_table = getattr(field, "second_table")
+                    if second_table in ALL_TABLES:
+                        name = field._name
+                        possible_edges.append((TAB, second_table, name))
 
-            if "__" not in c:
-                msg = (
-                    f"Invalid sintax; {c}. "
-                    "Valid separator: '__'."
-                )
-                logger.critical(msg)
-                raise ValueError(c)
+        # 3. Ordenar las relaciones evitando caminos redundantes
+        available_tables = {MAIN}
+        ordered_kwargs = {}
 
-            arg = c.split("__")
+        while possible_edges:
+            match_found = False
+            for edge in list(possible_edges):
+                tab_a, tab_b, field_name = edge
 
-            if len(arg) not in (2, 3):
-                msg = (
-                    f"Invalid quantity of arguments passed in {c}. "
-                    "At least you must specify table + __ + column. "
-                    "Or table + __ + column + __ + aggregation."
-                )
-                logger.critical(msg)
-                raise ValueError(len(arg))
+                # Caso A: tab_a ya es conocida, pero tab_b es NUEVA
+                if tab_a in available_tables and tab_b not in available_tables:
+                    arg = f"{tab_a}__inner__{tab_b}"
+                    ordered_kwargs[arg] = field_name
+                    available_tables.add(tab_b)
+                    possible_edges.remove(edge)
+                    match_found = True
+                    break
 
-            agg = ""  # <- Por defecto no agregacion.
-            if len(arg) != 2:
-                agg = arg[2]  # <- Se extrae agregacion.
-                if agg not in AGGS.keys():
-                    msg = (
-                        f"Invalid aggregation {agg}. "
-                        f"Valid ones are {AGGS}."
+                # Caso B: tab_b ya es conocida, pero tab_a es NUEVA - Invertir
+                elif (
+                    tab_b in available_tables and tab_a not in available_tables
+                ):
+                    arg = f"{tab_b}__inner__{tab_a}"
+                    ordered_kwargs[arg] = field_name
+                    available_tables.add(tab_a)
+                    possible_edges.remove(edge)
+                    match_found = True
+                    break
+
+                # Caso C: Ambas tablas ya están en la consulta. (Redundancia)
+                elif tab_a in available_tables and tab_b in available_tables:
+                    possible_edges.remove(edge)
+                    match_found = (
+                        True  # Marcamos progreso para que continúe el bucle
                     )
-                    logger.critical(msg)
-                    raise ValueError(agg)
+                    break
 
-                agg = AGGS[agg]  # Indexacion por la agregacion valida.
+            if not match_found:
+                break
 
-            tab = arg[0]  # <- Se extrae tabla.
-            col = arg[1]  # <- Se extrae columna.
-
-            m_tab = self.model._table  # <- tabla main.
-
-            if tab != m_tab:  # <- Si estamos seleccionando de union
-
-                # Label; si seleccion "id"
-                if col == f"{tab}_id":
-                    if not agg:
-                        lab = f"{tab} id".upper()
-                    else:
-                        lab = f"{tab} id {agg}".upper()
-                else:
-                    obj = self.model._family[tab]  # <- Buscamos la Tabla
-                    # Obtenemos el comment:
-                    lab = [c.comment for c in obj._fields if c._name == col]
-                    lab = f"{"".join(lab)} {agg.upper()}"
-                    lab = " ".join(lab.split(" ")).strip()
-
-                self.sp_label.append(lab)
-
-                dicc = {
-                        "table": tab,
-                        "name": col,
-                        "agg": agg,
-                    }
-                self.sp_select.append(dicc)
-                continue
-
-            elif tab == m_tab:
-
-                # Label; si seleccion "id"
-                if col == f"{tab}_id":
-                    if not agg:
-                        lab = f"{tab} id".upper()
-                    else:
-                        lab = f"{tab} id {agg}".upper()
-
-                # Iterar campos; si no selecciona id
-                else:
-                    # Obtenemos el comment desde la tabla main
-                    lab = []
-                    for c in self.model._fields:
-                        if c._name == col:
-                            lab.append(c.comment)
-                    lab = f"{"".join(lab)} {agg.upper()}"
-                    lab = " ".join(lab.split(" ")).strip()
-
-                self.s_label.append(lab)
-
-                dicc = {
-                    "name": col,
-                    "agg": agg
-                }
-                self.s_select.append(dicc)
-                continue
-
-        # Validar; no s_select, si sp_select
-        if not self.s_select:
-            m_tab = self.model._table
-            name = self.model._table
-            if "_" in name:
-                name = name.split("_")
-                name = " ".join(name)
-
-            self.s_label.append(f"{name} id".upper())
-            self.s_select = [
-                {
-                    "name": f"{m_tab}_id",
-                    "agg": ""
-                }
-            ]
-
+        # 4. Enviar los kwargs limpios y ordenados
+        self.add(**ordered_kwargs)
         return self
 
     def filter(self, **kwargs):
         """
-        Declaracion de filtros:
-        tabla + __ + columna + __ + operador = data
+        SINTAXIS:
 
-        Ejemplo:
+        tabla__columna__operador = data
+        tabla__columna__operador__logico = data
+
+        EJEMPLO:
         client__name__same = "Omar"
         country__name__in = ["Mexico", "France"]
 
-        Complejo:
+        COMPLEJO:
         filter.(client__name__same__and = "Omar", client__age__btwn = [10, 20])
 
         SQL:
-        WHERE client.name = "Omar"
-        AND client.age BETWEEN 10 AND 20;
+        WHERE client.name = "Omar" AND client.age BETWEEN 10 AND 20;
 
         Comparadores Validos:
-        OPERATOR = {
-        same: "=",
-        lt: "<",
-        ltsm: "<=",
-        gt: ">",
-        gtsm: ">=",
-        diff:"<>",
-        in: "IN",
-        notin: "NOT IN",
-        btwn: "BETWEEN",
-        is: "IS",
-        isnot: "IS NOT",
-        like: "LIKE",
-        notlike: "NOT LIKE"
-        }
+
+        OPERATOR = {same: "=", lt: "<", ltsm: "<=", gt: ">", gtsm: ">=",
+        diff:"<>", in: "IN", notin: "NOT IN", btwn: "BETWEEN",
+        is: "IS", isnot: "IS NOT", like: "LIKE", notlike: "NOT LIKE"}
 
         LOGICS = {'AND', 'OR', ''}
         """
 
-        OPERATOR = {
+        MODEL = self.model
+
+        DB_TABLES = list(MODEL._family.keys())
+
+        OPERATORS = {
             "same": "=",
             "lt": "<",
             "ltsm": "<=",
@@ -585,271 +563,124 @@ class QueryBox:
             "is": "IS",
             "isnot": "IS NOT",
             "like": "LIKE",
-            "notlike": "NOT LIKE"
+            "notlike": "NOT LIKE",
         }
-        LOGICS = {'AND', 'OR', ''}
+
+        LOGICS = {"AND", "OR", ""}
+
+        DATATYPES = (list, tuple, str, int, float, bool)
 
         if not kwargs:
             return self
 
-        res = []
-        keys = kwargs.keys()
+        RESULT = []
 
-        for k in keys:
+        for ARGUMENT, VALUE in kwargs.items():
+            if "__" not in ARGUMENT:
+                logger.critical(
+                    f"Invalid separator in argument {ARGUMENT}. "
+                    "Valid separator '__'."
+                )
+                raise ValueError
 
-            if "__" not in k:
-                msg = f"Invalid key {k}."
-                logger.critical(msg)
-                raise KeyError
+            if not isinstance(VALUE, DATATYPES):
+                logger.critical(
+                    f"Invalid datatype passed {VALUE}. "
+                    f"Valid datatypes are {DATATYPES}."
+                )
+                raise TypeError(type(VALUE))
 
-        for k in keys:
+            PARTS = ARGUMENT.split("__")
 
-            if not isinstance(
-                kwargs[k],
-                    (
-                    list,
-                    tuple,
-                    str,
-                    float,
-                    int,
-                    bool
+            if len(PARTS) not in (3, 4):
+                logger.critical(
+                    "Invalid parts passed in argument. "
+                    "Valid lenght: '3' or '4' elements. "
+                    f"Passed parts are {PARTS}."
+                )
+
+            # EXTRACCION DE ARGUMENTOS
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            OPR = PARTS[2]
+            try:
+                LOG = PARTS[3].upper()
+            except IndexError:
+                LOG = ""
+
+            # VALIDAR ARGUMENTOS
+            if TAB not in DB_TABLES:
+                logger.critical(
+                    f"Invalid table passed in argument {ARGUMENT}. "
+                    f"Valid tables are: {DB_TABLES}"
+                )
+                raise ValueError
+
+            COLUMNS = MODEL._family[TAB]._metadata[TAB]["columns"]
+            validate = (
+                (COL not in COLUMNS),
+                (OPR not in OPERATORS),
+                (LOG not in LOGICS),
+            )
+
+            if any(validate):
+                logger.critical(
+                    "Make sure passed arguments are validated. "
+                    f"Passed column: {COL}, valid ones: {COLUMNS}. "
+                    f"Passed operator: {OPR}, valid ones: {OPERATORS}. "
+                    f"Passed logic: {LOG}, valid ones: {LOGICS}."
+                )
+                raise ValueError
+
+            iterables = (
+                (OPR in {"in", "notin", "btwn"}),
+                (isinstance(VALUE, (list, tuple))),
+            )
+
+            if all(iterables):
+                if OPR == "btwn" and len(VALUE) == 2:
+                    RESULT.append(
+                        {
+                            "table": TAB,
+                            "column": COL,
+                            "operator": OPERATORS[OPR],
+                            "value": VALUE,
+                            "logic": LOG,
+                        }
                     )
-            ):
-                msg = (
-                    f"Invalid datatype {kwargs[k]}. "
-                    "Allowed datatypes: "
-                    "(list, tuple, str, float, int, bool)."
-                )
-                logger.critical(msg)
-                raise TypeError(type(kwargs[k]))
-
-            arg = k.split("__")
-
-            if len(arg) not in [3, 4]:
-                msg = (
-                    "Invalid statments passed in argument: "
-                    f"{arg}. Pay attention to separator "
-                    "'__'. At least 3 labels must be in "
-                    "the argument."
-                )
-                logger.critical(msg)
-                raise KeyError
-
-            tab = arg[0]
-            col = arg[1]
-            con = arg[2]
-
-            # Validar si hay comparador logico:
-            # Y lista blanca:
-            if len(arg) == 4:
-                log = arg[3].upper()
-                if log not in LOGICS:
-                    msg = f"Invalid logic operator {log}."
-                    logger.critical(msg)
-                    raise KeyError
+                    continue
+                elif OPR in {"in", "notin"}:
+                    RESULT.append(
+                        {
+                            "table": TAB,
+                            "column": COL,
+                            "operator": OPERATORS[OPR],
+                            "value": VALUE,
+                            "logic": LOG,
+                        }
+                    )
+                    continue
+                else:
+                    logger.critical(
+                        f"Passed argument: {ARGUMENT} "
+                        "requires an iterable of 2 elements for data. "
+                        f"Passed data: {VALUE}"
+                    )
             else:
-                log = ""
-
-            # lista blanca del operador de comparacion:
-            if con not in set(OPERATOR.keys()):
-                msg = f"Invalid operator {con}."
-                logger.critical(msg)
-                raise KeyError
-
-            if con == 'btwn':
-
-                if not isinstance(kwargs[k], (list, tuple)):
-                    msg = (
-                        "Operator 'btwn' "
-                        "requires datatypes (list, tuple)."
-                        f"Passed: {kwargs[k]}"
-                    )
-                    logger.critical(msg)
-                    raise TypeError(type(kwargs[k]))
-
-                if len(kwargs[k]) != 2:
-                    msg = (
-                        f"'btwn' condition requires "
-                        "a list of 2 values "
-                        f"{kwargs[k]}."
-                    )
-                    logger.critical(msg)
-                    raise ValueError
-
-                dicc = {
-                    'table': tab,
-                    'column': col,
-                    'operator': 'between',
-                    'value': kwargs[k],
-                    'logic': log,
-                }
-                res.append(dicc)
-                continue
-
-            if con in ['in', 'notin']:
-
-                if not isinstance(kwargs[k], (list, tuple)):
-                    msg = (
-                        "Operador 'in' and 'notin' "
-                        "requires datatypes (list, tuple)."
-                        f"Passed: {kwargs[k]}"
-                    )
-                    logger.critical(msg)
-                    raise TypeError(type(kwargs[k]))
-
-                dicc = {
-                    'table': tab,
-                    'column': col,
-                    'operator': OPERATOR[con],
-                    'value': kwargs[k],
-                    'logic': log,
-                }
-                res.append(dicc)
-                continue
-
-            if not isinstance(kwargs[k], (str, int, float, bool)):
-                msg = (
-                    f"Invalid datatype for argument: "
-                    f"{kwargs[k]}."
+                RESULT.append(
+                    {
+                        "table": TAB,
+                        "column": COL,
+                        "operator": OPERATORS[OPR],
+                        "value": VALUE,
+                        "logic": LOG,
+                    }
                 )
-                logger.critical(msg)
-                raise TypeError(type(kwargs[k]))
 
-            dicc = {
-                'table': tab,
-                'column': col,
-                'operator': OPERATOR[con],
-                'value': kwargs[k],
-                'logic': log,
-            }
-
-            res.append(dicc)
-            continue
-
-        self.condition = res
+        self.FILTER = RESULT
         return self
 
-    def add(self, **kwargs):
-        """
-        Permite union de tabla de manera rapida a traves de **kwargs
-
-        Los argumentos deben ser:
-        tipo de union + __ + tabla extra = [id referencia, tabla]
-
-        Uniones validas
-        in = INNER
-        rg = RIGHT
-        lf = LEFT
-
-        Ejemplo de argumento:
-        _from = client
-        in__country = ['country_id', 'client'] <- Doble Guion como separador
-
-        SQL
-        INNER JOIN country
-        ON country.country_id = client.country_id
-
-        Por tanto, si no se mantuvo la convencion de:
-        Cada llave foranea declarada en alguna tabla (nombrarse como):
-
-        tabla_2_id = sql_datatype.ForeignKey(tabla_2, tabla_2_id)
-
-        Este metodo no funcionara por que la columna no existira.
-        Y por tanto tendras que usar el metodo query()
-
-        El cual es mas flexible pero mas verboso.
-        """
-        VALID_JOIN = {'in', 'rg', 'lf'}
-        if not kwargs:
-            return self
-
-        res = []
-        keys = kwargs.keys()
-        #import ipdb; ipdb.set_trace()
-
-        for k in keys:
-
-            if "__" not in k:
-                msg = f"Invalid key {k}."
-                logger.critical(msg)
-                raise KeyError
-
-            if not isinstance(kwargs[k], (tuple, list)):
-                msg = (
-                    f"Invalid datatype {kwargs[k]}. "
-                    "Arguments must be a list "
-                    "[union id, table]"
-                )
-                logger.critical(msg)
-                raise TypeError(type(kwargs[k]))
-
-            arg = k.split('__')
-            join = arg[0].lower()
-            plus = arg[1]
-
-            if join not in VALID_JOIN:
-                msg = (
-                    f"Invalid union operator {join}. "
-                    f"Valid ones are: {VALID_JOIN}."
-                )
-                logger.critical(msg)
-                raise KeyError
-
-            udid = kwargs[k][0]
-            utab = kwargs[k][1]
-
-            if not isinstance(udid, str):
-                msg = (
-                    f"Invalid 'id reference' datatype: {udid}. "
-                    "No relationship found. "
-                    "Ensure you have related your tables "
-                    "before using methods like .link(), .add(), "
-                    "or the .query() function."
-                )
-                logger.critical(msg)
-                raise TypeError(type(udid))
-
-            if not isinstance(utab, str):
-                msg = f"Invalid 'table' datatype: {utab}. "
-                logger.critical(msg)
-                raise TypeError(type(utab))
-
-            if join == 'in':
-                dicc = {
-                    'join': 'INNER',
-                    'tab1': plus,
-                    'id1': udid,
-                    'tab2': utab,
-                    'id2': udid
-                }
-                res.append(dicc)
-                continue
-
-            if join == 'lf':
-                dicc = {
-                    'join': 'LEFT',
-                    'tab1': plus,
-                    'id1': udid,
-                    'tab2': utab,
-                    'id2': udid
-                }
-                res.append(dicc)
-                continue
-
-            if join == 'rg':
-                dicc = {
-                    'join': 'RIGHT',
-                    'tab1': plus,
-                    'id1': udid,
-                    'tab2': utab,
-                    'id2': udid
-                }
-                res.append(dicc)
-                continue
-        self.join = res
-        return self
-
-    def gp(self, **kwargs):
+    def group(self, **kwargs):
         """
         Agrupar pasando el nombre de la tabla como argumento
         y el nombre de la columna como valor:
@@ -857,378 +688,295 @@ class QueryBox:
         Ej: category="name"
 
         """
-        if not kwargs:
-            return self
 
-        res = []
-        keys = kwargs.keys()
-
-        for k in keys:
-
-            if not isinstance(kwargs[k], str):
-                msg = (
-                    f"Invalid datatype: {kwargs[k]}. "
-                    "values must be a string"
-                )
-                logger.critical(msg)
-                raise TypeError(type(kwargs[k]))
-
-            tab = k
-            col = kwargs[k]
-
-            dicc = {
-                "table": tab,
-                "name": col
-            }
-
-            res.append(dicc)
-
-        self.group = res
-        return self
-
-    def sort(self, **kwargs):
-        """
-        Equivalente a ORDER BY
-
-        Ej: tabla__columna = "DESC"
-        """
-        DIRECTION = {'DESC', 'ASC', ''}
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
+        DB_COLUMNS = []
+        for TAB in DB_TABLES:
+            columns =MODEL._family[TAB]._metadata[TAB]["columns"]
+            DB_COLUMNS.extend(columns)
 
         if not kwargs:
             return self
 
-        res = []
-        keys = kwargs.keys()
+        RESULT = []
 
-        for k in keys:
-            if "__" not in k:
-                msg = f"Invalid key {k}."
-                logger.critical(msg)
-                raise KeyError
+        for TAB, COL in kwargs.items():
 
-        for k in keys:
+            validate = (
+                (TAB not in DB_TABLES),
+                (not isinstance(COL, str)),
+                (COL not in DB_COLUMNS)
+            )
 
-            if not isinstance(kwargs[k], str):
-                msg = (
-                    f"Invalid datatype {kwargs[k]}. "
-                    "Arguments must be a string "
+            if any(validate):
+                logger.critical(
+                    "Make sure the following contidions are True: "
+                    f"Valid tables {DB_TABLES}, you passed {TAB}. "
+                    f"Valid columns {DB_COLUMNS}, you passed {COL}"
                 )
-                logger.critical(msg)
-                raise TypeError(type(kwargs[k]))
-
-            arg = k.split("__")
-            tab = arg[0]
-            col = arg[1]
-            ordn = kwargs[k].upper()
-
-            if ordn not in DIRECTION:
-                msg = (
-                    f"Invalid order passed {ordn}. "
-                    f"Valid ones are {DIRECTION}"
-                )
-                logger.critical(msg)
                 raise ValueError
 
             dicc = {
-                "table": tab,
-                "name": col,
-                "order": ordn,
+                "table": TAB,
+                "name": COL
             }
-            res.append(dicc)
-        self.order = res
+
+            RESULT.append(dicc)
+
+        self.group = RESULT
         return self
 
-    def lim(self, limit: int):
+    def sort(self, *sort):
         """
-        Asigna un valor int para limitar el output
-        del query.
+        Ordenar pasando strings, ...
+
+        Sintaxis
+        tabla__columna__order
+
+        Ordenes:
+        {"desc": "DESC", "asc": "ASC"}
         """
-        if not isinstance(limit, int):
-            msg = f"Invalid datatype {limit}."
-            logger.critical(msg)
-            raise TypeError(type(limit))
 
-        limit = limit if limit else None
-        self.limit = limit
-        return self
+        VALID_ORDERS = {"desc": "DESC", "asc": "ASC"}
 
-    def off(self, offset: int):
-        """
-        Asigna un valor integer para seleccionar
-        el comienzo del query.
-        """
-        if not isinstance(offset, int):
-            msg = f"Invalid datatype: {offset}."
-            logger.critical(msg)
-            raise TypeError(type(offset))
+        MODEL = self.model
+        DB_TABLES = list(MODEL._family.keys())
 
-        offset = offset if offset else None
-        self.offset = offset
-        return self
-
-    def id(self):
-        """
-        Bandera que especifica al query devolver
-        unicamente los ids.
-        """
-        self.ids = True
-        return self
-
-    def all(self, db_path=None, _from=None):
-
-        # Validar ruta
-        if db_path is None:
-            path = self.model._db_file
-
-        # Validar tabla; query
-        if _from is None:
-            _from = self.model._table
-
-        ids = f"{_from}_id" if self.ids else None
-        s_select = self.s_select if self.s_select else None
-        sp_select = self.sp_select if self.sp_select else None
-        join = self.join if self.join else None
-        condition = self.condition if self.condition else None
-        group = self.group if self.group else None
-        order = self.order if self.order else None
-        limit = self.limit if self.limit else None
-        offset = self.offset if self.offset else None
-
-        ambiguous = (
-            ids and s_select,
-            ids and sp_select,
-            ids and sp_select and s_select)
-        if any(ambiguous):
-            warnings.warn(
-                "Ambiguous structure. "
-                "requested; 'id' but specific columns "
-                f"were passed: {s_select} : {sp_select}. "
-                "Your query will continue; return 'ids' only. "
-                "otherwise do not use .id() method.", UserWarning
-            )
-            s_select = [{"name": f"{_from}_id"}]
-            sp_select = None
-
-        if ids and not sp_select and not s_select:
-            s_select = [{"name": f"{_from}_id"}]
-            sp_select = None
-
-        # Evaluar cuando .all() no contiene select():
-        if s_select is None and sp_select is None:
-            self._if_no_select()
-            self.all()
+        if not sort:
             return self
 
-        row, col = query(
-            db_path=path,
-            select=s_select,
-            _from=_from,
-            sp_select=sp_select,
-            join=join,
-            condition=condition,
-            group_by=group,
-            order_by=order,
-            limit=limit,
-            offset=offset
-        )
+        RESULT = []
+        # VALIDANDO ARGUMENTOS
+        for ARG in sort:
+            validate = ((not isinstance(ARG, str)), ("__" not in ARG))
 
-        self.row = row
-        self.col = col
-
-        return self
-
-    def link(self, *relation):
-        """
-        * Esta función imita **kwargs de add()
-        tipo de union + __ + tabla extra = [id referencia, tabla]
-
-        * Recibe; list[tabla1, tabla2, etc...]
-        """
-
-        # Si no hay datos, salir
-        if not relation:
-            return self
-
-        by_dependency = False
-        kwargs = {}
-
-        # Iteracion sobre los nombre de tablas dadas
-        for rel in relation:
-
-            # validar que se hayan pasado strings
-            if not isinstance(rel, str):
-                msg = (
-                    f"Passed table name {rel} "
-                    f"must be a string."
+            if any(validate):
+                logger.critical(
+                    f"Make sure passed arguments are strings {ARG} "
+                    f"and the usage of proper separator '__'."
                 )
-                logger.critical(msg)
-                raise TypeError(type(rel))
+                raise ValueError(type(ARG))
 
-            # Obtenecion de campo relacional
-            field = None
+            PARTS = ARG.split("__")
+            if len(PARTS) != 3:
+                logger.critical(
+                    "You must specify: "
+                    f"table__column__order. Passed pattern: {PARTS}"
+                )
+                raise ValueError
 
-            # Iteramos los "objetos" tipo "campos" <- o sea columnas
-            # "_fields"
-            for f in self.model._fields:
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            DIR = PARTS[2]
 
-                # Evaluamos que el campo tenga el atributo:
-                # "second_table".
-                # Que el nombre dado y que el nombre del campo
-                # sean iguales
-                #
-                # Se guarda y salimos de bucle
-                if (
-                    hasattr(f, "second_table") and
-                    rel == f.second_table
-                ):
+            if TAB not in DB_TABLES:
+                logger.critical(
+                    f"The following passed table {TAB} does not exist "
+                    f"in DATABASE. Valid tables are: {DB_TABLES}"
+                )
+                raise ValueError
 
-                    field = f._name
-                    break
+            COLUMNS = MODEL._family[TAB]._metadata[TAB]["columns"]
 
-            # Validamos que la operacion directa no encontro campos
-            # Pasamos a la operacion inversa (de tabla padre a hija).
-            if not field:
+            purge = ((COL not in COLUMNS), (DIR not in VALID_ORDERS))
+            if any(purge):
+                logger.critical(
+                    f"Make sure column {COL} exists. "
+                    f"Make sure order value is valid {DIR}. "
+                    f"Valid columns are: {COLUMNS}. Valid orders are: "
+                    f"{VALID_ORDERS}."
+                )
 
-                # Buscamos relacion del PRIMARY KEY de la tabla
-                # A la FOREIGN KEY de la tabla hija
-                c_id = f"{self.model._table}_id"
-                # Buscamos que la tabla exista en la base de datos
-                if rel not in self.model._family:
-                    msg = (
-                        f"Passed {rel} tables does not exists. "
-                        "Make sure of the spelling and "
-                        "make sure of relation before "
-                        "trying again."
-                    )
-                    logger.critical(msg)
-                    raise KeyError(rel)
+            RESULT.append({"table": TAB, "name": COL, "order": DIR})
 
-                # Si existe accedemos a la tabla entera
-                # e iteramos sus campos
-                tab2 = self.model._family[rel]
+        self.ORDER = RESULT
+        return self
 
-                for f in tab2._fields:
-                    if c_id == f._name:
-                        field = f._name
-                        break
+    def chunk(self, offset=None, limit=None):
 
-            # Agregamos la relacion al dicc "kwargs"
-            # Por defecto INNER JOIN
-            kwargs[f"in__{rel}"] = [field, self.model._table]
-
-        dicc_values = kwargs.values()
-        for v in dicc_values:
-            if v[0] is None or v[1] is None:
-                by_dependency = True
-                break
-
-        if by_dependency:
-            copy = list(relation)
-
-            # Orden de relacion por dependencia:
-            DEP = reversed(self.model._order)
-            copy.insert(0, self.model._table)
-            REL = [d for d in DEP if d in copy]
-            winner = self.model
-
-            # Iterar esquema de relación
-            kwargs = {}
-            for t in REL:
-
-                # Bandera Validación
-                flag = True
-
-                TABS = REL
-                MODEL = self.model._family[t]
-                TABS.remove(MODEL._table)
-
-                # Iteracion sobre los nombre de tablas dadas
-                for rel in TABS:
-
-                    # validar que se hayan pasado strings
-                    if not isinstance(rel, str):
-                        msg = (
-                            f"Passed table name {rel} "
-                            f"must be a string."
-                        )
-                        logger.critical(msg)
-                        raise TypeError(type(rel))
-
-                    field = None
-
-                    # Iteramos los "objetos" tipo "campos" <- o sea columnas
-                    # "_fields"
-                    for f in MODEL._fields:
-
-                        # Evaluamos que el campo tenga el atributo:
-                        # "second_table".
-                        # Que el nombre dado y que el nombre del campo
-                        # sean iguales
-                        #
-                        # Se guarda y salimos de bucle
-                        if (
-                            hasattr(f, "second_table") and
-                            rel == f.second_table
-                        ):
-
-                            field = f._name
-                            winner = MODEL
-                            break
-
-                    # Validamos que la operacion directa no encontro campos
-                    # Pasamos a la operacion inversa (de tabla padre a hija).
-                    if field is None:
-
-                        # Buscamos relacion del PRIMARY KEY de la tabla
-                        # A la FOREIGN KEY de la tabla hija
-                        c_id = f"{MODEL._table}_id"
-                        # Buscamos que la tabla exista en la base de datos
-                        if rel not in MODEL._family:
-                            msg = (
-                                f"Passed {rel} tables does not exists. "
-                                "Make sure of the spelling and "
-                                "make sure of relation before "
-                                "trying again."
-                            )
-                            logger.critical(msg)
-                            raise KeyError(rel)
-
-                        # Si existe accedemos a la tabla entera
-                        # e iteramos sus campos
-                        tab2 = MODEL._family[rel]
-
-                        for f in tab2._fields:
-                            if c_id == f._name:
-                                field = f._name
-                                winner = MODEL
-                                break
-
-                    # Si no relación absoluta; reportar cambio de esquema
-                    if field is None:
-                        flag = False
-                        break
-
-                    # Agregamos la relacion al dicc "kwargs"
-                    # Por defecto INNER JOIN
-                    kwargs[f"in__{rel}"] = [field, MODEL._table]
-
-                # Cambiamos el esquema de busqueda
-                if flag is False:
-                    continue
-                else:
-                    break
-
-            # Si se encontraron nulos:
-            self.model = winner
-            self.add(**kwargs)
+        if not offset and not limit:
             return self
 
-        # Si no hay nulos retornamos
-        self.add(**kwargs)
+        if limit and not offset:
+            if not isinstance(limit, int):
+                logger.critical("Passed argument 'limit' must be an integer.")
+                raise TypeError(type(limit))
+
+            self.LIMIT = limit
+            self.OFFSET = None
+
+        elif offset and not limit:
+            logger.critical(
+                "Invalid structure. When invokin a segmented query "
+                "you can pass only 'limit' argument but it is not valid"
+                "passin 'offset' without 'limit'."
+            )
+            raise ValueError
+
+        else:
+            if not isinstance(limit, int) or not isinstance(offset, int):
+                logger.critical(
+                    "Make sure both passed arguments are integers. "
+                    f"Limit {limit}. Offset {offset}."
+                )
+                raise TypeError
+            self.LIMIT = limit
+            self.OFFSET = offset
+
         return self
 
     def count(self):
-        self.select(
-            f"{self.model._table}__{self.model._table}_id__count").all()
+        QUERY = f"{self.model._table}__{self.model._table}_id__count"
+        row, col = self.select(QUERY).all().raw()
+        return row[0][0]
+
+    def all(self, ids=False):
+
+        # RUTA DB
+        PATH = self.model._db_file
+
+        # FROM
+        FROM = self.model._table if not self.FROM else self.FROM
+
+        # VALIDAR SELECCION
+        if not self.SE_SELECT:
+            self._NO_SELECT_()
+
+        # OBTNER IDS DE MAIN TABLE DEL QUERY (Prioridad de select)
+        if ids:
+            self._IDS_(main_table=FROM)
+
+        # OBTENCION DE AGRUPACIÓN
+        self._DYNAMIC_GROUP_()
+
+        # VALIDAR OPCIONALES
+        JOIN = None if not self.JOIN else self.JOIN
+        FILTER = None if not self.FILTER else self.FILTER
+        GROUP = None if not self.GROUP else self.GROUP
+        ORDER = None if not self.ORDER else self.ORDER
+        LIMIT = None if not self.LIMIT else self.LIMIT
+        OFFSET = None if not self.OFFSET else self.OFFSET
+
+        row, col = query(
+            db_path=PATH,
+            select=self.SE_SELECT,
+            _from=FROM,
+            join=JOIN,
+            condition=FILTER,
+            group_by=GROUP,
+            order_by=ORDER,
+            limit=LIMIT,
+            offset=OFFSET,
+        )
+
+        self.ROW = row
+        self.COL = col
 
         return self
+
+    def raw(self, label=False, align=False):
+
+        if not self.ROW and not self.COL:
+            return self.ROW, self.COL
+
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
+
+        if label:
+            LABELS = self.SE_LABEL.copy()
+
+            COLS = _NOT_DUPLICATED_LABELS_(labels=LABELS, columns=COLS)
+
+        if align:
+            ROWS = list(zip(*ROWS))
+
+        self.reset()
+        return ROWS, COLS
+
+    def dictionary(self, label=False):
+
+        if not self.ROW and not self.COL:
+            return []
+
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
+
+        if label:
+            LABELS = self.SE_LABEL.copy()
+
+            COLS = _NOT_DUPLICATED_LABELS_(labels=LABELS, columns=COLS)
+
+        if ROWS:
+            dicc = [dict(zip(COLS, r)) for r in ROWS]
+            self.reset()
+            return dicc
+
+        else:
+            NONES = [None for C in COLS]
+            dicc = [dict(zip(COLS, NONES))]
+            self.reset()
+            return dicc
+
+    def container(self, label=False):
+
+        if not self.ROW and not self.COL:
+            return []
+
+        ROWS = self.ROW.copy()
+        COLS = self.COL.copy()
+        LABELS = self.SE_LABEL.copy()
+
+        # OBTENCION DE TABLAS PARA TODO EL QUERY
+        TABLES = [C.split("__", 1)[0] for C in COLS]
+        SETTAB = set(TABLES)
+        # COLUMNAS SIN SUFIJO "tabla__"
+        SLT_COLS = [C.split("__", 1)[1] for C in COLS]
+        # MAPA {tabla__columna: frontend}
+        MAP = dict(zip(COLS, LABELS))
+        TABCOL = dict(zip(TABLES, SLT_COLS))  
+        # MAPA DE POSICION DE COLUMNA POR TABLA DEL QUERY
+        POSITIONS = {}
+
+        for TAB in SETTAB:
+            POSITIONS[TAB] = {}
+            ORDER = self.model._family[TAB]._metadata[TAB]["columns"]
+            for COL in SLT_COLS:
+                PARTS = COL.split("__")
+                try:
+                    if len(PARTS) == 2:
+                        EXTRA = PARTS[0]
+                        index = ORDER.index(EXTRA)
+                    else:
+                        index = ORDER.index(COL)
+                    if label:
+                        try:
+                            POSITIONS[TAB].update({MAP[TAB + "__" + COL]: index})
+                        except KeyError:
+                            continue
+                    else:
+                        POSITIONS[TAB].update({COL: index})
+                except ValueError:
+                    continue
+        if ROWS:
+            RESULT = _TRANSPOSITION_(
+                tables=TABLES,
+                columns=COLS,
+                rows=ROWS,
+                positions=POSITIONS,
+                chart=MAP,
+                label=label,
+            )
+            return RESULT
+
+        else:
+            TUPLA = tuple([None for C in COLS])
+            RESULT = _TRANSPOSITION_(
+                tables=TABLES,
+                columns=COLS,
+                rows=[TUPLA],
+                positions=POSITIONS,
+                chart=MAP,
+                label=label,
+            )
+            return RESULT

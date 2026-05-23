@@ -128,7 +128,7 @@ def test_sinchronized_schema():
 
         name = datatype.Char(comment="Product Name")
 
-    api = Product2.all().to_dict()
+    api = Product2.all().dictionary()
 
     # OJO: Ya no existe la columna category_id (La sincronizacion funciona)
     assert api == [{"product__product_id": 1, "product__name": "Pan"}]
@@ -170,7 +170,7 @@ def test_quitar_group_constraint():
 
     SaleLine2.i(sale_line=[(None, 1, 1, None, None, None)])
 
-    api = SaleLine2.all().to_dict()
+    api = SaleLine2.all().dictionary()
 
     # Quito el constraint de manera dinamica, la base datos sola interpreta
     assert api == [

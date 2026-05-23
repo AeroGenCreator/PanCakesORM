@@ -736,7 +736,7 @@ class PanCakesORM:
 
             def make_read_all(model):
                 def read_all():
-                    return model.all().to_dict(label=True)
+                    return model.all().dictionary(label=True)
 
                 return read_all
 
@@ -785,19 +785,22 @@ class PanCakesORM:
                     links = lk.links
                     groups = g.groups
                     orders = o.orders
-                    limits = limit.num
-                    offsets = offset.num
+                    limit = limit.num
+                    offset = offset.num
 
                     dicc = (
-                        model.select(*select)
+                        model
+                        .select(*select)
                         .filter(**filters)
                         .link(*links)
-                        .gp(**groups)
-                        .sort(**orders)
-                        .lim(limit=limits)
-                        .off(offset=offsets)
+                        .group(**groups)
+                        .sort(*orders)
+                        .chunk(
+                            offset=offset,
+                            limit=limit
+                        )
                         .all()
-                        .to_dict(label=True)
+                        .dictionary(label=True)
                     )
                     return dicc
 
@@ -807,7 +810,7 @@ class PanCakesORM:
                 def api_pro_query(
                     s: ValidateSelect,
                     f: ValidateFilter,
-                    ad: ValidateAdd,
+                    a: ValidateAdd,
                     g: ValidateGroupBy,
                     o: ValidateOrderBy,
                     limit: ValidateLimitOffset,
@@ -816,22 +819,25 @@ class PanCakesORM:
                 ):
                     select = s.select
                     filters = f.filters
-                    added = ad.added
+                    add = a.added
                     groups = g.groups
                     orders = o.orders
-                    limits = limit.num
-                    offsets = offset.num
+                    limit = limit.num
+                    offset = offset.num
 
                     dicc = (
-                        model.select(*select)
+                        model
+                        .select(*select)
                         .filter(**filters)
-                        .add(**added)
-                        .gp(**groups)
-                        .sort(**orders)
-                        .lim(limit=limits)
-                        .off(offset=offsets)
+                        .add(**add)
+                        .group(**groups)
+                        .sort(*orders)
+                        .chunk(
+                            offset=offset,
+                            limit=limit
+                        )
                         .all()
-                        .to_dict(label=True)
+                        .dictionary(label=True)
                     )
                     return dicc
 
@@ -907,43 +913,39 @@ class PanCakesORM:
     @classmethod  # Inyeccion Segura
     def query(
         cls,
-        db_path: str = None,
-        select: str | list = None,
-        _from: str = None,
-        sp_select: list = None,
-        join: list = None,
-        condition: list = None,
-        group_by: list = None,
-        order_by: list = None,
-        limit: int = None,
-        offset: int = None,
+        select: list,
+        _from: str | None = None,
+        db_path: str | None = None,
+        join: list | None = None,
+        condition: list | None = None,
+        group_by: list | None = None,
+        order_by: list | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
     ):
         """
         Llama a la funcion de consulta global.
         Documentacion: cook/flavor
         """
-        db_path = cls._db_file if db_path is None else db_path
-        select = "*" if select is None else select
-        _from = cls._table if _from is None else _from
-        sp_select = None if sp_select is None else sp_select
-        join = None if join is None else join
-        condition = None if condition is None else condition
-        group_by = None if group_by is None else group_by
-        order_by = None if order_by is None else order_by
-        limit = None if limit is None else limit
-        offset = None if offset is None else offset
+        FROM = cls._table if _from is None else _from
+        PATH = cls._db_file if db_path is None else db_path
+        JOIN = None if join is None else join
+        CONDITION = None if condition is None else condition
+        GROUP = None if group_by is None else group_by
+        ORDER = None if order_by is None else order_by
+        LIMIT = None if limit is None else limit
+        OFFSET = None if offset is None else offset
 
         res, col = query(
-            db_path=db_path,
             select=select,
-            _from=_from,
-            sp_select=sp_select,
-            join=join,
-            condition=condition,
-            group_by=group_by,
-            order_by=order_by,
-            limit=limit,
-            offset=offset,
+            _from=FROM,
+            db_path=PATH,
+            join=JOIN,
+            condition=CONDITION,
+            group_by=GROUP,
+            order_by=ORDER,
+            limit=LIMIT,
+            offset=OFFSET,
         )
 
         return res, col
@@ -999,10 +1001,6 @@ class PanCakesORM:
         return cls.q().select(*columns)
 
     @classmethod  # Inyeccion Segura
-    def id(cls):
-        return cls.q().id()
-
-    @classmethod  # Inyeccion Segura
     def add(cls, **kwargs):
         return cls.q().add(**kwargs)
 
@@ -1015,28 +1013,25 @@ class PanCakesORM:
         return cls.q().filter(**kwargs)
 
     @classmethod  # Inyeccion Segura
-    def gp(cls, **kwargs):
-        return cls.q().gp(**kwargs)
+    def group(cls, **kwargs):
+        return cls.q().group(**kwargs)
 
     @classmethod  # Inyeccion Segura
-    def sort(cls, **kwargs):
-        return cls.q().sort(**kwargs)
+    def sort(cls, *columns):
+        return cls.q().sort(*columns)
 
     @classmethod  # Iyeccion Segura
-    def lim(cls, num: int = None):
-        return cls.q().lim(num)
-
-    @classmethod  # Inyección Segura
-    def off(cls, num: int = None):
-        return cls.q().off(num)
-
-    @classmethod  # Inyeccion Segura
-    def all(cls):
-        return cls.q().all()
+    def chunk(cls, offset: int = None, limit: int = None):
+        return cls.q().chunk(offset=offset, limit=limit)
 
     @classmethod  # Inyeccion Segura
     def count(cls):
-        return cls.q().count()
+        rows = cls.q().count()
+        return rows
+
+    @classmethod  # Inyeccion Segura
+    def all(cls, ids: bool = False):
+        return cls.q().all(ids=ids)
 
     # --*-- HELPERS CRUD --*--
 
@@ -1061,10 +1056,11 @@ class PanCakesORM:
 
 # Despues de carga: Inyectar "Clase Modelo" -> Validadores Pydantic
 ValidateSelect.MODEL = PanCakesORM
+ValidateAdd.MODEL = PanCakesORM
 ValidateFilter.MODEL = PanCakesORM
 ValidateLink.MODEL = PanCakesORM
 ValidateGroupBy.MODEL = PanCakesORM
 ValidateOrderBy.MODEL = PanCakesORM
-ValidateAdd.MODEL = PanCakesORM
+
 DeleteFilterValidator.MODEL = PanCakesORM
 UpdateFilterValidator.MODEL = PanCakesORM

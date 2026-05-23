@@ -23,21 +23,21 @@ class User(PanCakesORM):
 
 
 def test_env_query():
-    row, col = query(select="*", _from="user")
+    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
 
     assert row == []
-    assert col == ["user_id", "name"]
+    assert col == ['user__user_id', 'user__name']
 
 
 def test_env_insert():
     insert([{"table": "user", "data": [(None, "User1")]}])
-    row, col = query(select="*", _from="user")
+    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
     assert len(row) == 1
 
 
 def test_env_delete():
     delete([{"table": "user"}], delete_all=True)
-    row, col = query(select="*", _from="user")
+    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
     assert row == []
 
 
@@ -59,14 +59,14 @@ def test_env_update():
             }
         ]
     )
-    row, col = query(select="*", _from="user")
+    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
 
     assert row == [(1, "PanCakesORM")]
 
 
 def test_coffee_insert():
     AbstractBox(model=PanCakesORM).i(user=[(None, "AbstractBox")])
-    dicc = User.all().to_dict()
+    dicc = User.all().dictionary()
 
     assert dicc == [
         {"user__user_id": 1, "user__name": "PanCakesORM"},
@@ -78,7 +78,7 @@ def test_coffee_update():
     AbstractBox(model=PanCakesORM).u(
         user__name__user_id__same=("PanCakesORM & AbstractBox & QueryBox", 2)
     )
-    dicc = User.all().to_dict()
+    dicc = User.all().dictionary()
 
     assert dicc == [
         {"user__user_id": 1, "user__name": "PanCakesORM"},
@@ -91,7 +91,7 @@ def test_coffee_update():
 
 def test_coffee_delete():
     AbstractBox(model=PanCakesORM).d(user__user_id__same=1)
-    dicc = User.all().to_dict()
+    dicc = User.all().dictionary()
 
     assert dicc == [
         {
@@ -108,7 +108,7 @@ def test_querybox():
     con las salidas
     """
     query_user = QueryBox(User)
-    dicc = query_user.select().all(_from="user").to_dict()
+    dicc = query_user.select().all().dictionary()
 
     assert dicc == [
         {
