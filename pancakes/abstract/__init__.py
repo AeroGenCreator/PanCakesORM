@@ -4,5 +4,4 @@
 # You may obtain a copy of the License at
 # http://www.apache.org/licenses/LICENSE-2.0
 
-from . import query_box
-from . import abstract_box
+from . import abstract_box, query_box

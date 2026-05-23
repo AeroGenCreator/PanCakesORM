@@ -68,7 +68,7 @@ User.i(user=[(None, "Omar", 30)])  # <- El primer elemento de tupla es el "id"
 User.u(user__user_name__user_id__same=["Juan", 1])
 
 # ¡Listo para consultar!
-users = User.filter(user__age__gt=18).all().to_dict()
+users = User.filter(user__age__gt=18).all().dictionary()
 ```
 
 # [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
@@ -92,7 +92,7 @@ PanCakesORM no es solo una cara bonita; está construido para ser el motor confi
         Streamlit: Ideal para aplicaciones de datos donde la velocidad de desarrollo es clave.
 
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
-    de más de 140 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
+    de más de 160 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
 ### 🏗️ Arquitectura de Consultas (QueryBox)
 

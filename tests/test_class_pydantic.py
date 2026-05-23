@@ -1,10 +1,11 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
-""" Tipado Para Pydantic -*- PanCakesORM -*- """
+"""Tipado Para Pydantic -*- PanCakesORM -*-"""
 
 # Modulos PanCakesORM
 # Modulos Python
@@ -21,6 +22,7 @@ from pancakes.sql import datatype
 path_dir = Path.cwd() / "data" / "test_env"
 path_db = path_dir / "pydantic.sqlite"
 
+
 class Category(PanCakesORM):
     _table = "category"
     _depends = "self"
@@ -32,11 +34,11 @@ class Category(PanCakesORM):
         max_length=200,
         required=True,
         unique=True,
-        default="Unknown"
+        default="Unknown",
     )
 
-class Inventory(PanCakesORM):
 
+class Inventory(PanCakesORM):
     # Configuracion Modelo
     _table = "inventory"
     _depends = ["category"]
@@ -45,16 +47,14 @@ class Inventory(PanCakesORM):
 
     # Campos
     mk_date = datatype.Text(
-        comment="C. Date",
-        required=True,
-        default="2026-28-04"
+        comment="C. Date", required=True, default="2026-28-04"
     )
     product_name = datatype.Char(
         comment="Product Name",
         max_length=100,
         min_length=10,
         required=True,
-        unique=True
+        unique=True,
     )
     stock_quantity = datatype.Int(
         comment="Stock Quantity",
@@ -71,19 +71,19 @@ class Inventory(PanCakesORM):
         required=True,
     )
     saleable = datatype.Bool(
-        comment="Saleable Product",
-        default=True,
-        required=True
+        comment="Saleable Product", default=True, required=True
     )
     category_id = datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
         comment="Prod. Cate. Rel",
-        on_del='set null',
-        on_upd='cascade'
+        on_del="set null",
+        on_upd="cascade",
     )
 
+
 create_schema = Inventory.CREATE
+
 
 # Pydantic Validation Creation:
 def test_create_schema():
@@ -92,9 +92,10 @@ def test_create_schema():
         product_name="Simple Shampoo",
         stock_quantity=20,
         product_price=10,
-        saleable=True
+        saleable=True,
     )
     pass
+
 
 """print()
 print(Inventory.CREATE)
@@ -117,24 +118,33 @@ Por tanto PanCakesORM
 -> Permite pasar None (Integridad SQL)
 -> Permite valores defecto (Modelos Pydantic)
 """
+
+
 def test_i():
     Inventory.i(
-        category=[
-            (None, "Categoria Numero 1")
-        ],
+        category=[(None, "Categoria Numero 1")],
         inventory=[
-            (None,"2026-28-04","SuperProducto",10,10,True, 1),
-            (None,"2026-28-05","SuperProducto2",12,11,True,None),
-            (None,"-miss","SuperProducto3","-miss","-miss","-miss","-miss")
-        ]
+            (None, "2026-28-04", "SuperProducto", 10, 10, True, 1),
+            (None, "2026-28-05", "SuperProducto2", 12, 11, True, None),
+            (
+                None,
+                "-miss",
+                "SuperProducto3",
+                "-miss",
+                "-miss",
+                "-miss",
+                "-miss",
+            ),
+        ],
     )
 
     data = Inventory.return_all()
     assert data == [
-        (1, '2026-28-04', 'SuperProducto', 10, 10.0, 1, 1),
-        (2, '2026-28-05', 'SuperProducto2', 12, 11.0, 1, None),
-        (3, '2026-28-04', 'SuperProducto3', 10, 10.0, 1, None)
+        (1, "2026-28-04", "SuperProducto", 10, 10.0, 1, 1),
+        (2, "2026-28-05", "SuperProducto2", 12, 11.0, 1, None),
+        (3, "2026-28-04", "SuperProducto3", 10, 10.0, 1, None),
     ]
+
 
 def test_u():
     Inventory.u(
@@ -145,53 +155,60 @@ def test_u():
     data = Inventory.return_all()
 
     assert data == [
-        (1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
-        (2, '2025-01-01', 'SuperProducto2', 12, 11.0, 1, None),
-        (3, '2025-01-01', 'SuperProducto3', 10, 10.0, 1, None)
+        (1, "2026-28-04", "SuperProducto", 10, 10.0, 0, 1),
+        (2, "2025-01-01", "SuperProducto2", 12, 11.0, 1, None),
+        (3, "2025-01-01", "SuperProducto3", 10, 10.0, 1, None),
     ]
+
 
 def test_u_type_constraints():
     wrong_data = {"inventory__product_name__inventory_id__same": ["Un", 1]}
     with pytest.raises(ValidationError) as excinfo:
         Inventory.u(**wrong_data)
 
-    info = [{
-        'type': 'string_too_short',
-        'loc': (),
-        'msg': 'String should have at least 10 characters',
-        'input': 'Un',
-        'ctx': {'min_length': 10},
-        'url': 'https://errors.pydantic.dev/2.13/v/string_too_short'
-    }]
+    info = [
+        {
+            "type": "string_too_short",
+            "loc": (),
+            "msg": "String should have at least 10 characters",
+            "input": "Un",
+            "ctx": {"min_length": 10},
+            "url": "https://errors.pydantic.dev/2.13/v/string_too_short",
+        }
+    ]
 
     errors = excinfo.value.errors()
 
     assert errors == info
+
 
 def test_u_all():
     Inventory.u(inventory__saleable=False, update_all=True)
     data = Inventory.return_all()
 
     assert data == [
-        (1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
-        (2, '2025-01-01', 'SuperProducto2', 12, 11.0, 0, None),
-        (3, '2025-01-01', 'SuperProducto3', 10, 10.0, 0, None)
+        (1, "2026-28-04", "SuperProducto", 10, 10.0, 0, 1),
+        (2, "2025-01-01", "SuperProducto2", 12, 11.0, 0, None),
+        (3, "2025-01-01", "SuperProducto3", 10, 10.0, 0, None),
     ]
+
 
 def test_d():
     Inventory.d(inventory__inventory_id__same=3)
     data = Inventory.return_all()
 
     assert data == [
-        (1, '2026-28-04', 'SuperProducto', 10, 10.0, 0, 1),
-        (2, '2025-01-01', 'SuperProducto2', 12, 11.0, 0, None)
+        (1, "2026-28-04", "SuperProducto", 10, 10.0, 0, 1),
+        (2, "2025-01-01", "SuperProducto2", 12, 11.0, 0, None),
     ]
 
+
 def test_d_iter():
-    Inventory.d(inventory__inventory_id__in=[1,2])
+    Inventory.d(inventory__inventory_id__in=[1, 2])
     data = Inventory.return_all()
 
     assert data == []
+
 
 print()
 print(list(PanCakesORM._metadata["inventory"].keys()))

@@ -1,8 +1,9 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
 """Test QueryBox Class -*- PanCakesORM -*-"""
 
@@ -814,12 +815,10 @@ def test_group_by():
     m = QueryBox(Product)
     dicc = (
         m.link("recipe", "category", "recipe_product_line")
-        .select("recipe__recipe_ingredient__dcount",
-            "category__category"
-        )
+        .select("recipe__recipe_ingredient__dcount", "category__category")
         .group(category="category")
         .all()
         .dictionary(label=True)
     )
 
-    assert dicc == [{'Recipe Ingredient DCOUNT': 3, 'Category': 'Dessert'}]
+    assert dicc == [{"Recipe Ingredient DCOUNT": 3, "Category": "Dessert"}]

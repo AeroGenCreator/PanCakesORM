@@ -1,16 +1,17 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
 """-*- Test Self oriented link -*-"""
 
 from pathlib import Path
 
+from pancakes.abstract.query_box import QueryBox
 from pancakes.models.model import PanCakesORM
 from pancakes.sql import datatype
-from pancakes.abstract.query_box import QueryBox
 
 # GLOBAL PATH para pruebas
 dir_ = Path.cwd() / "data" / "test_env"

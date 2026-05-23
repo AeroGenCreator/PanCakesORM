@@ -1,8 +1,9 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
 """Test QueryBox Class -*- PanCakesORM -*-"""
 
@@ -156,15 +157,96 @@ def test_box_meth_join_all():
     )
 
     assert api == [
-    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 1, 'sale__name': 'F1', 'sale__client_id': 1},
-    {'client__client_id': 1, 'client__name': 'Andres', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 4, 'sale__name': 'F4', 'sale__client_id': 1},
-    {'client__client_id': 2, 'client__name': 'Lupita', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 9, 'sale__name': 'F9', 'sale__client_id': 2},
-    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 2, 'sale__name': 'F2', 'sale__client_id': 3},
-    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 5, 'sale__name': 'F5', 'sale__client_id': 3},
-    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 6, 'sale__name': 'F6', 'sale__client_id': 3},
-    {'client__client_id': 3, 'client__name': 'Peke', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 8, 'sale__name': 'F8', 'sale__client_id': 3},
-    {'client__client_id': 4, 'client__name': 'Polar', 'client__country_id': 1, 'country__country_id': 1, 'country__name': 'Mexico', 'sale__sale_id': 3, 'sale__name': 'F3', 'sale__client_id': 4},
-    {'client__client_id': 5, 'client__name': 'Malteada', 'client__country_id': 2, 'country__country_id': 2, 'country__name': 'Brasil', 'sale__sale_id': 7, 'sale__name': 'F7', 'sale__client_id': 5}
+        {
+            "client__client_id": 1,
+            "client__name": "Andres",
+            "client__country_id": 1,
+            "country__country_id": 1,
+            "country__name": "Mexico",
+            "sale__sale_id": 1,
+            "sale__name": "F1",
+            "sale__client_id": 1,
+        },
+        {
+            "client__client_id": 1,
+            "client__name": "Andres",
+            "client__country_id": 1,
+            "country__country_id": 1,
+            "country__name": "Mexico",
+            "sale__sale_id": 4,
+            "sale__name": "F4",
+            "sale__client_id": 1,
+        },
+        {
+            "client__client_id": 2,
+            "client__name": "Lupita",
+            "client__country_id": 1,
+            "country__country_id": 1,
+            "country__name": "Mexico",
+            "sale__sale_id": 9,
+            "sale__name": "F9",
+            "sale__client_id": 2,
+        },
+        {
+            "client__client_id": 3,
+            "client__name": "Peke",
+            "client__country_id": 2,
+            "country__country_id": 2,
+            "country__name": "Brasil",
+            "sale__sale_id": 2,
+            "sale__name": "F2",
+            "sale__client_id": 3,
+        },
+        {
+            "client__client_id": 3,
+            "client__name": "Peke",
+            "client__country_id": 2,
+            "country__country_id": 2,
+            "country__name": "Brasil",
+            "sale__sale_id": 5,
+            "sale__name": "F5",
+            "sale__client_id": 3,
+        },
+        {
+            "client__client_id": 3,
+            "client__name": "Peke",
+            "client__country_id": 2,
+            "country__country_id": 2,
+            "country__name": "Brasil",
+            "sale__sale_id": 6,
+            "sale__name": "F6",
+            "sale__client_id": 3,
+        },
+        {
+            "client__client_id": 3,
+            "client__name": "Peke",
+            "client__country_id": 2,
+            "country__country_id": 2,
+            "country__name": "Brasil",
+            "sale__sale_id": 8,
+            "sale__name": "F8",
+            "sale__client_id": 3,
+        },
+        {
+            "client__client_id": 4,
+            "client__name": "Polar",
+            "client__country_id": 1,
+            "country__country_id": 1,
+            "country__name": "Mexico",
+            "sale__sale_id": 3,
+            "sale__name": "F3",
+            "sale__client_id": 4,
+        },
+        {
+            "client__client_id": 5,
+            "client__name": "Malteada",
+            "client__country_id": 2,
+            "country__country_id": 2,
+            "country__name": "Brasil",
+            "sale__sale_id": 7,
+            "sale__name": "F7",
+            "sale__client_id": 5,
+        },
     ]
 
 
@@ -283,9 +365,9 @@ def test_box_meth_id():
     )
 
     assert api == [
-        {'client__client_id__distinct': 3},
-        {'client__client_id__distinct': 4},
-        {'client__client_id__distinct': 5}
+        {"client__client_id__distinct": 3},
+        {"client__client_id__distinct": 4},
+        {"client__client_id__distinct": 5},
     ]
 
 
@@ -313,18 +395,16 @@ def test_box_tuple_of_ids():
 
 def test_box_meth_group_all():
     api = (
-        Sale
-        .select("client__country_id", "client__country_id__count")
+        Sale.select("client__country_id", "client__country_id__count")
         .group(client="country_id")
         .link("client")
         .all()
         .dictionary()
     )
 
-    
     assert api == [
-        {'client__country_id': 1, 'client__country_id__count': 4},
-        {'client__country_id': 2, 'client__country_id__count': 5}
+        {"client__country_id": 1, "client__country_id__count": 4},
+        {"client__country_id": 2, "client__country_id__count": 5},
     ]
 
 
@@ -603,12 +683,12 @@ def test_direct_select():
     api = Client.select("client__name").all().dictionary()
 
     assert api == [
-    {'client__name': 'Andres'},
-    {'client__name': 'Lupita'},
-    {'client__name': 'Malteada'},
-    {'client__name': 'Peke'},
-    {'client__name': 'Polar'}
-]
+        {"client__name": "Andres"},
+        {"client__name": "Lupita"},
+        {"client__name": "Malteada"},
+        {"client__name": "Peke"},
+        {"client__name": "Polar"},
+    ]
 
 
 def test_direct_select_agg():
@@ -625,7 +705,10 @@ def test_direct_select_avg():
 
 def test_direct_select_link():
     api = (
-        Sale.select("sale__name", "client__name").link("client").all().dictionary()
+        Sale.select("sale__name", "client__name")
+        .link("client")
+        .all()
+        .dictionary()
     )
 
     assert api == [
@@ -663,15 +746,15 @@ def test_ids_select_warning():
     api = Sale.select("sale__name").all(ids=True).dictionary()
 
     assert api == [
-        {'sale__sale_id__distinct': 1},
-        {'sale__sale_id__distinct': 2},
-        {'sale__sale_id__distinct': 3},
-        {'sale__sale_id__distinct': 4},
-        {'sale__sale_id__distinct': 5},
-        {'sale__sale_id__distinct': 6},
-        {'sale__sale_id__distinct': 7},
-        {'sale__sale_id__distinct': 8},
-        {'sale__sale_id__distinct': 9}
+        {"sale__sale_id__distinct": 1},
+        {"sale__sale_id__distinct": 2},
+        {"sale__sale_id__distinct": 3},
+        {"sale__sale_id__distinct": 4},
+        {"sale__sale_id__distinct": 5},
+        {"sale__sale_id__distinct": 6},
+        {"sale__sale_id__distinct": 7},
+        {"sale__sale_id__distinct": 8},
+        {"sale__sale_id__distinct": 9},
     ]
 
 
@@ -685,28 +768,31 @@ def test_output_json():
     api = Sale.link("client").all().container()
 
     assert api == [
-        {'client': {
-            'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2],
-            'name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'],
-            'country_id': [1, 2, 1, 1, 2, 2, 2, 2, 1]
+        {
+            "client": {
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
             },
-        'sale': {
-            'sale_id': [1, 2, 3, 4, 5, 6, 7, 8, 9],
-            'name': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'],
-            'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2]
+            "sale": {
+                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
             },
-        '@positions@':
-            {'client': {
-                'name': 1,
-                'client_id': 0,
-                'country_id': 2
-                },
-            'sale': {
-                'sale_id': 0,
-                'name': 1,
-                'client_id': 2
-                }
-            }
+            "@positions@": {
+                "client": {"name": 1, "client_id": 0, "country_id": 2},
+                "sale": {"sale_id": 0, "name": 1, "client_id": 2},
+            },
         }
     ]
 
@@ -714,7 +800,34 @@ def test_output_json():
 def test_reverse_link():
     api = Client.link("sale").all().container()
 
-    assert api == [{'sale': {'sale_id': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'name': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'], 'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2]}, 'client': {'client_id': [1, 3, 4, 1, 3, 3, 5, 3, 2], 'name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'], 'country_id': [1, 2, 1, 1, 2, 2, 2, 2, 1]}, '@positions@': {'sale': {'client_id': 2, 'name': 1, 'sale_id': 0}, 'client': {'client_id': 0, 'name': 1, 'country_id': 2}}}]
+    assert api == [
+        {
+            "sale": {
+                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            },
+            "client": {
+                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            },
+            "@positions@": {
+                "sale": {"client_id": 2, "name": 1, "sale_id": 0},
+                "client": {"client_id": 0, "name": 1, "country_id": 2},
+            },
+        }
+    ]
 
 
 def test_reverse_link_filter():
@@ -813,24 +926,33 @@ def test_raw_labels_full_join():
     row, col = Client.link("sale", "country").all().raw(label=True)
 
     assert row == [
-        (1, 'Andres', 1, 1, 'F1', 1, 1, 'Mexico'),
-        (3, 'Peke', 2, 2, 'F2', 3, 2, 'Brasil'),
-        (4, 'Polar', 1, 3, 'F3', 4, 1, 'Mexico'),
-        (1, 'Andres', 1, 4, 'F4', 1, 1, 'Mexico'),
-        (3, 'Peke', 2, 5, 'F5', 3, 2, 'Brasil'),
-        (3, 'Peke', 2, 6, 'F6', 3, 2, 'Brasil'),
-        (5, 'Malteada', 2, 7, 'F7', 5, 2, 'Brasil'),
-        (3, 'Peke', 2, 8, 'F8', 3, 2, 'Brasil'),
-        (2, 'Lupita', 1, 9, 'F9', 2, 1, 'Mexico')
+        (1, "Andres", 1, 1, "F1", 1, 1, "Mexico"),
+        (3, "Peke", 2, 2, "F2", 3, 2, "Brasil"),
+        (4, "Polar", 1, 3, "F3", 4, 1, "Mexico"),
+        (1, "Andres", 1, 4, "F4", 1, 1, "Mexico"),
+        (3, "Peke", 2, 5, "F5", 3, 2, "Brasil"),
+        (3, "Peke", 2, 6, "F6", 3, 2, "Brasil"),
+        (5, "Malteada", 2, 7, "F7", 5, 2, "Brasil"),
+        (3, "Peke", 2, 8, "F8", 3, 2, "Brasil"),
+        (2, "Lupita", 1, 9, "F9", 2, 1, "Mexico"),
     ]
 
-    assert col == ['CLIENT ID', 'Client Name', 'Country Rel', 'SALE ID', 'Sale Code', 'Cliente Rel', 'COUNTRY ID', 'Country']
+    assert col == [
+        "CLIENT ID",
+        "Client Name",
+        "Country Rel",
+        "SALE ID",
+        "Sale Code",
+        "Cliente Rel",
+        "COUNTRY ID",
+        "Country",
+    ]
 
 
 def test_raw_labels_select():
     vec, col = Client.select("client__name").all().raw(label=True, align=True)
 
-    assert vec == [('Andres', 'Lupita', 'Malteada', 'Peke', 'Polar')]
+    assert vec == [("Andres", "Lupita", "Malteada", "Peke", "Polar")]
     assert col == ["Client Name"]
 
 
@@ -844,15 +966,15 @@ def test_raw_labels_select_multi():
     )
 
     assert row == [
-        ('Andres', 'F1'),
-        ('Andres', 'F4'),
-        ('Lupita', 'F9'),
-        ('Malteada', 'F7'),
-        ('Peke', 'F2'),
-        ('Peke', 'F5'),
-        ('Peke', 'F6'),
-        ('Peke', 'F8'),
-        ('Polar', 'F3')
+        ("Andres", "F1"),
+        ("Andres", "F4"),
+        ("Lupita", "F9"),
+        ("Malteada", "F7"),
+        ("Peke", "F2"),
+        ("Peke", "F5"),
+        ("Peke", "F6"),
+        ("Peke", "F8"),
+        ("Polar", "F3"),
     ]
     assert col == ["Client Name", "Sale Code"]
 
@@ -1052,7 +1174,13 @@ def test_dict_label_full_join():
 def test_dict_label_select():
     dicc = Client.select("client__name").all().dictionary()
 
-    assert dicc == [{'client__name': 'Andres'}, {'client__name': 'Lupita'}, {'client__name': 'Malteada'}, {'client__name': 'Peke'}, {'client__name': 'Polar'}]
+    assert dicc == [
+        {"client__name": "Andres"},
+        {"client__name": "Lupita"},
+        {"client__name": "Malteada"},
+        {"client__name": "Peke"},
+        {"client__name": "Polar"},
+    ]
 
 
 def test_dict_label_select_multi():
@@ -1064,7 +1192,17 @@ def test_dict_label_select_multi():
         .dictionary(label=True)
     )
 
-    assert dicc == [{'Client Name': 'Andres', 'Sale Code': 'F1'}, {'Client Name': 'Andres', 'Sale Code': 'F4'}, {'Client Name': 'Lupita', 'Sale Code': 'F9'}, {'Client Name': 'Malteada', 'Sale Code': 'F7'}, {'Client Name': 'Peke', 'Sale Code': 'F2'}, {'Client Name': 'Peke', 'Sale Code': 'F5'}, {'Client Name': 'Peke', 'Sale Code': 'F6'}, {'Client Name': 'Peke', 'Sale Code': 'F8'}, {'Client Name': 'Polar', 'Sale Code': 'F3'}]
+    assert dicc == [
+        {"Client Name": "Andres", "Sale Code": "F1"},
+        {"Client Name": "Andres", "Sale Code": "F4"},
+        {"Client Name": "Lupita", "Sale Code": "F9"},
+        {"Client Name": "Malteada", "Sale Code": "F7"},
+        {"Client Name": "Peke", "Sale Code": "F2"},
+        {"Client Name": "Peke", "Sale Code": "F5"},
+        {"Client Name": "Peke", "Sale Code": "F6"},
+        {"Client Name": "Peke", "Sale Code": "F8"},
+        {"Client Name": "Polar", "Sale Code": "F3"},
+    ]
 
 
 def test_dict_label_select_multi_agg():
@@ -1109,25 +1247,123 @@ def test_dict_label_select_full_agg():
 def test_container_label():
     api = Client.all().container(label=True)
 
-    assert api == [{'client': {'CLIENT ID': [1, 2, 3, 4, 5], 'Client Name': ['Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'], 'Country Rel': [1, 1, 2, 1, 2]}, '@positions@': {'client': {'CLIENT ID': 0, 'Client Name': 1, 'Country Rel': 2}}}]
+    assert api == [
+        {
+            "client": {
+                "CLIENT ID": [1, 2, 3, 4, 5],
+                "Client Name": [
+                    "Andres",
+                    "Lupita",
+                    "Peke",
+                    "Polar",
+                    "Malteada",
+                ],
+                "Country Rel": [1, 1, 2, 1, 2],
+            },
+            "@positions@": {
+                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2}
+            },
+        }
+    ]
 
 
 def test_container_label_join():
     api = Client.link("country").all().container(label=True)
 
-    assert api == [{'country': {'COUNTRY ID': [1, 1, 2, 1, 2], 'Country': ['Mexico', 'Mexico', 'Brasil', 'Mexico', 'Brasil']}, 'client': {'CLIENT ID': [1, 2, 3, 4, 5], 'Client Name': ['Andres', 'Lupita', 'Peke', 'Polar', 'Malteada'], 'Country Rel': [1, 1, 2, 1, 2]}, '@positions@': {'country': {'Country': 1, 'COUNTRY ID': 0}, 'client': {'CLIENT ID': 0, 'Client Name': 1, 'Country Rel': 2}}}]
+    assert api == [
+        {
+            "country": {
+                "COUNTRY ID": [1, 1, 2, 1, 2],
+                "Country": ["Mexico", "Mexico", "Brasil", "Mexico", "Brasil"],
+            },
+            "client": {
+                "CLIENT ID": [1, 2, 3, 4, 5],
+                "Client Name": [
+                    "Andres",
+                    "Lupita",
+                    "Peke",
+                    "Polar",
+                    "Malteada",
+                ],
+                "Country Rel": [1, 1, 2, 1, 2],
+            },
+            "@positions@": {
+                "country": {"Country": 1, "COUNTRY ID": 0},
+                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2},
+            },
+        }
+    ]
 
 
 def test_container_label_full_join():
     api = Client.link("sale", "country").all().container(label=True)
 
-    assert api == [{'country': {'COUNTRY ID': [1, 2, 1, 1, 2, 2, 2, 2, 1], 'Country': ['Mexico', 'Brasil', 'Mexico', 'Mexico', 'Brasil', 'Brasil', 'Brasil', 'Brasil', 'Mexico']}, 'client': {'CLIENT ID': [1, 3, 4, 1, 3, 3, 5, 3, 2], 'Client Name': ['Andres', 'Peke', 'Polar', 'Andres', 'Peke', 'Peke', 'Malteada', 'Peke', 'Lupita'], 'Country Rel': [1, 2, 1, 1, 2, 2, 2, 2, 1]}, 'sale': {'SALE ID': [1, 2, 3, 4, 5, 6, 7, 8, 9], 'Sale Code': ['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9'], 'Cliente Rel': [1, 3, 4, 1, 3, 3, 5, 3, 2]}, '@positions@': {'country': {'Country': 1, 'COUNTRY ID': 0}, 'client': {'CLIENT ID': 0, 'Client Name': 1, 'Country Rel': 2}, 'sale': {'Cliente Rel': 2, 'Sale Code': 1, 'SALE ID': 0}}}]
+    assert api == [
+        {
+            "country": {
+                "COUNTRY ID": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "Country": [
+                    "Mexico",
+                    "Brasil",
+                    "Mexico",
+                    "Mexico",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Mexico",
+                ],
+            },
+            "client": {
+                "CLIENT ID": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "Client Name": [
+                    "Andres",
+                    "Peke",
+                    "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
+                ],
+                "Country Rel": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+            },
+            "sale": {
+                "SALE ID": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "Sale Code": [
+                    "F1",
+                    "F2",
+                    "F3",
+                    "F4",
+                    "F5",
+                    "F6",
+                    "F7",
+                    "F8",
+                    "F9",
+                ],
+                "Cliente Rel": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            },
+            "@positions@": {
+                "country": {"Country": 1, "COUNTRY ID": 0},
+                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2},
+                "sale": {"Cliente Rel": 2, "Sale Code": 1, "SALE ID": 0},
+            },
+        }
+    ]
 
 
 def test_container_label_select():
     api = Client.select("client__name").all().container()
 
-    assert api == [{'client': {'name': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar']}, '@positions@': {'client': {'name': 1}}}]
+    assert api == [
+        {
+            "client": {
+                "name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+            },
+            "@positions@": {"client": {"name": 1}},
+        }
+    ]
 
 
 def test_container_label_select_multi():
@@ -1139,7 +1375,40 @@ def test_container_label_select_multi():
         .container(label=True)
     )
 
-    assert api == [{'sale': {'Sale Code': ['F1', 'F4', 'F9', 'F7', 'F2', 'F5', 'F6', 'F8', 'F3']}, 'client': {'Client Name': ['Andres', 'Andres', 'Lupita', 'Malteada', 'Peke', 'Peke', 'Peke', 'Peke', 'Polar']}, '@positions@': {'sale': {'Sale Code': 1}, 'client': {'Client Name': 1}}}]
+    assert api == [
+        {
+            "sale": {
+                "Sale Code": [
+                    "F1",
+                    "F4",
+                    "F9",
+                    "F7",
+                    "F2",
+                    "F5",
+                    "F6",
+                    "F8",
+                    "F3",
+                ]
+            },
+            "client": {
+                "Client Name": [
+                    "Andres",
+                    "Andres",
+                    "Lupita",
+                    "Malteada",
+                    "Peke",
+                    "Peke",
+                    "Peke",
+                    "Peke",
+                    "Polar",
+                ]
+            },
+            "@positions@": {
+                "sale": {"Sale Code": 1},
+                "client": {"Client Name": 1},
+            },
+        }
+    ]
 
 
 def test_container_label_select_multi_agg():
@@ -1152,7 +1421,18 @@ def test_container_label_select_multi_agg():
         .container(label=True)
     )
 
-    assert api == [{'sale': {'Sale Code COUNT': [2, 1, 1, 4, 1]}, 'client': {'Client Name': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar']}, '@positions@': {'sale': {'Sale Code COUNT': 1}, 'client': {'Client Name': 1}}}]
+    assert api == [
+        {
+            "sale": {"Sale Code COUNT": [2, 1, 1, 4, 1]},
+            "client": {
+                "Client Name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+            },
+            "@positions@": {
+                "sale": {"Sale Code COUNT": 1},
+                "client": {"Client Name": 1},
+            },
+        }
+    ]
 
 
 def test_container_label_select_full_agg():
@@ -1165,7 +1445,22 @@ def test_container_label_select_full_agg():
         .container(label=True)
     )
 
-    assert api == [{'sale': {'Sale Code COUNT': [2, 1, 1, 4, 1]}, 'client': {'Client Name': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar']}, 'country': {'Country': ['Mexico', 'Mexico', 'Brasil', 'Brasil', 'Mexico']}, '@positions@': {'sale': {'Sale Code COUNT': 1}, 'client': {'Client Name': 1}, 'country': {'Country': 1}}}]
+    assert api == [
+        {
+            "sale": {"Sale Code COUNT": [2, 1, 1, 4, 1]},
+            "client": {
+                "Client Name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+            },
+            "country": {
+                "Country": ["Mexico", "Mexico", "Brasil", "Brasil", "Mexico"]
+            },
+            "@positions@": {
+                "sale": {"Sale Code COUNT": 1},
+                "client": {"Client Name": 1},
+                "country": {"Country": 1},
+            },
+        }
+    ]
 
 
 # TESTING -> "DATA TRUNCADA" -> POR PAQUETES

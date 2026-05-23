@@ -1,10 +1,11 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
-""" Tipado Para Pydantic -*- PanCakesORM -*- """
+"""Tipado Para Pydantic -*- PanCakesORM -*-"""
 
 # Modulos PanCakesORM
 # Modulos Python
@@ -33,11 +34,11 @@ class Category(PanCakesORM):
         max_length=200,
         required=True,
         unique=True,
-        default="Unknown"
+        default="Unknown",
     )
 
-class Inventory(PanCakesORM):
 
+class Inventory(PanCakesORM):
     # Configuracion Modelo
     _table = "inventory"
     _depends = ["category"]
@@ -46,16 +47,14 @@ class Inventory(PanCakesORM):
 
     # Campos
     mk_date = datatype.Text(
-        comment="C. Date",
-        required=True,
-        default="2026-28-04"
+        comment="C. Date", required=True, default="2026-28-04"
     )
     product_name = datatype.Char(
         comment="Product Name",
         max_length=100,
         min_length=10,
         required=True,
-        unique=False
+        unique=False,
     )
     stock_quantity = datatype.Int(
         comment="Stock Quantity",
@@ -72,17 +71,16 @@ class Inventory(PanCakesORM):
         required=True,
     )
     saleable = datatype.Bool(
-        comment="Saleable Product",
-        default=True,
-        required=True
+        comment="Saleable Product", default=True, required=True
     )
     category_id = datatype.ForeignKey(
         second_table="category",
         column_id="category_id",
         comment="Prod. Cate. Rel",
-        on_del='set null',
-        on_upd='cascade'
+        on_del="set null",
+        on_upd="cascade",
     )
+
 
 routers = PanCakesORM.ROUTERS
 for r in routers:

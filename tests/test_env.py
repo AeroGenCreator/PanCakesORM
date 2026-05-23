@@ -1,8 +1,9 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
 """Test QueryBox Class -*- PanCakesORM -*-"""
 
@@ -23,21 +24,39 @@ class User(PanCakesORM):
 
 
 def test_env_query():
-    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
+    row, col = query(
+        select=[
+            {"table": "user", "name": "user_id"},
+            {"table": "user", "name": "name"},
+        ],
+        _from="user",
+    )
 
     assert row == []
-    assert col == ['user__user_id', 'user__name']
+    assert col == ["user__user_id", "user__name"]
 
 
 def test_env_insert():
     insert([{"table": "user", "data": [(None, "User1")]}])
-    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
+    row, col = query(
+        select=[
+            {"table": "user", "name": "user_id"},
+            {"table": "user", "name": "name"},
+        ],
+        _from="user",
+    )
     assert len(row) == 1
 
 
 def test_env_delete():
     delete([{"table": "user"}], delete_all=True)
-    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
+    row, col = query(
+        select=[
+            {"table": "user", "name": "user_id"},
+            {"table": "user", "name": "name"},
+        ],
+        _from="user",
+    )
     assert row == []
 
 
@@ -59,7 +78,13 @@ def test_env_update():
             }
         ]
     )
-    row, col = query(select=[{"table": "user", "name": "user_id"}, {"table": "user", "name": "name"}], _from="user")
+    row, col = query(
+        select=[
+            {"table": "user", "name": "user_id"},
+            {"table": "user", "name": "name"},
+        ],
+        _from="user",
+    )
 
     assert row == [(1, "PanCakesORM")]
 

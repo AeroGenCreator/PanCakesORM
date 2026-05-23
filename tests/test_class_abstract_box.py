@@ -1,8 +1,9 @@
-# Copyright 2026 AeroGenCreator
+# -*- coding: utf-8 -*-
+# PanCakesORM v5.0.0 | Test Suite
+# Copyright (c) 2026 AeroGenCreator (https://github.com/AeroGenCreator)
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
+# You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+# ==============================================================================
 
 """Test AbstractBox Class -*- PanCakesORM -*-"""
 
@@ -213,18 +214,18 @@ def test_duplicated_name_when_output():
     api2 = User.link("user_dos").all().container(label=True)
 
     assert col1 == [
-        'user__user_id',
-        'user__name',
-        'user_dos__user_dos_id',
-        'user_dos__name',
-        'user_dos__user_id'
+        "user__user_id",
+        "user__name",
+        "user_dos__user_dos_id",
+        "user_dos__name",
+        "user_dos__user_id",
     ]
     assert col2 == [
-        'user__user_id__0',
-        'user__name__1',
-        'user_dos__user_dos_id__2',
-        'user_dos__name__3',
-        'user_dos__user_id__4'
+        "user__user_id__0",
+        "user__name__1",
+        "user_dos__user_dos_id__2",
+        "user_dos__name__3",
+        "user_dos__user_id__4",
     ]
     assert dicc1 == [
         {
@@ -244,9 +245,39 @@ def test_duplicated_name_when_output():
             "user_dos__user_id__4": 1,
         }
     ]
-    
-    assert api1 == [{'user_dos': {'user_dos_id': [1], 'name': ['Tabla1'], 'user_id': [1]}, 'user': {'user_id': [1], 'name': ['Tabla1']}, '@positions@': {'user_dos': {'user_id': 2, 'name': 1, 'user_dos_id': 0}, 'user': {'user_id': 0, 'name': 1}}}]
-    assert api2 == [{'user_dos': {'USER_DOS ID': [1], 'Usuario': ['Tabla1'], 'User User Dos Rel': [1]}, 'user': {'USER ID': [1], 'Usuario': ['Tabla1']}, '@positions@': {'user_dos': {'User User Dos Rel': 2, 'Usuario': 1, 'USER_DOS ID': 0}, 'user': {'USER ID': 0, 'Usuario': 1}}}]
+
+    assert api1 == [
+        {
+            "user_dos": {
+                "user_dos_id": [1],
+                "name": ["Tabla1"],
+                "user_id": [1],
+            },
+            "user": {"user_id": [1], "name": ["Tabla1"]},
+            "@positions@": {
+                "user_dos": {"user_id": 2, "name": 1, "user_dos_id": 0},
+                "user": {"user_id": 0, "name": 1},
+            },
+        }
+    ]
+    assert api2 == [
+        {
+            "user_dos": {
+                "USER_DOS ID": [1],
+                "Usuario": ["Tabla1"],
+                "User User Dos Rel": [1],
+            },
+            "user": {"USER ID": [1], "Usuario": ["Tabla1"]},
+            "@positions@": {
+                "user_dos": {
+                    "User User Dos Rel": 2,
+                    "Usuario": 1,
+                    "USER_DOS ID": 0,
+                },
+                "user": {"USER ID": 0, "Usuario": 1},
+            },
+        }
+    ]
 
 
 def test_error_queries_relaciones():
@@ -262,4 +293,9 @@ def test_vacios():
     assert row == []
     assert col == ["category__category_id", "category__name"]
     assert dicc == [{"category__category_id": None, "category__name": None}]
-    assert api == [{'category': {'category_id': [None], 'name': [None]}, '@positions@': {'category': {'category_id': 0, 'name': 1}}}]
+    assert api == [
+        {
+            "category": {"category_id": [None], "name": [None]},
+            "@positions@": {"category": {"category_id": 0, "name": 1}},
+        }
+    ]
