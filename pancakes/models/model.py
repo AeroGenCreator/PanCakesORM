@@ -391,6 +391,8 @@ class PanCakesORM:
             datatype.ForeignKey,
             datatype.Text,
             datatype.Bool,
+            datatype.Date,
+            datatype.TimeStamp
         )
 
         # Esquema; field_id 'modelo' | cache esquema 'modelo'
@@ -399,11 +401,11 @@ class PanCakesORM:
                 "type": int,
                 "required": False,
                 "default": None,
+                "readonly": True,
                 "constraints": {},
                 "metadata": {
                     "comment": id_comment,
                     "primary_key": True,
-                    "read_only": True,
                 },
             }
         }
@@ -581,7 +583,7 @@ class PanCakesORM:
     def _pydantic_validators_(cls) -> None:
 
         # Llaves extensas -> Se usan mas abajo.
-        KEY = "foreign_key"
+        FK = "foreign_key"
         JSON = "json_schema_extra"
 
         # 0. Objetivo -> Validadores
@@ -616,11 +618,14 @@ class PanCakesORM:
                 f_type = field.get("type", str)
                 f_required = field.get("required", False)
                 f_default = field.get("default", None)
+                f_readonly = field.get("readonly", False)
                 f_constraints = field.get("constraints", {})
                 f_metadata = field.get("metadata", {})
 
                 # Validadores Capa 2
                 f_comment = f_metadata.get("comment", "NO COMMENT")
+                f_primary = f_metadata.get("primary_key", False)
+                f_sql_datatype = f_metadata.get("sql_type", "")
                 f_unique = f_constraints.get("unique", False)
 
                 # Text -> 'No Valida Extra' ... Salto a 'Char'
@@ -634,10 +639,10 @@ class PanCakesORM:
                 f_ge = f_constraints.get("ge", None)
 
                 # Bool --> 'No valida Extra' ... Salto a 'ForeignKey'
-                f_key = f_metadata.get(KEY, {})
+                f_key = f_metadata.get(FK, {})
                 if f_key:
-                    f_second_table = f_metadata[KEY].get("second_table")
-                    f_column_id = f_metadata[KEY].get("column_id")
+                    f_second_table = f_metadata[FK].get("second_table")
+                    f_column_id = f_metadata[FK].get("column_id")
                 else:
                     f_second_table = None
                     f_column_id = None
@@ -649,6 +654,9 @@ class PanCakesORM:
                 KWARGS[JSON].update({"unique": f_unique})
                 KWARGS[JSON].update({"second_table": f_second_table})
                 KWARGS[JSON].update({"column_id": f_column_id})
+                KWARGS[JSON].update({"primary_key": f_primary})
+                KWARGS[JSON].update({"sql_type": f_sql_datatype})
+                KWARGS[JSON].update({"readonly": f_readonly})
 
                 # Capa Superior -> Argumentos Nombrados "SI PYDANTIC"
                 KWARGS.update({"description": f_comment})
@@ -688,6 +696,9 @@ class PanCakesORM:
 
             # 11. Respaldo Metadata Por Campos
             cls._metadata[table]["validators"][ANNOTATED] = FIELDS
+
+            # 12. Respaldo nuevo esquema en _metadata
+            cls._metadata[table]["schema"] = schema
 
         return
 

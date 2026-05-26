@@ -71,6 +71,8 @@ User.u(user__user_name__user_id__same=["Juan", 1])
 users = User.filter(user__age__gt=18).all().dictionary()
 ```
 
+![image](assets/application/mounted-module.png)
+
 # [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
 
 # [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)

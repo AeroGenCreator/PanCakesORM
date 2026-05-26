@@ -713,7 +713,7 @@ class QueryBox:
         DB_TABLES = list(MODEL._family.keys())
         DB_COLUMNS = []
         for TAB in DB_TABLES:
-            columns =MODEL._family[TAB]._metadata[TAB]["columns"]
+            columns = MODEL._family[TAB]._metadata[TAB]["columns"]
             DB_COLUMNS.extend(columns)
 
         if not kwargs:
@@ -722,11 +722,10 @@ class QueryBox:
         RESULT = []
 
         for TAB, COL in kwargs.items():
-
             validate = (
                 (TAB not in DB_TABLES),
                 (not isinstance(COL, str)),
-                (COL not in DB_COLUMNS)
+                (COL not in DB_COLUMNS),
             )
 
             if any(validate):
@@ -737,10 +736,7 @@ class QueryBox:
                 )
                 raise ValueError
 
-            dicc = {
-                "table": TAB,
-                "name": COL
-            }
+            dicc = {"table": TAB, "name": COL}
 
             RESULT.append(dicc)
 
@@ -954,7 +950,6 @@ class QueryBox:
         SLT_COLS = [C.split("__", 1)[1] for C in COLS]
         # MAPA {tabla__columna: frontend}
         MAP = dict(zip(COLS, LABELS))
-        TABCOL = dict(zip(TABLES, SLT_COLS))  
         # MAPA DE POSICION DE COLUMNA POR TABLA DEL QUERY
         POSITIONS = {}
 
@@ -971,7 +966,9 @@ class QueryBox:
                         index = ORDER.index(COL)
                     if label:
                         try:
-                            POSITIONS[TAB].update({MAP[TAB + "__" + COL]: index})
+                            POSITIONS[TAB].update(
+                                {MAP[TAB + "__" + COL]: index}
+                            )
                         except KeyError:
                             continue
                     else:

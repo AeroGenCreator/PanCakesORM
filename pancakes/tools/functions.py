@@ -35,6 +35,7 @@ import logging
 import os
 import sqlite3
 from contextlib import contextmanager
+from datetime import date, datetime
 from pathlib import Path
 
 # Modulos de Terceros
@@ -47,11 +48,22 @@ log = os.getenv("LOG", "WARNING").upper()
 log_level = getattr(logging, log, logging.WARNING)
 logging.basicConfig(
     level=log_level,
-    format='%(asctime)s [%(levelname)s] '
-    '%(name)s.%(funcName)s:%(lineno)d - %(message)s',
-    force=True
+    format="%(asctime)s [%(levelname)s] "
+    "%(name)s.%(funcName)s:%(lineno)d - %(message)s",
+    force=True,
 )
 logger = logging.getLogger(__name__)
+
+# Estandarizar Parsing (datetime) & (date)
+sqlite3.register_adapter(datetime, lambda dt: dt.isoformat())
+sqlite3.register_converter(
+    "TIMESTAMP", lambda val: datetime.fromisoformat(val.decode("utf-8"))
+)
+sqlite3.register_adapter(date, lambda d: d.isoformat())
+sqlite3.register_converter(
+    "DATE", lambda val: date.fromisoformat(val.decode("utf-8"))
+)
+
 
 def environment():
     """
@@ -67,10 +79,7 @@ def environment():
     # Obtener log; validar log
     log = os.getenv("LOG", "WARNING").upper()
     if log not in log_valid:
-        raise ValueError(
-            f"Invalid Log value: {log} "
-            f"Valid ones are: {log}"
-        )
+        raise ValueError(f"Invalid Log value: {log} Valid ones are: {log}")
 
     # Obtener rutas; validacion de rutas
     path_dir = os.getenv("DB_DIR", "data")
@@ -82,20 +91,16 @@ def environment():
 
     if db_file.suffix.lower() not in dot_valid:
         raise ValueError(
-            f"Invalid extension {db_file} "
-            f"Expected exyensions are {dot_valid}"
+            f"Invalid extension {db_file} Expected exyensions are {dot_valid}"
         )
 
     envs = dict([("log", log), ("dir", dir_path), ("db", db_file)])
 
     return envs
 
+
 @contextmanager
-def db_connection(
-    db_path: str,
-    no_foreign: bool = False,
-    timeout:  int = 10
-):
+def db_connection(db_path: str, no_foreign: bool = False, timeout: int = 10):
     """
     Funcion De Conexion E Inyeccion de datos
     Para La Clase Principal Del ORM
@@ -104,17 +109,19 @@ def db_connection(
 
     Devuelve: Conexion Y Cursor.
     """
-    conn = sqlite3.connect(database=db_path, timeout=timeout)
+    conn = sqlite3.connect(
+        database=db_path, timeout=timeout, detect_types=sqlite3.PARSE_DECLTYPES
+    )
     try:
         if no_foreign:
-            conn.execute('PRAGMA foreign_keys = OFF;')
+            conn.execute("PRAGMA foreign_keys = OFF;")
         else:
-            conn.execute('PRAGMA foreign_keys = ON;')
+            conn.execute("PRAGMA foreign_keys = ON;")
         logger.debug(f"Opened Connection: database {db_path}")
-        conn.execute('PRAGMA journal_mode = WAL;')
+        conn.execute("PRAGMA journal_mode = WAL;")
         yield conn, conn.cursor()
         conn.commit()
-        logger.debug('SQLite3 succeded commit action.')
+        logger.debug("SQLite3 succeded commit action.")
     except Exception as e:
         conn.rollback()
         logger.error(
@@ -127,17 +134,19 @@ def db_connection(
         conn.close()
         logger.debug(f"Closed Connection: database {db_path}.")
 
+
 def clean_string(string: str):
     if string == "*":
         return string
-    line = [char for char in string if char.isalnum() or char == '_']
+    line = [char for char in string if char.isalnum() or char == "_"]
     f_line = "".join(line)
     if f_line:
         return f_line
     else:
-        msg = f'Invalid string passed for cleaning {string}.'
+        msg = f"Invalid string passed for cleaning {string}."
         logger.critical(msg)
         raise ValueError(msg)
+
 
 def validate_field(model, field, data):
 

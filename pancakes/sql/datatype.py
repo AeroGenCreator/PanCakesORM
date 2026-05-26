@@ -34,6 +34,7 @@ Contenido
 6. Bool
 7. ForeignKey
 """
+from datetime import date, datetime
 
 
 class DataTypeSQL:
@@ -49,11 +50,13 @@ class DataTypeSQL:
     def __init__(
         self,
         comment: str,
-        required: bool | None = None
+        required: bool | None = None,
+        readonly: bool | None = None
     ):
 
         self.comment = comment
         self.required = required
+        self.readonly = readonly
         self._dtype = None
         self._name = None
         self._schema = {}
@@ -69,6 +72,7 @@ class DataTypeSQL:
             "type": None,
             "required": None,
             "default": None,
+            "readonly": None,
             "constraints": {},
             "metadata": {}
         }
@@ -86,10 +90,15 @@ class Text(DataTypeSQL):
         self,
         comment: str,
         required: bool | None = None,
+        readonly: str | None = None,
         default: str | None = None
     ):
 
-        super().__init__(comment=comment, required=required)
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
         self.default = default
         self._sentence()
         self._pydantic()
@@ -104,7 +113,9 @@ class Text(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
 
 
 class Char(DataTypeSQL):
@@ -123,9 +134,14 @@ class Char(DataTypeSQL):
         min_length: int | None = None,
         required: bool | None = None,
         unique: bool | None = None,
-        default: str | None = None
+        default: str | None = None,
+        readonly: bool | None = None
     ):
-        super().__init__(comment=comment, required=required)
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
         self.max_length = max_length
         self.min_length = min_length
         self.unique = unique
@@ -147,11 +163,13 @@ class Char(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
         self._schema["constraints"].update({"max_length": self.max_length})
         self._schema["constraints"].update({"min_length": self.min_length})
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
 
 
 class Int(DataTypeSQL):
@@ -178,10 +196,15 @@ class Int(DataTypeSQL):
         gt: int | None = None,
         ge: int | None = None,
         default: int | None = None,
+        readonly: bool | None = None,
         required: bool | None = None,
         unique: bool | None = None
     ):
-        super().__init__(comment=comment, required=required)
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
         self.lt = lt
         self.le = le
         self.gt = gt
@@ -205,6 +228,7 @@ class Int(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         if self.lt:
@@ -216,6 +240,7 @@ class Int(DataTypeSQL):
         if self.ge:
             self._schema["constraints"].update({"ge": self.ge})
         self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
 
 
 class Float(DataTypeSQL):
@@ -242,10 +267,15 @@ class Float(DataTypeSQL):
         gt: float | None = None,
         ge: float | None = None,
         default: float | None = None,
+        readonly: bool | None = None,
         required: bool | None = None,
         unique: bool | None = None
     ):
-        super().__init__(comment=comment, required=required)
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
         self.lt = lt
         self.le = le
         self.gt = gt
@@ -269,6 +299,7 @@ class Float(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         if self.lt:
@@ -280,6 +311,7 @@ class Float(DataTypeSQL):
         if self.ge:
             self._schema["constraints"].update({"ge": self.ge})
         self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
 
 
 class Bool(DataTypeSQL):
@@ -297,10 +329,15 @@ class Bool(DataTypeSQL):
         self,
         comment: str,
         default: bool | None = None,
+        readonly: bool | None = None,
         required: bool | None = None
     ):
 
-        super().__init__(comment=comment, required=required)
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
         self.default = default
         self._sentence()
         self._pydantic()
@@ -314,7 +351,9 @@ class Bool(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = bool(self.required)
         self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
 
 
 class ForeignKey(DataTypeSQL):
@@ -353,11 +392,13 @@ class ForeignKey(DataTypeSQL):
         comment: str,
         on_del: str = 'set null',
         on_upd: str = 'cascade',
+        readonly: bool = True
     ):
 
         super().__init__(
             comment=comment,
-            required=self._not_null
+            required=self._not_null,
+            readonly=readonly
         )
 
         self.second_table = second_table
@@ -381,6 +422,7 @@ class ForeignKey(DataTypeSQL):
         self._schema["type"] = self._python
         self._schema["required"] = False
         self._schema["default"] = None
+        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update(
             {"foreign_key": {
@@ -388,3 +430,85 @@ class ForeignKey(DataTypeSQL):
                 "column_id": self.column_id
             }
         })
+        self._schema["metadata"].update({"sql_type": "FOREIGN KEY"})
+
+class Date(DataTypeSQL):
+    """
+    Permite almacenar tipos de datos "date" nativos de python.
+    """
+    _data_type = 'DATE'
+    _sql_default = 'DEFAULT NULL'
+    _python = date
+    today = date.today()
+
+    def __init__(
+        self,
+        comment: str,
+        required: bool | None = None,
+        readonly: bool | None = None,
+        default: date | None = None
+    ):
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
+        self.default = default
+        self._sentence()
+        self._pydantic()
+
+    def _sentence(self):
+        super()._sentence()
+
+        self._dtype = f"{self._data_type} {self._sql_default}"
+        self._dtype = self._dtype.replace("  ", " ").strip()
+
+    def _pydantic(self):
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = self.required
+        self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
+        self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
+
+
+class TimeStamp(DataTypeSQL):
+    """
+    Permite almacenar tipos de datos "datetime" nativos de python.
+    """
+    _data_type = 'TIMESTAMP'
+    _sql_default = 'DEFAULT NULL'
+    _python = datetime
+    now = datetime.now()
+
+    def __init__(
+        self,
+        comment: str,
+        required: bool | None = None,
+        readonly: bool | None = None,
+        default: datetime | None = None
+    ):
+        super().__init__(
+            comment=comment,
+            required=required,
+            readonly=readonly
+        )
+        self.default = default
+        self._sentence()
+        self._pydantic()
+
+    def _sentence(self):
+        super()._sentence()
+
+        self._dtype = f"{self._data_type} {self._sql_default}"
+        self._dtype = self._dtype.replace("  ", " ").strip()
+
+    def _pydantic(self):
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = self.required
+        self._schema["default"] = self.default
+        self._schema["readonly"] = bool(self.readonly)
+        self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update({"sql_type": self._data_type})
