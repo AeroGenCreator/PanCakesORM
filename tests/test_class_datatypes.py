@@ -53,6 +53,7 @@ Category.i(
     ]
 )
 
+
 def test_tipos_datos_mas_fechas():
     container = Producto.link("category").all().container(label=True)
 

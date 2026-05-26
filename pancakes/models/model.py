@@ -156,14 +156,14 @@ class PanCakesORM:
       'fields',
       'comments',
       'columns',
-      'validators']
+      'validators',
+      'schema']
     -> _db_dir: (Atributo Clase) Ruta directorio para la base de datos.
     -> _db_file: (Atributo Clase) Ruta fichero para la base de datos.
     -> _depends: (Atributo Instancia) Declarar dependencia de tablas.
     -> _group_constraint: (Atributo Instancia) Linea UNIQUE(col1, col2, ...)
     -> _fields: (Atributo Instancia) Lista de campos [obj1, obj2, ...]
     -> _comment: (Atributo Instancia) Lista de etiquetas [lab1, lab2, ...]
-    -> _json: (Atributo Instancia) Diccionario {'campo': {Pydantic Schema}}
     -> _order: (Atributo Clase) Guarda el orden de creación de tablas segun.
     -> _depends: (Atributo Instancia) Declarar si la tabla depende
     de otra u otras.
@@ -373,9 +373,6 @@ class PanCakesORM:
         # Atributos nuevos de clase; _fields, comment
         cls._fields = []
 
-        # JSON para API
-        cls._json = {cls._table: {}}
-
         # Etiqueta por defecto PK -> TABLA + ID
         id_comment = f"{cls._table} id".upper()
         cls.comment = [id_comment]
@@ -406,11 +403,13 @@ class PanCakesORM:
                 "metadata": {
                     "comment": id_comment,
                     "primary_key": True,
+                    "position": 0
                 },
             }
         }
 
         # Iteramos PanCakesORM
+        position_counter = 1
         for key, value in data.items():
 
             # Valida unica seleccion tipo de dato "columna sql"
@@ -431,7 +430,9 @@ class PanCakesORM:
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
                 # Esquema; actualizado
+                value._schema["metadata"]["position"] = position_counter
                 schema_cache.update({value._name: value._schema})
+                position_counter += 1
 
         # Campos Guardados Como Objeto
         cls._metadata[cls._table]["fields"] = cls._fields
@@ -442,7 +443,7 @@ class PanCakesORM:
         columns.insert(0, f"{cls._table}_id")
         cls._metadata[cls._table]["columns"] = columns
         # Esquema Pydantic
-        cls._json[cls._table]["schema"] = schema_cache
+        cls._metadata[cls._table]["schema"] = schema_cache
 
         return
 
@@ -599,7 +600,7 @@ class PanCakesORM:
                 continue
 
             # 3. Esquema Pydantic de la Tabla
-            schema = cls._json[table]["schema"]
+            schema = cls._metadata[table]["schema"]
 
             # 4. Objetivo -> Mapear Annotated[] por campos de modelo.
             FIELDS = {}
@@ -626,6 +627,7 @@ class PanCakesORM:
                 f_comment = f_metadata.get("comment", "NO COMMENT")
                 f_primary = f_metadata.get("primary_key", False)
                 f_sql_datatype = f_metadata.get("sql_type", "")
+                f_position = f_metadata.get("position", None)
                 f_unique = f_constraints.get("unique", False)
 
                 # Text -> 'No Valida Extra' ... Salto a 'Char'
@@ -657,6 +659,7 @@ class PanCakesORM:
                 KWARGS[JSON].update({"primary_key": f_primary})
                 KWARGS[JSON].update({"sql_type": f_sql_datatype})
                 KWARGS[JSON].update({"readonly": f_readonly})
+                KWARGS[JSON].update({"position": f_position})
 
                 # Capa Superior -> Argumentos Nombrados "SI PYDANTIC"
                 KWARGS.update({"description": f_comment})
@@ -696,9 +699,6 @@ class PanCakesORM:
 
             # 11. Respaldo Metadata Por Campos
             cls._metadata[table]["validators"][ANNOTATED] = FIELDS
-
-            # 12. Respaldo nuevo esquema en _metadata
-            cls._metadata[table]["schema"] = schema
 
         return
 
