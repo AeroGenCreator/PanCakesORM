@@ -5,7 +5,10 @@
 ![static](https://img.shields.io/badge/pytest-pytest?style=for-the-badge&logo=pytest&logoColor=white&labelColor=black&color=yellow)
 ![static](https://img.shields.io/badge/git--hub-git--bun?style=for-the-badge&logo=github&logoColor=white&labelColor=black&color=yellow)
 ![static](https://img.shields.io/badge/pypi-pypi?style=for-the-badge&logo=pypi&logoColor=white&labelColor=black&color=yellow)
-![static](https://img.shields.io/badge/ipdb-ipdb?style=for-the-badge&logoColor=white&label=debugger&labelColor=black&color=yellow)
+![static](https://img.shields.io/badge/ipdb-ipdb?style=for-the-badge&logoColor=white&label=debug&labelColor=black&color=yellow)
+![static](https://img.shields.io/badge/fastapi-fastapi?style=for-the-badge&logo=fastapi&logoColor=white&labelColor=black&color=yellow)
+![static](https://img.shields.io/badge/linux-linux?style=for-the-badge&logo=linux&logoColor=white&labelColor=black&color=yellow)
+![static](https://img.shields.io/badge/macos-mac?style=for-the-badge&logo=apple&logoColor=white&labelColor=black&color=yellow)
 
 ![image](assets/banner.png)
 
