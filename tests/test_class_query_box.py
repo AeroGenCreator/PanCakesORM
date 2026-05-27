@@ -300,9 +300,7 @@ def test_box_meth_filter_in_all():
 def test_box_meth_filter_ind_all():
     api = Sale.filter(sale__name__same="F1").all().dictionary()
 
-    assert api == [
-        {"sale__sale_id": 1, "sale__name": "F1", "sale__client_id": 1}
-    ]
+    assert api == [{"sale__sale_id": 1, "sale__name": "F1", "sale__client_id": 1}]
 
 
 def test_box_meth_filter_logic_all():
@@ -312,9 +310,7 @@ def test_box_meth_filter_logic_all():
         .dictionary()
     )
 
-    assert api == [
-        {"sale__sale_id": 1, "sale__name": "F1", "sale__client_id": 1}
-    ]
+    assert api == [{"sale__sale_id": 1, "sale__name": "F1", "sale__client_id": 1}]
 
 
 def test_box_meth_filter_logic_join_all():
@@ -704,12 +700,7 @@ def test_direct_select_avg():
 
 
 def test_direct_select_link():
-    api = (
-        Sale.select("sale__name", "client__name")
-        .link("client")
-        .all()
-        .dictionary()
-    )
+    api = Sale.select("sale__name", "client__name").link("client").all().dictionary()
 
     assert api == [
         {"sale__name": "F1", "client__name": "Andres"},
@@ -1118,11 +1109,7 @@ def test_raw_labels_select():
 
 def test_raw_labels_select_multi():
     row, col = (
-        Client()
-        .select("client__name", "sale__name")
-        .link("sale")
-        .all()
-        .raw(label=True)
+        Client().select("client__name", "sale__name").link("sale").all().raw(label=True)
     )
 
     assert row == [
@@ -1712,13 +1699,8 @@ def test_container_label_select():
 
 
 def test_container_label_select_multi():
-    api = (
-        Client()
-        .select("client__name", "sale__name")
-        .link("sale")
-        .all()
-        .container()
-    )
+    api = Client.select(
+        "client__name", "sale__name").link("sale").all().container()
 
     assert api == {
         "client": {
@@ -1789,42 +1771,41 @@ def test_container_label_select_multi_agg():
     )
 
     assert api == {
-    'client': {
-        '@main_table@': True, 
-        '@depends@': ['country'],
-        'name': 
-            {
-            'vector': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar'],
-            'label': 'Client Name',
-            'position': 1,
-            'readonly': False,
-            'default': None,
-            'required': False,
-            'python_type': 'str',
-            'primary_key': False,
-            'sql_type': 'VARCHAR',
-            'second_table': False,
-            'foreign_key': False}
+        "client": {
+            "@main_table@": True,
+            "@depends@": ["country"],
+            "name": {
+                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        'sale': 
-        {
-        '@main_table@': False,
-        '@depends@': ['client'],
-        'name':
-            {
-            'vector': [2, 1, 1, 4, 1],
-            'label': 'Sale Code Count',
-            'position': None,
-            'readonly': False,
-            'default': None,
-            'required': False,
-            'python_type': 'str',
-            'primary_key': False,
-            'sql_type': 'VARCHAR',
-            'second_table': False,
-            'foreign_key': False}
-            }
-        }
+        },
+        "sale": {
+            "@main_table@": False,
+            "@depends@": ["client"],
+            "name": {
+                "vector": [2, 1, 1, 4, 1],
+                "label": "Sale Code Count",
+                "position": None,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+        },
+    }
 
 
 def test_container_label_select_full_agg():
@@ -1838,22 +1819,58 @@ def test_container_label_select_full_agg():
     )
 
     assert api == {
-        'client': {
-            '@main_table@': True,
-            '@depends@': ['country'], 
-            'name': {'vector': ['Andres', 'Lupita', 'Malteada', 'Peke', 'Polar'], 'label': 'Client Name', 'position': 1, 'readonly': False, 'default': None, 'required': False, 'python_type': 'str', 'primary_key': False, 'sql_type': 'VARCHAR', 'second_table': False, 'foreign_key': False}
+        "client": {
+            "@main_table@": True,
+            "@depends@": ["country"],
+            "name": {
+                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        'sale': {
-            '@main_table@': False,
-            '@depends@': ['client'],
-            'name': {'vector': [2, 1, 1, 4, 1], 'label': 'Sale Code Count', 'position': None, 'readonly': False, 'default': None, 'required': False, 'python_type': 'str', 'primary_key': False, 'sql_type': 'VARCHAR', 'second_table': False, 'foreign_key': False}
+        },
+        "sale": {
+            "@main_table@": False,
+            "@depends@": ["client"],
+            "name": {
+                "vector": [2, 1, 1, 4, 1],
+                "label": "Sale Code Count",
+                "position": None,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        'country': {
-            '@main_table@': False,
-            '@depends@': ['self'],
-            'name': {'vector': ['Mexico', 'Mexico', 'Brasil', 'Brasil', 'Mexico'], 'label': 'Country', 'position': 1, 'readonly': False, 'default': None, 'required': False, 'python_type': 'str', 'primary_key': False, 'sql_type': 'VARCHAR', 'second_table': False, 'foreign_key': False}
-            }
-        }
+        },
+        "country": {
+            "@main_table@": False,
+            "@depends@": ["self"],
+            "name": {
+                "vector": ["Mexico", "Mexico", "Brasil", "Brasil", "Mexico"],
+                "label": "Country",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+        },
+    }
 
 
 # TESTING -> "DATA TRUNCADA" -> POR PAQUETES
