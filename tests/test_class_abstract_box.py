@@ -248,7 +248,7 @@ def test_duplicated_name_when_output():
     assert api1 == {
         "user": {
             "@main_table@": True,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "user_id": {
                 "vector": [1],
                 "label": "USER ID",
@@ -278,7 +278,7 @@ def test_duplicated_name_when_output():
         },
         "user_dos": {
             "@main_table@": False,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "user_dos_id": {
                 "vector": [1],
                 "label": "USER_DOS ID",
@@ -338,7 +338,7 @@ def test_vacios():
     assert api == {
         "category": {
             "@main_table@": True,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "category_id": {
                 "vector": [None],
                 "label": "CATEGORY ID",

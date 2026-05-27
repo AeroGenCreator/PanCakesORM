@@ -483,7 +483,7 @@ def test_container_output_si_label():
     assert container == {
         "sale": {
             "@main_table@": True,
-            "depends": ["client"],
+            "@depends@": ["client"],
             "sale_id": {
                 "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "label": "SALE ID",
@@ -536,7 +536,7 @@ def test_container_output_si_label():
         },
         "client": {
             "@main_table@": False,
-            "depends": ["country"],
+            "@depends@": ["country"],
             "client_id": {
                 "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
                 "label": "CLIENT ID",
@@ -596,7 +596,7 @@ def test_container_output_no_label():
     assert container == {
         "sale": {
             "@main_table@": True,
-            "depends": ["client"],
+            "@depends@": ["client"],
             "sale_id": {
                 "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "label": "SALE ID",
@@ -649,7 +649,7 @@ def test_container_output_no_label():
         },
         "client": {
             "@main_table@": False,
-            "depends": ["country"],
+            "@depends@": ["country"],
             "client_id": {
                 "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
                 "label": "CLIENT ID",
@@ -710,7 +710,7 @@ def test_container_empty_table():
     assert container == {
         "empty": {
             "@main_table@": True,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "empty_id": {
                 "vector": [None],
                 "label": "EMPTY ID",
@@ -762,7 +762,7 @@ def test_link_one_table():
     assert container == {
         "client": {
             "@main_table@": True,
-            "depends": ["country"],
+            "@depends@": ["country"],
             "client_id": {
                 "vector": [1, 2, 3, 4, 5],
                 "label": "CLIENT ID",
@@ -805,7 +805,7 @@ def test_link_one_table():
         },
         "country": {
             "@main_table@": False,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "country_id": {
                 "vector": [1, 1, 2, 1, 2],
                 "label": "COUNTRY ID",
@@ -844,7 +844,7 @@ def test_link_two_tables():
     assert container == {
         "client": {
             "@main_table@": True,
-            "depends": ["country"],
+            "@depends@": ["country"],
             "client_id": {
                 "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
                 "label": "CLIENT ID",
@@ -897,7 +897,7 @@ def test_link_two_tables():
         },
         "sale": {
             "@main_table@": False,
-            "depends": ["client"],
+            "@depends@": ["client"],
             "sale_id": {
                 "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
                 "label": "SALE ID",
@@ -950,7 +950,7 @@ def test_link_two_tables():
         },
         "country": {
             "@main_table@": False,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "country_id": {
                 "vector": [1, 2, 1, 1, 2, 2, 2, 2, 1],
                 "label": "COUNTRY ID",

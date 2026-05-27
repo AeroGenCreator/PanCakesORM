@@ -970,7 +970,7 @@ class QueryBox:
                 CONTAINER[ITER_TAB]["@main_table@"] = False
 
             # MAPEAR DEPENDENCIAS DE TABLA ACTUAL
-            CONTAINER[ITER_TAB]["depends"] = META[ITER_TAB]["depends"]
+            CONTAINER[ITER_TAB]["@depends@"] = META[ITER_TAB]["depends"]
 
             for col, vector in zip(COLS, VECTORS):
 
@@ -1015,7 +1015,8 @@ class QueryBox:
                     ]["column_id"]
 
                 if AGG:
-                    LABEL = f"{LABEL}" + f"{AGG}".capitalize()
+                    LABEL = f"{LABEL}" + " " + f"{AGG}".capitalize().strip()
+                    POSITION = None
 
                 if SQL == "BOOLEAN":
                     vector = [bool(item) for item in vector]

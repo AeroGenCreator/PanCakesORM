@@ -60,7 +60,7 @@ def test_tipos_datos_mas_fechas():
     assert container == {
         "producto": {
             "@main_table@": True,
-            "depends": ["category"],
+            "@depends@": ["category"],
             "producto_id": {
                 "vector": [1],
                 "label": "PRODUCTO ID",
@@ -181,7 +181,7 @@ def test_tipos_datos_mas_fechas():
         },
         "category": {
             "@main_table@": False,
-            "depends": ["self"],
+            "@depends@": ["self"],
             "category_id": {
                 "vector": [1],
                 "label": "CATEGORY ID",
