@@ -767,11 +767,78 @@ def test_helper_count():
 def test_output_json():
     api = Sale.link("client").all().container()
 
-    assert api == [
-        {
-            "client": {
-                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
-                "name": [
+    assert api == {
+        "sale": {
+            "@main_table@": True,
+            "depends": ["client"],
+            "sale_id": {
+                "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "label": "SALE ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [
+                    "F1",
+                    "F2",
+                    "F3",
+                    "F4",
+                    "F5",
+                    "F6",
+                    "F7",
+                    "F8",
+                    "F9",
+                ],
+                "label": "Sale Code",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "Cliente Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "client",
+                "foreign_key": "client_id",
+            },
+        },
+        "client": {
+            "@main_table@": False,
+            "depends": ["country"],
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "CLIENT ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [
                     "Andres",
                     "Peke",
                     "Polar",
@@ -782,34 +849,56 @@ def test_output_json():
                     "Peke",
                     "Lupita",
                 ],
-                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "sale": {
-                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
-                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+            "country_id": {
+                "vector": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Country Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "country",
+                "foreign_key": "country_id",
             },
-            "@positions@": {
-                "client": {"name": 1, "client_id": 0, "country_id": 2},
-                "sale": {"sale_id": 0, "name": 1, "client_id": 2},
-            },
-        }
-    ]
+        },
+    }
 
 
 def test_reverse_link():
     api = Client.link("sale").all().container()
 
-    assert api == [
-        {
-            "sale": {
-                "sale_id": [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "name": ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9"],
-                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "CLIENT ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "client": {
-                "client_id": [1, 3, 4, 1, 3, 3, 5, 3, 2],
-                "name": [
+            "name": {
+                "vector": [
                     "Andres",
                     "Peke",
                     "Polar",
@@ -820,14 +909,85 @@ def test_reverse_link():
                     "Peke",
                     "Lupita",
                 ],
-                "country_id": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "sale": {"client_id": 2, "name": 1, "sale_id": 0},
-                "client": {"client_id": 0, "name": 1, "country_id": 2},
+            "country_id": {
+                "vector": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Country Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "country",
+                "foreign_key": "country_id",
             },
-        }
-    ]
+        },
+        "sale": {
+            "@main_table@": False,
+            "depends": ["client"],
+            "sale_id": {
+                "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "label": "SALE ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [
+                    "F1",
+                    "F2",
+                    "F3",
+                    "F4",
+                    "F5",
+                    "F6",
+                    "F7",
+                    "F8",
+                    "F9",
+                ],
+                "label": "Sale Code",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "Cliente Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "client",
+                "foreign_key": "client_id",
+            },
+        },
+    }
 
 
 def test_reverse_link_filter():
@@ -1245,78 +1405,157 @@ def test_dict_label_select_full_agg():
 
 
 def test_container_label():
-    api = Client.all().container(label=True)
+    api = Client.all().container()
 
-    assert api == [
-        {
-            "client": {
-                "CLIENT ID": [1, 2, 3, 4, 5],
-                "Client Name": [
-                    "Andres",
-                    "Lupita",
-                    "Peke",
-                    "Polar",
-                    "Malteada",
-                ],
-                "Country Rel": [1, 1, 2, 1, 2],
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "client_id": {
+                "vector": [1, 2, 3, 4, 5],
+                "label": "CLIENT ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2}
+            "name": {
+                "vector": ["Andres", "Lupita", "Peke", "Polar", "Malteada"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "country_id": {
+                "vector": [1, 1, 2, 1, 2],
+                "label": "Country Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "country",
+                "foreign_key": "country_id",
             },
         }
-    ]
+    }
 
 
 def test_container_label_join():
-    api = Client.link("country").all().container(label=True)
+    api = Client.link("country").all().container()
 
-    assert api == [
-        {
-            "country": {
-                "COUNTRY ID": [1, 1, 2, 1, 2],
-                "Country": ["Mexico", "Mexico", "Brasil", "Mexico", "Brasil"],
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "client_id": {
+                "vector": [1, 2, 3, 4, 5],
+                "label": "CLIENT ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "client": {
-                "CLIENT ID": [1, 2, 3, 4, 5],
-                "Client Name": [
-                    "Andres",
-                    "Lupita",
-                    "Peke",
-                    "Polar",
-                    "Malteada",
-                ],
-                "Country Rel": [1, 1, 2, 1, 2],
+            "name": {
+                "vector": ["Andres", "Lupita", "Peke", "Polar", "Malteada"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "country": {"Country": 1, "COUNTRY ID": 0},
-                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2},
+            "country_id": {
+                "vector": [1, 1, 2, 1, 2],
+                "label": "Country Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "country",
+                "foreign_key": "country_id",
             },
-        }
-    ]
+        },
+        "country": {
+            "@main_table@": False,
+            "depends": ["self"],
+            "country_id": {
+                "vector": [1, 1, 2, 1, 2],
+                "label": "COUNTRY ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": ["Mexico", "Mexico", "Brasil", "Mexico", "Brasil"],
+                "label": "Country",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+        },
+    }
 
 
 def test_container_label_full_join():
-    api = Client.link("sale", "country").all().container(label=True)
+    api = Client.link("sale", "country").all().container()
 
-    assert api == [
-        {
-            "country": {
-                "COUNTRY ID": [1, 2, 1, 1, 2, 2, 2, 2, 1],
-                "Country": [
-                    "Mexico",
-                    "Brasil",
-                    "Mexico",
-                    "Mexico",
-                    "Brasil",
-                    "Brasil",
-                    "Brasil",
-                    "Brasil",
-                    "Mexico",
-                ],
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "CLIENT ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "client": {
-                "CLIENT ID": [1, 3, 4, 1, 3, 3, 5, 3, 2],
-                "Client Name": [
+            "name": {
+                "vector": [
                     "Andres",
                     "Peke",
                     "Polar",
@@ -1327,11 +1566,49 @@ def test_container_label_full_join():
                     "Peke",
                     "Lupita",
                 ],
-                "Country Rel": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "sale": {
-                "SALE ID": [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "Sale Code": [
+            "country_id": {
+                "vector": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "Country Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "country",
+                "foreign_key": "country_id",
+            },
+        },
+        "sale": {
+            "@main_table@": False,
+            "depends": ["client"],
+            "sale_id": {
+                "vector": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "label": "SALE ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [
                     "F1",
                     "F2",
                     "F3",
@@ -1342,28 +1619,96 @@ def test_container_label_full_join():
                     "F8",
                     "F9",
                 ],
-                "Cliente Rel": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "Sale Code",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "country": {"Country": 1, "COUNTRY ID": 0},
-                "client": {"CLIENT ID": 0, "Client Name": 1, "Country Rel": 2},
-                "sale": {"Cliente Rel": 2, "Sale Code": 1, "SALE ID": 0},
+            "client_id": {
+                "vector": [1, 3, 4, 1, 3, 3, 5, 3, 2],
+                "label": "Cliente Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "client",
+                "foreign_key": "client_id",
             },
-        }
-    ]
+        },
+        "country": {
+            "@main_table@": False,
+            "depends": ["self"],
+            "country_id": {
+                "vector": [1, 2, 1, 1, 2, 2, 2, 2, 1],
+                "label": "COUNTRY ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [
+                    "Mexico",
+                    "Brasil",
+                    "Mexico",
+                    "Mexico",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Brasil",
+                    "Mexico",
+                ],
+                "label": "Country",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+        },
+    }
 
 
 def test_container_label_select():
     api = Client.select("client__name").all().container()
 
-    assert api == [
-        {
-            "client": {
-                "name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "name": {
+                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {"client": {"name": 1}},
         }
-    ]
+    }
 
 
 def test_container_label_select_multi():
@@ -1372,26 +1717,15 @@ def test_container_label_select_multi():
         .select("client__name", "sale__name")
         .link("sale")
         .all()
-        .container(label=True)
+        .container()
     )
 
-    assert api == [
-        {
-            "sale": {
-                "Sale Code": [
-                    "F1",
-                    "F4",
-                    "F9",
-                    "F7",
-                    "F2",
-                    "F5",
-                    "F6",
-                    "F8",
-                    "F3",
-                ]
-            },
-            "client": {
-                "Client Name": [
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "name": {
+                "vector": [
                     "Andres",
                     "Andres",
                     "Lupita",
@@ -1401,14 +1735,47 @@ def test_container_label_select_multi():
                     "Peke",
                     "Peke",
                     "Polar",
-                ]
+                ],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "sale": {"Sale Code": 1},
-                "client": {"Client Name": 1},
+        },
+        "sale": {
+            "@main_table@": False,
+            "depends": ["client"],
+            "name": {
+                "vector": [
+                    "F1",
+                    "F4",
+                    "F9",
+                    "F7",
+                    "F2",
+                    "F5",
+                    "F6",
+                    "F8",
+                    "F3",
+                ],
+                "label": "Sale Code",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        }
-    ]
+        },
+    }
 
 
 def test_container_label_select_multi_agg():
@@ -1418,21 +1785,45 @@ def test_container_label_select_multi_agg():
         .link("sale")
         .group(client="name")
         .all()
-        .container(label=True)
+        .container()
     )
 
-    assert api == [
-        {
-            "sale": {"Sale Code COUNT": [2, 1, 1, 4, 1]},
-            "client": {
-                "Client Name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "name": {
+                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "sale": {"Sale Code COUNT": 1},
-                "client": {"Client Name": 1},
+        },
+        "sale": {
+            "@main_table@": False,
+            "depends": ["client"],
+            "name": {
+                "vector": [2, 1, 1, 4, 1],
+                "label": "Sale CodeCount",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        }
-    ]
+        },
+    }
 
 
 def test_container_label_select_full_agg():
@@ -1442,25 +1833,62 @@ def test_container_label_select_full_agg():
         .link("sale", "country")
         .group(client="name")
         .all()
-        .container(label=True)
+        .container()
     )
 
-    assert api == [
-        {
-            "sale": {"Sale Code COUNT": [2, 1, 1, 4, 1]},
-            "client": {
-                "Client Name": ["Andres", "Lupita", "Malteada", "Peke", "Polar"]
+    assert api == {
+        "client": {
+            "@main_table@": True,
+            "depends": ["country"],
+            "name": {
+                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "label": "Client Name",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "country": {
-                "Country": ["Mexico", "Mexico", "Brasil", "Brasil", "Mexico"]
+        },
+        "sale": {
+            "@main_table@": False,
+            "depends": ["client"],
+            "name": {
+                "vector": [2, 1, 1, 4, 1],
+                "label": "Sale CodeCount",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "@positions@": {
-                "sale": {"Sale Code COUNT": 1},
-                "client": {"Client Name": 1},
-                "country": {"Country": 1},
+        },
+        "country": {
+            "@main_table@": False,
+            "depends": ["self"],
+            "name": {
+                "vector": ["Mexico", "Mexico", "Brasil", "Brasil", "Mexico"],
+                "label": "Country",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        }
-    ]
+        },
+    }
 
 
 # TESTING -> "DATA TRUNCADA" -> POR PAQUETES

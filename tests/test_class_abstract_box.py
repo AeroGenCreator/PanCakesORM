@@ -211,7 +211,6 @@ def test_duplicated_name_when_output():
     dicc1 = User.link("user_dos").all().dictionary()
     dicc2 = User.link("user_dos").all().dictionary(label=True)
     api1 = User.link("user_dos").all().container()
-    api2 = User.link("user_dos").all().container(label=True)
 
     assert col1 == [
         "user__user_id",
@@ -246,38 +245,81 @@ def test_duplicated_name_when_output():
         }
     ]
 
-    assert api1 == [
-        {
-            "user_dos": {
-                "user_dos_id": [1],
-                "name": ["Tabla1"],
-                "user_id": [1],
+    assert api1 == {
+        "user": {
+            "@main_table@": True,
+            "depends": ["self"],
+            "user_id": {
+                "vector": [1],
+                "label": "USER ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "user": {"user_id": [1], "name": ["Tabla1"]},
-            "@positions@": {
-                "user_dos": {"user_id": 2, "name": 1, "user_dos_id": 0},
-                "user": {"user_id": 0, "name": 1},
+            "name": {
+                "vector": ["Tabla1"],
+                "label": "Usuario",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        }
-    ]
-    assert api2 == [
-        {
-            "user_dos": {
-                "USER_DOS ID": [1],
-                "Usuario": ["Tabla1"],
-                "User User Dos Rel": [1],
+        },
+        "user_dos": {
+            "@main_table@": False,
+            "depends": ["self"],
+            "user_dos_id": {
+                "vector": [1],
+                "label": "USER_DOS ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
             },
-            "user": {"USER ID": [1], "Usuario": ["Tabla1"]},
-            "@positions@": {
-                "user_dos": {
-                    "User User Dos Rel": 2,
-                    "Usuario": 1,
-                    "USER_DOS ID": 0,
-                },
-                "user": {"USER ID": 0, "Usuario": 1},
+            "name": {
+                "vector": ["Tabla1"],
+                "label": "Usuario",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
             },
-        }
-    ]
+            "user_id": {
+                "vector": [1],
+                "label": "User User Dos Rel",
+                "position": 2,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": False,
+                "sql_type": "FOREIGN KEY",
+                "second_table": "user",
+                "foreign_key": "user_id",
+            },
+        },
+    }
 
 
 def test_error_queries_relaciones():
@@ -293,9 +335,35 @@ def test_vacios():
     assert row == []
     assert col == ["category__category_id", "category__name"]
     assert dicc == [{"category__category_id": None, "category__name": None}]
-    assert api == [
-        {
-            "category": {"category_id": [None], "name": [None]},
-            "@positions@": {"category": {"category_id": 0, "name": 1}},
+    assert api == {
+        "category": {
+            "@main_table@": True,
+            "depends": ["self"],
+            "category_id": {
+                "vector": [None],
+                "label": "CATEGORY ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": [None],
+                "label": "Unique Category",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
         }
-    ]
+    }

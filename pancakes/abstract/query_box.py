@@ -23,6 +23,9 @@
 # [Abtraccion de queries a traves de encadenamiento de metodos.]
 # ==============================================================================
 
+# Python
+import datetime
+
 # Modulos Propios
 import logging
 
@@ -934,66 +937,102 @@ class QueryBox:
             self.reset()
             return dicc
 
-    def container(self, label=False):
+    def container(self):
 
         if not self.ROW and not self.COL:
-            return []
+            return {}
 
-        ROWS = self.ROW.copy()
-        COLS = self.COL.copy()
-        LABELS = self.SE_LABEL.copy()
+        MAIN = self.model._table
+        ROWS = self.ROW
+        COLS = self.COL
+        META = self.model._metadata
 
-        # OBTENCION DE TABLAS PARA TODO EL QUERY
-        TABLES = [C.split("__", 1)[0] for C in COLS]
-        SETTAB = set(TABLES)
-        # COLUMNAS SIN SUFIJO "tabla__"
-        SLT_COLS = [C.split("__", 1)[1] for C in COLS]
-        # MAPA {tabla__columna: frontend}
-        MAP = dict(zip(COLS, LABELS))
-        # MAPA DE POSICION DE COLUMNA POR TABLA DEL QUERY
-        POSITIONS = {}
+        TABLES = []
+        for col in COLS:
+            PARTS = col.split("__")
+            TAB = PARTS[0]
+            if TAB not in TABLES:
+                TABLES.append(TAB)
 
-        for TAB in SETTAB:
-            POSITIONS[TAB] = {}
-            ORDER = self.model._family[TAB]._metadata[TAB]["columns"]
-            for COL in SLT_COLS:
-                PARTS = COL.split("__")
-                try:
-                    if len(PARTS) == 2:
-                        EXTRA = PARTS[0]
-                        index = ORDER.index(EXTRA)
-                    else:
-                        index = ORDER.index(COL)
-                    if label:
-                        try:
-                            POSITIONS[TAB].update(
-                                {MAP[TAB + "__" + COL]: index}
-                            )
-                        except KeyError:
-                            continue
-                    else:
-                        POSITIONS[TAB].update({COL: index})
-                except ValueError:
-                    continue
         if ROWS:
-            RESULT = _TRANSPOSITION_(
-                tables=TABLES,
-                columns=COLS,
-                rows=ROWS,
-                positions=POSITIONS,
-                chart=MAP,
-                label=label,
-            )
-            return RESULT
-
+            VECTORS = list(zip(*ROWS))
+            VECTORS = [list(v) for v in VECTORS]
         else:
-            TUPLA = tuple([None for C in COLS])
-            RESULT = _TRANSPOSITION_(
-                tables=TABLES,
-                columns=COLS,
-                rows=[TUPLA],
-                positions=POSITIONS,
-                chart=MAP,
-                label=label,
-            )
-            return RESULT
+            VECTORS = [[None] for c in COLS]
+        CONTAINER = {}
+        for ITER_TAB in TABLES:
+            CONTAINER[ITER_TAB] = {}
+
+            # MAPAEAR TABLA FORM
+            if ITER_TAB == MAIN:
+                CONTAINER[ITER_TAB]["@main_table@"] = True
+            else:
+                CONTAINER[ITER_TAB]["@main_table@"] = False
+
+            # MAPEAR DEPENDENCIAS DE TABLA ACTUAL
+            CONTAINER[ITER_TAB]["depends"] = META[ITER_TAB]["depends"]
+
+            for col, vector in zip(COLS, VECTORS):
+
+                PARTS = col.split("__")
+
+                TAB = PARTS[0]
+                COL = PARTS[1]
+                AGG = ""
+
+                if TAB != ITER_TAB:
+                    continue
+
+                if len(PARTS) == 3:
+                    AGG = PARTS[2]
+
+                CONTAINER[TAB][COL] = {}
+
+                TYPE = META[TAB]["schema"][COL]["type"]
+                REQUIRED = META[TAB]["schema"][COL]["required"]
+                DEFAULT = META[TAB]["schema"][COL]["default"]
+                READONLY = META[TAB]["schema"][COL]["readonly"]
+                LABEL = META[TAB]["schema"][COL]["metadata"]["comment"]
+                POSITION = META[TAB]["schema"][COL]["metadata"]["position"]
+                PK = META[TAB]["schema"][COL]["metadata"].get(
+                    "primary_key", False
+                )
+                FK = META[TAB]["schema"][COL]["metadata"].get(
+                    "foreign_key", False
+                )
+                SQL = META[TAB]["schema"][COL]["metadata"].get(
+                    "sql_type", ""
+                )
+                SEC_TAB = False
+                SEC_COL = False
+
+                if FK:
+                    SEC_TAB = META[TAB]["schema"][COL]["metadata"][
+                        "foreign_key"
+                    ]["second_table"]
+                    SEC_COL = META[TAB]["schema"][COL]["metadata"][
+                        "foreign_key"
+                    ]["column_id"]
+
+                if AGG:
+                    LABEL = f"{LABEL}" + f"{AGG}".capitalize()
+
+                if SQL == "BOOLEAN":
+                    vector = [bool(item) for item in vector]
+
+                if any(((SQL == "TIMESTAMP"), (SQL == "DATE"))):
+                    vector = [item.isoformat() for item in vector]
+
+                CONTAINER[TAB][COL]["vector"] = vector
+                CONTAINER[TAB][COL]["label"] = LABEL
+                CONTAINER[TAB][COL]["position"] = POSITION
+                CONTAINER[TAB][COL]["readonly"] = READONLY
+                CONTAINER[TAB][COL]["default"] = DEFAULT
+                CONTAINER[TAB][COL]["required"] = REQUIRED
+                CONTAINER[TAB][COL]["python_type"] = TYPE.__name__
+                CONTAINER[TAB][COL]["primary_key"] = PK
+                CONTAINER[TAB][COL]["sql_type"] = SQL
+                CONTAINER[TAB][COL]["second_table"] = SEC_TAB
+                CONTAINER[TAB][COL]["foreign_key"] = SEC_COL
+
+        return CONTAINER
