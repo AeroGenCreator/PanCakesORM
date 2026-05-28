@@ -304,7 +304,9 @@ class QueryBox:
         self.SE_LABEL.extend(COMMENTS)
 
         for COL in COLUMNS:
-            self.SE_SELECT.append({"table": MAINT, "name": COL})
+            SQL = MODEL._metadata[MAINT]["schema"][COL]["metadata"]["sql_type"]
+            if SQL != "1:N":
+                self.SE_SELECT.append({"table": MAINT, "name": COL})
 
         # OBTENER TODO DE UN JOIN
         CACHE = []
@@ -329,7 +331,9 @@ class QueryBox:
 
                     listado1 = []
                     for COL in COLS1:
-                        listado1.append({"table": TAB1, "name": COL})
+                        SQL = MODEL._metadata[TAB1]["schema"][COL]["metadata"]["sql_type"]
+                        if SQL != "1:N":
+                            listado1.append({"table": TAB1, "name": COL})
 
                     self.SE_LABEL.extend(LABS1)
                     self.SE_SELECT.extend(listado1)
@@ -349,6 +353,9 @@ class QueryBox:
 
                     listado2 = []
                     for COL in COLS2:
+                        SQL = MODEL._metadata[TAB2]["schema"][COL]["metadata"]["sql_type"]
+                        if SQL != "1:N":
+                            listado1.append({"table": TAB1, "name": COL})
                         listado2.append({"table": TAB2, "name": COL})
 
                     self.SE_LABEL.extend(LABS2)

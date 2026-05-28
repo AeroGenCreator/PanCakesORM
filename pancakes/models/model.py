@@ -385,11 +385,12 @@ class PanCakesORM:
             datatype.Char,
             datatype.Int,
             datatype.Float,
-            datatype.ForeignKey,
             datatype.Text,
             datatype.Bool,
             datatype.Date,
-            datatype.TimeStamp
+            datatype.TimeStamp,
+            datatype.ForeignKey,
+            datatype.One2Many
         )
 
         # Esquema; field_id 'modelo' | cache esquema 'modelo'
@@ -403,7 +404,8 @@ class PanCakesORM:
                 "metadata": {
                     "comment": id_comment,
                     "primary_key": True,
-                    "position": 0
+                    "position": 0,
+                    "sql_type": "INTEGER"
                 },
             }
         }
@@ -430,9 +432,13 @@ class PanCakesORM:
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
                 # Esquema; actualizado
-                value._schema["metadata"]["position"] = position_counter
-                schema_cache.update({value._name: value._schema})
-                position_counter += 1
+                if not isinstance(value, datatype.One2Many):
+                    value._schema["metadata"]["position"] = position_counter
+                    schema_cache.update({value._name: value._schema})
+                    position_counter += 1
+                else:
+                    value._schema["metadata"]["position"] = None
+                    schema_cache.update({value._name: value._schema})
 
         # Campos Guardados Como Objeto
         cls._metadata[cls._table]["fields"] = cls._fields
@@ -528,7 +534,8 @@ class PanCakesORM:
                 unique = ", UNIQUE" + f"({', '.join(constn)})"
             extraction = []
             for f in fields:
-                extraction.append([f"[{f._name}]", f._dtype])
+                if not isinstance(f, datatype.One2Many):
+                    extraction.append([f"[{f._name}]", f._dtype])
             union = ", ".join([" ".join(f) for f in extraction])
             line = (
                 f"CREATE TABLE IF NOT EXISTS [{t}]("
@@ -537,7 +544,6 @@ class PanCakesORM:
                 f"{unique});"
             ).strip()
             lines.append(line)
-
         # Guarda; Tablas por eliminar
         tabs_to_drop = []
 
@@ -599,8 +605,14 @@ class PanCakesORM:
             if skip:
                 continue
 
-            # 3. Esquema Pydantic de la Tabla
-            schema = cls._metadata[table]["schema"]
+            # 3. Esquema Pydantic de la Tabla: Sin One2Many
+            full_schema = cls._metadata[table]["schema"]
+            schema = {}
+
+            for name, meta in full_schema.items():
+                TYPE = meta["metadata"]["sql_type"]
+                if TYPE != "1:N":
+                    schema[name] = meta
 
             # 4. Objetivo -> Mapear Annotated[] por campos de modelo.
             FIELDS = {}
@@ -626,9 +638,12 @@ class PanCakesORM:
                 # Validadores Capa 2
                 f_comment = f_metadata.get("comment", "NO COMMENT")
                 f_primary = f_metadata.get("primary_key", False)
-                f_sql_datatype = f_metadata.get("sql_type", "")
+                f_sql_datatype = f_metadata.get("sql_type", "FAKE")
                 f_position = f_metadata.get("position", None)
                 f_unique = f_constraints.get("unique", False)
+
+                if f_sql_datatype == "1:N":
+                    continue
 
                 # Text -> 'No Valida Extra' ... Salto a 'Char'
                 f_max_length = f_constraints.get("max_length", None)

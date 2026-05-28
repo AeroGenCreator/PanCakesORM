@@ -23,6 +23,9 @@ class Category(PanCakesORM):
     _depends = "self"
 
     name = datatype.Char(comment="Categoria Producto")
+    producto_ids = datatype.One2Many(
+        references="category", inverse_column="category_id"
+    )
 
 
 class Producto(PanCakesORM):
@@ -70,7 +73,7 @@ def test_tipos_datos_mas_fechas():
                 "required": False,
                 "python_type": "int",
                 "primary_key": True,
-                "sql_type": "",
+                "sql_type": "INTEGER",
                 "second_table": False,
                 "foreign_key": False,
             },
@@ -191,7 +194,7 @@ def test_tipos_datos_mas_fechas():
                 "required": False,
                 "python_type": "int",
                 "primary_key": True,
-                "sql_type": "",
+                "sql_type": "INTEGER",
                 "second_table": False,
                 "foreign_key": False,
             },
@@ -209,4 +212,42 @@ def test_tipos_datos_mas_fechas():
                 "foreign_key": False,
             },
         },
+    }
+
+
+def test_One2Many_yields_data():
+    container = Category.all().container()
+
+    # Los queries no devuelven columnas One2Many
+    assert container == {
+        "category": {
+            "@main_table@": True,
+            "@depends@": ["self"],
+            "category_id": {
+                "vector": [1],
+                "label": "CATEGORY ID",
+                "position": 0,
+                "readonly": True,
+                "default": None,
+                "required": False,
+                "python_type": "int",
+                "primary_key": True,
+                "sql_type": "INTEGER",
+                "second_table": False,
+                "foreign_key": False,
+            },
+            "name": {
+                "vector": ["Vinos y Licores"],
+                "label": "Categoria Producto",
+                "position": 1,
+                "readonly": False,
+                "default": None,
+                "required": False,
+                "python_type": "str",
+                "primary_key": False,
+                "sql_type": "VARCHAR",
+                "second_table": False,
+                "foreign_key": False,
+            },
+        }
     }

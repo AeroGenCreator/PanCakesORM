@@ -74,7 +74,9 @@ class DataTypeSQL:
             "default": None,
             "readonly": None,
             "constraints": {},
-            "metadata": {}
+            "metadata": {
+                "sql_type": None
+            }
         }
 
 
@@ -356,82 +358,6 @@ class Bool(DataTypeSQL):
         self._schema["metadata"].update({"sql_type": self._data_type})
 
 
-class ForeignKey(DataTypeSQL):
-    """
-    Recomendacion: Hacer coincidir el nombre de la instancia
-    creada a partir de ForeignKey con la columna de referencia en la
-    tabla externa.
-
-    1. Poque el nombre de la instancia es: (nombre de columna en esta tabla),
-    2. Para facilidad de query y lectura: Tener en ambas tablas involucradas
-    el mismo nombre de columna. (Join's explicitos)
-
-    EJEMPLO:
-
-    client_id = sql.datatype.ForeignKey(
-    second_table = 'client',
-    column_id = 'client_id',
-    comment:str = 'Client Relation',
-    on_del = 'set null',
-    on_upd = 'cascade')
-
-    -> Notar como ambos compartiran el nombre "client_id"
-    """
-
-    ACTIONS = {'no action', 'restrict', 'set null', 'cascade'}
-    _data_type = 'INTEGER'
-    _not_null = False
-    _python = int
-    # UNIQUE no se define porque en las relaciones de tablas pueden haber
-    # ids repetidos
-
-    def __init__(
-        self,
-        second_table: str,
-        column_id: str,
-        comment: str,
-        on_del: str = 'set null',
-        on_upd: str = 'cascade',
-        readonly: bool = True
-    ):
-
-        super().__init__(
-            comment=comment,
-            required=self._not_null,
-            readonly=readonly
-        )
-
-        self.second_table = second_table
-        self.column_id = column_id
-        self.on_del = on_del.upper() if on_del in self.ACTIONS else 'SET NULL'
-        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE'
-        self._sentence()
-        self._pydantic()
-
-    def _sentence(self):
-        super()._sentence()
-
-        self._dtype = f"""
-        {self._data_type} {self.nls} REFERENCES {self.second_table}
-        ({self.column_id}) ON DELETE {self.on_del} ON UPDATE {self.on_upd}
-        """
-        self._dtype = self._dtype.replace("  ", " ").strip()
-
-    def _pydantic(self):
-        super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = False
-        self._schema["default"] = None
-        self._schema["readonly"] = bool(self.readonly)
-        self._schema["metadata"].update({"comment": self.comment})
-        self._schema["metadata"].update(
-            {"foreign_key": {
-                "second_table": self.second_table,
-                "column_id": self.column_id
-            }
-        })
-        self._schema["metadata"].update({"sql_type": "FOREIGN KEY"})
-
 class Date(DataTypeSQL):
     """
     Permite almacenar tipos de datos "date" nativos de python.
@@ -512,3 +438,124 @@ class TimeStamp(DataTypeSQL):
         self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update({"sql_type": self._data_type})
+
+
+class ForeignKey(DataTypeSQL):
+    """
+    Recomendacion: Hacer coincidir el nombre de la instancia
+    creada a partir de ForeignKey con la columna de referencia en la
+    tabla externa.
+
+    1. Poque el nombre de la instancia es: (nombre de columna en esta tabla),
+    2. Para facilidad de query y lectura: Tener en ambas tablas involucradas
+    el mismo nombre de columna. (Join's explicitos)
+
+    EJEMPLO:
+
+    client_id = sql.datatype.ForeignKey(
+    second_table = 'client',
+    column_id = 'client_id',
+    comment:str = 'Client Relation',
+    on_del = 'set null',
+    on_upd = 'cascade')
+
+    -> Notar como ambos compartiran el nombre "client_id"
+    """
+
+    ACTIONS = {'no action', 'restrict', 'set null', 'cascade'}
+    _data_type = 'INTEGER'
+    _not_null = False
+    _python = int
+    # UNIQUE no se define porque en las relaciones de tablas pueden haber
+    # ids repetidos
+
+    def __init__(
+        self,
+        second_table: str,
+        column_id: str,
+        comment: str,
+        on_del: str = 'set null',
+        on_upd: str = 'cascade',
+        readonly: bool = True
+    ):
+
+        super().__init__(
+            comment=comment,
+            required=self._not_null,
+            readonly=readonly
+        )
+
+        self.second_table = second_table
+        self.column_id = column_id
+        self.on_del = on_del.upper() if on_del in self.ACTIONS else 'SET NULL'
+        self.on_upd = on_upd.upper() if on_upd in self.ACTIONS else 'CASCADE'
+        self._sentence()
+        self._pydantic()
+
+    def _sentence(self):
+        super()._sentence()
+
+        self._dtype = f"""
+        {self._data_type} {self.nls} REFERENCES {self.second_table}
+        ({self.column_id}) ON DELETE {self.on_del} ON UPDATE {self.on_upd}
+        """
+        self._dtype = self._dtype.replace("  ", " ").strip()
+
+    def _pydantic(self):
+        super()._pydantic()
+        self._schema["type"] = self._python
+        self._schema["required"] = False
+        self._schema["default"] = None
+        self._schema["readonly"] = bool(self.readonly)
+        self._schema["metadata"].update({"comment": self.comment})
+        self._schema["metadata"].update(
+            {"foreign_key": {
+                "second_table": self.second_table,
+                "column_id": self.column_id
+            }
+        })
+        self._schema["metadata"].update({"sql_type": "FOREIGN KEY"})
+
+
+class One2Many(DataTypeSQL):
+    """
+    Este campo no recibe datos.
+    Renderiza relaciones one2many en el formulario de la tabla donde se
+    invoca.
+    Esto se traduce a una relacion que existe en la GUI.
+
+    Argumentos:
+    references: str
+    inverse_column: str
+    """
+    def __init__(
+        self,
+        references: str,
+        inverse_column: str,
+        comment: str | None = None
+    ):
+        super().__init__(comment=comment)
+        self.references = references
+        self.inverse_column = inverse_column
+        self._pydantic()
+
+    def _pydantic(self):
+        super()._pydantic()
+
+        if self.comment:
+            comment = self.comment
+        else:
+            comment = f"{self.references} 1:N".upper()
+
+        self._schema["type"] = None
+        self._schema["required"] = False
+        self._schema["default"] = None
+        self._schema["readonly"] = False
+        self._schema["metadata"].update({"comment": comment})
+        self._schema["metadata"].update(
+            {"foreign_key": {
+                "second_table": self.references,
+                "column_id": self.inverse_column
+            }
+        })
+        self._schema["metadata"].update({"sql_type": "1:N"})

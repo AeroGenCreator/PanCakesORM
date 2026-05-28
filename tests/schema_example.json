@@ -112,3 +112,47 @@
         },
     },
 }
+
+{
+    "category_id": {
+        "type": "<class 'int'>",
+        "required": false,
+        "default": null,
+        "readonly": true,
+        "constraints": {},
+        "metadata": {
+            "comment": "CATEGORY ID",
+            "primary_key": true,
+            "position": 0,
+            "sql_type": "INTEGER",
+        },
+    },
+    "name": {
+        "type": "<class 'str'>",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {"max_length": 250, "min_length": null},
+        "metadata": {
+            "sql_type": "VARCHAR",
+            "comment": "Categoria Producto",
+            "position": 1,
+        },
+    },
+    "producto_ids": {
+        "type": null,
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+            "sql_type": "1:N",
+            "comment": "CATEGORY 1:N",
+            "foreign_key": {
+                "second_table": "category",
+                "column_id": "category_id",
+            },
+            "position": null,
+        },
+    },
+}

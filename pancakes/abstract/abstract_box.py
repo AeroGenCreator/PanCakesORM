@@ -29,6 +29,7 @@ import logging
 from ..orm.delete import delete  # Funcion delete()
 from ..orm.insert import insert  # Funcion insert()
 from ..orm.update import update  # Funcion update()
+from ..sql.datatype import One2Many
 from ..tools.functions import environment  # Variables de entorno
 from ..valid.filter_validator import (
     DeleteFilterValidator,  # Val. Kwargs Del.
