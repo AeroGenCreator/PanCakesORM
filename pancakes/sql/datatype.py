@@ -35,7 +35,8 @@ Contenido
 7. ForeignKey
 """
 from datetime import date, datetime
-
+from collections.abc import Callable
+from typing import Any
 
 class DataTypeSQL:
     """
@@ -46,36 +47,73 @@ class DataTypeSQL:
     required: bool -> Requerido Para la API
     """
     _data_type = ''
+    _python = Any
 
     def __init__(
         self,
         comment: str,
-        required: bool | None = None,
-        readonly: bool | None = None
+        required: bool = False,
+        readonly: bool = False,
+        default: Any | None = None,
+        compute: Callable[[Any], Any] | None = None
     ):
 
         self.comment = comment
         self.required = required
         self.readonly = readonly
+        self.raw_default = default
+        self.compute = compute
         self._dtype = None
         self._name = None
         self._schema = {}
         # atributo '_name' se asigna cuando se declara modelo
         # Revisar: '_get_fields', mold.py
 
+    def _get_default_value(self) -> Any:
+        """Evalúa y retorna el valor por defecto de manera segura."""
+        if self.raw_default is None:
+            return None
+        
+        # Si es un callable (ej. datetime.now), lo ejecuta
+        if isinstance(self.raw_default, Callable):
+            value = self.raw_default()
+        else:
+            value = self.raw_default
+
+        # Validar tipo de dato segun campo SQL
+        if self._python is not Any and not isinstance(value, self._python):
+            raise TypeError(
+                f"Invalid datatype: {type(value)}. Valid datatype for "
+                f"this SQL typer is: {self._python} or 'None'."
+            )
+        return value
+
+    def _compute_value(self, **kwargs) -> Any:
+        if self.compute is not None:
+            return self.compute(**kwargs)
+        return None
+
     def _sentence(self):
         self.nls = "NOT NULL" if bool(self.required) else ""
         self._dtype = f'{self._data_type} {self.nls}'.strip()
 
     def _pydantic(self):
+
+        if isinstance(self.raw_default, Callable):
+            self.default = self.raw_default
+            self.readonly = True
+        else:
+            self.default = self._get_default_value()
+        
         self._schema = {
-            "type": None,
-            "required": None,
-            "default": None,
-            "readonly": None,
+            "type": self._python,
+            "required": self.required,
+            "default": self.default,
+            "readonly": self.readonly,
             "constraints": {},
             "metadata": {
-                "sql_type": None
+                "sql_type": None,
+                "compute": self.compute
             }
         }
 
@@ -91,17 +129,19 @@ class Text(DataTypeSQL):
     def __init__(
         self,
         comment: str,
-        required: bool | None = None,
-        readonly: str | None = None,
-        default: str | None = None
+        required: bool = False,
+        readonly: bool = False,
+        default: str | Callable | None = None,
+        compute: Callable[[Any], str] | None = None
     ):
 
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -112,10 +152,6 @@ class Text(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = bool(self.required)
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update({"sql_type": self._data_type})
 
@@ -134,20 +170,22 @@ class Char(DataTypeSQL):
         comment: str,
         max_length: int = 250,
         min_length: int | None = None,
-        required: bool | None = None,
+        required: bool = False,
         unique: bool | None = None,
         default: str | None = None,
-        readonly: bool | None = None
+        readonly: bool = False,
+        compute: Callable[[Any], str] | None = None
     ):
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
         self.max_length = max_length
         self.min_length = min_length
         self.unique = unique
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -162,10 +200,6 @@ class Char(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = bool(self.required)
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["constraints"].update({"max_length": self.max_length})
         self._schema["constraints"].update({"min_length": self.min_length})
         if self.unique:
@@ -198,21 +232,23 @@ class Int(DataTypeSQL):
         gt: int | None = None,
         ge: int | None = None,
         default: int | None = None,
-        readonly: bool | None = None,
-        required: bool | None = None,
-        unique: bool | None = None
+        readonly: bool = False,
+        required: bool = False,
+        unique: bool | None = None,
+        compute: Callable[[Any], int] | None = None
     ):
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
         self.lt = lt
         self.le = le
         self.gt = gt
         self.ge = ge
         self.required = required
-        self.default = default
         self.unique = unique
         self._sentence()
         self._pydantic()
@@ -227,10 +263,6 @@ class Int(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = bool(self.required)
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         if self.lt:
@@ -269,21 +301,22 @@ class Float(DataTypeSQL):
         gt: float | None = None,
         ge: float | None = None,
         default: float | None = None,
-        readonly: bool | None = None,
-        required: bool | None = None,
-        unique: bool | None = None
+        readonly: bool = False,
+        required: bool = False,
+        unique: bool | None = None,
+        compute: Callable[[Any], float] | None = None
     ):
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
         self.lt = lt
         self.le = le
         self.gt = gt
         self.ge = ge
-        self.required = required
-        self.default = default
         self.unique = unique
         self._sentence()
         self._pydantic()
@@ -298,10 +331,6 @@ class Float(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = bool(self.required)
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         if self.unique:
             self._schema["constraints"].update({"unique": bool(self.unique)})
         if self.lt:
@@ -331,16 +360,18 @@ class Bool(DataTypeSQL):
         self,
         comment: str,
         default: bool | None = None,
-        readonly: bool | None = None,
-        required: bool | None = None
+        readonly: bool = False,
+        required: bool = False,
+        compute: Callable[[Any], bool] | None = None
     ):
 
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -350,10 +381,6 @@ class Bool(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = bool(self.required)
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update({"sql_type": self._data_type})
 
@@ -365,21 +392,23 @@ class Date(DataTypeSQL):
     _data_type = 'DATE'
     _sql_default = 'DEFAULT NULL'
     _python = date
-    today = date.today()
+    today = date.today
 
     def __init__(
         self,
         comment: str,
-        required: bool | None = None,
-        readonly: bool | None = None,
-        default: date | None = None
+        required: bool = False,
+        readonly: bool = False,
+        default: date | None = None,
+        compute: Callable[[Any], date] | None = None
     ):
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -391,10 +420,6 @@ class Date(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = self.required
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update({"sql_type": self._data_type})
 
@@ -406,21 +431,23 @@ class TimeStamp(DataTypeSQL):
     _data_type = 'TIMESTAMP'
     _sql_default = 'DEFAULT NULL'
     _python = datetime
-    now = datetime.now()
+    now = datetime.now
 
     def __init__(
         self,
         comment: str,
-        required: bool | None = None,
-        readonly: bool | None = None,
-        default: datetime | None = None
+        required: bool = False,
+        readonly: bool = False,
+        default: datetime | None = None,
+        compute: Callable[[Any], datetime] | None = None
     ):
         super().__init__(
             comment=comment,
             required=required,
-            readonly=readonly
+            readonly=readonly,
+            default=default,
+            compute=compute
         )
-        self.default = default
         self._sentence()
         self._pydantic()
 
@@ -432,10 +459,6 @@ class TimeStamp(DataTypeSQL):
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = self.required
-        self._schema["default"] = self.default
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update({"sql_type": self._data_type})
 
@@ -482,7 +505,9 @@ class ForeignKey(DataTypeSQL):
         super().__init__(
             comment=comment,
             required=self._not_null,
-            readonly=readonly
+            readonly=readonly,
+            default=None,
+            compute=None
         )
 
         self.second_table = second_table
@@ -495,18 +520,14 @@ class ForeignKey(DataTypeSQL):
     def _sentence(self):
         super()._sentence()
 
-        self._dtype = f"""
-        {self._data_type} {self.nls} REFERENCES {self.second_table}
-        ({self.column_id}) ON DELETE {self.on_del} ON UPDATE {self.on_upd}
-        """
+        self._dtype = (
+        f"{self._data_type} {self.nls} REFERENCES {self.second_table} "
+        f"({self.column_id}) ON DELETE {self.on_del} ON UPDATE {self.on_upd}"
+        )
         self._dtype = self._dtype.replace("  ", " ").strip()
 
     def _pydantic(self):
         super()._pydantic()
-        self._schema["type"] = self._python
-        self._schema["required"] = False
-        self._schema["default"] = None
-        self._schema["readonly"] = bool(self.readonly)
         self._schema["metadata"].update({"comment": self.comment})
         self._schema["metadata"].update(
             {"foreign_key": {
@@ -534,7 +555,13 @@ class One2Many(DataTypeSQL):
         inverse_column: str,
         comment: str | None = None
     ):
-        super().__init__(comment=comment)
+        super().__init__(
+            comment=comment,
+            required=False,
+            readonly=False,
+            default=None,
+            compute=None
+        )
         self.references = references
         self.inverse_column = inverse_column
         self._pydantic()

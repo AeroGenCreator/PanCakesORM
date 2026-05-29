@@ -67,7 +67,7 @@ class Inventory(PanCakesORM):
         comment="Product Price",
         lt=1000,
         gt=1,
-        default=10,
+        default=10.0,
         required=True,
     )
     saleable = datatype.Bool(

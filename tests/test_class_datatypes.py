@@ -51,9 +51,7 @@ fecha = datetime.date(2026, 1, 1)
 
 Category.i(category=[(None, "Vinos y Licores")])
 Category.i(
-    producto=[
-        (None, "Lambrusco", 10, 120, True, "Espumosos", timestamp, fecha, 1)
-    ]
+    producto=[(None, "Lambrusco", 10, 120, True, "Espumosos", timestamp, fecha, 1)]
 )
 
 
@@ -148,7 +146,7 @@ def test_tipos_datos_mas_fechas():
                 "position": 6,
                 "readonly": False,
                 "default": None,
-                "required": None,
+                "required": False,
                 "python_type": "datetime",
                 "primary_key": False,
                 "sql_type": "TIMESTAMP",
@@ -161,7 +159,7 @@ def test_tipos_datos_mas_fechas():
                 "position": 7,
                 "readonly": False,
                 "default": None,
-                "required": None,
+                "required": False,
                 "python_type": "date",
                 "primary_key": False,
                 "sql_type": "DATE",

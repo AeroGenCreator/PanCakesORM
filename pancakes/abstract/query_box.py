@@ -23,9 +23,6 @@
 # [Abtraccion de queries a traves de encadenamiento de metodos.]
 # ==============================================================================
 
-# Python
-import datetime
-
 # Modulos Propios
 import logging
 
@@ -45,7 +42,6 @@ logging.basicConfig(
     force=True,
 )
 logger = logging.getLogger(__name__)
-
 
 def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
 
@@ -70,34 +66,6 @@ def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
     else:
         columns = labels
         return columns
-
-
-def _TRANSPOSITION_(tables, columns, rows, positions, chart, label):
-
-    # Validar alineacion de datos
-    if len(rows[0]) != len(columns):
-        logger.critical(
-            "Unexpected received data while transposition. "
-            "Lenght missmatch. Posible bug when query DATABASE. "
-            f"Column lenght: {len(columns)}, row lenght {len(rows[0])}"
-        )
-        raise ValueError
-
-    TRANS = list(zip(*rows))
-    MDICC = {}
-    SETTAB = set(tables)
-
-    for TAB in SETTAB:
-        MDICC[TAB] = {}
-    for index, (TAB, COL) in enumerate(zip(tables, columns)):
-        if label:
-            CURCOL = chart[COL]
-            MDICC[TAB].update({CURCOL: list(TRANS[index])})
-        else:
-            MDICC[TAB].update({COL.split("__", 1)[1]: list(TRANS[index])})
-    MDICC["@positions@"] = positions
-
-    return [MDICC]
 
 
 class QueryBox:

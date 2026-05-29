@@ -405,7 +405,8 @@ class PanCakesORM:
                     "comment": id_comment,
                     "primary_key": True,
                     "position": 0,
-                    "sql_type": "INTEGER"
+                    "sql_type": "INTEGER",
+                    "compute": None
                 },
             }
         }
