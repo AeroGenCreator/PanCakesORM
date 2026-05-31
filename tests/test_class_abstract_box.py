@@ -64,7 +64,7 @@ def test_method_i():
 
     abs_box.i(db_path=file, user=[(None, "Andres")])
     api = User.all().dictionary()
-    
+
     assert api == [{"user__user_id": 1, "user__name": "Andres"}]
 
 
@@ -84,13 +84,21 @@ def test_method_u_same():
     abs_box.u(user__name__user_id__same=["Po", 1])
     api = User.all().dictionary()
 
-    assert api == [{'user__user_id': 1, 'user__name': 'Po'}, {'user__user_id': 2, 'user__name': 'Polar'}]
+    assert api == [
+        {"user__user_id": 1, "user__name": "Po"},
+        {"user__user_id": 2, "user__name": "Polar"},
+    ]
+
 
 def test_method_u_between():
-    User.u(user__name__user_id__btwn=["Andres", [1,2]])
+    User.u(user__name__user_id__btwn=["Andres", [1, 2]])
     api = User.all().dictionary()
 
-    assert api == [{'user__user_id': 1, 'user__name': 'Andres'}, {'user__user_id': 2, 'user__name': 'Andres'}]
+    assert api == [
+        {"user__user_id": 1, "user__name": "Andres"},
+        {"user__user_id": 2, "user__name": "Andres"},
+    ]
+
 
 def test_method_u_one_table_multiple_rows():
     abs_box = AbstractBox(model=User)
@@ -201,6 +209,7 @@ def test_classmethod_d():
 
 
 # --*-- TEST NOMBRES REPETIDOS --*--
+
 
 def test_duplicated_name_when_output():
     User.i(user=[(None, "Tabla1")])
@@ -325,6 +334,7 @@ def test_duplicated_name_when_output():
 def test_error_queries_relaciones():
     dicc = Category.link("user").all().dictionary()
     assert dicc == [{"category__category_id": None, "category__name": None}]
+
 
 def test_vacios():
     row, col = Category.all().raw()

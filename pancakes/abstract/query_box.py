@@ -43,6 +43,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
 
     # VALIDAR ETIQUETAS UNICAS
@@ -299,7 +300,9 @@ class QueryBox:
 
                     listado1 = []
                     for COL in COLS1:
-                        SQL = MODEL._metadata[TAB1]["schema"][COL]["metadata"]["sql_type"]
+                        SQL = MODEL._metadata[TAB1]["schema"][COL]["metadata"][
+                            "sql_type"
+                        ]
                         if SQL != "1:N":
                             listado1.append({"table": TAB1, "name": COL})
 
@@ -321,7 +324,9 @@ class QueryBox:
 
                     listado2 = []
                     for COL in COLS2:
-                        SQL = MODEL._metadata[TAB2]["schema"][COL]["metadata"]["sql_type"]
+                        SQL = MODEL._metadata[TAB2]["schema"][COL]["metadata"][
+                            "sql_type"
+                        ]
                         if SQL != "1:N":
                             listado1.append({"table": TAB1, "name": COL})
                         listado2.append({"table": TAB2, "name": COL})
@@ -948,7 +953,6 @@ class QueryBox:
             CONTAINER[ITER_TAB]["@depends@"] = META[ITER_TAB]["depends"]
 
             for col, vector in zip(COLS, VECTORS):
-
                 PARTS = col.split("__")
 
                 TAB = PARTS[0]
@@ -975,9 +979,7 @@ class QueryBox:
                 FK = META[TAB]["schema"][COL]["metadata"].get(
                     "foreign_key", False
                 )
-                SQL = META[TAB]["schema"][COL]["metadata"].get(
-                    "sql_type", ""
-                )
+                SQL = META[TAB]["schema"][COL]["metadata"].get("sql_type", "")
                 SEC_TAB = False
                 SEC_COL = False
 

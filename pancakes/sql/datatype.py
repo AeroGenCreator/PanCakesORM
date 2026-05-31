@@ -37,9 +37,10 @@ Contenido
 9. ForeignKey
 10. One2Many
 """
-from datetime import date, datetime
 from collections.abc import Callable
+from datetime import date, datetime
 from typing import Any
+
 
 class DataTypeSQL:
     """
@@ -76,7 +77,7 @@ class DataTypeSQL:
         """Evalúa y retorna el valor por defecto de manera segura."""
         if self.raw_default is None:
             return None
-        
+
         # Si es un callable (ej. datetime.now), lo ejecuta
         if isinstance(self.raw_default, Callable):
             value = self.raw_default()

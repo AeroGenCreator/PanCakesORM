@@ -698,7 +698,7 @@ class PanCakesORM:
                 else:
                     TYPE = Optional[f_type]
                     DEFAULT = None
-                
+
                 # 8. Guardar Campo Pydantic "Anottated"
                 FIELDS[name] = Annotated[TYPE, Field(DEFAULT, **KWARGS)]
 

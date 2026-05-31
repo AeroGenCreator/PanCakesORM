@@ -491,7 +491,7 @@ class ValidateOrderBy(BaseModel):
         LISTA = data.get("orders", [])
 
         for ARG in LISTA:
-            
+
             if "__" not in ARG:
                 raise ValueError(
                     f"Valid separator '__' not found in passed argument: {ARG}"

@@ -28,9 +28,9 @@ import logging
 from types import SimpleNamespace
 from typing import Callable
 
-from ..orm.query import query  # Para computar campos
 from ..orm.delete import delete  # Funcion delete()
 from ..orm.insert import insert  # Funcion insert()
+from ..orm.query import query  # Para computar campos
 from ..orm.update import update  # Funcion update()
 from ..tools.functions import environment  # Variables de entorno
 from ..valid.filter_validator import (
@@ -47,7 +47,10 @@ DEFAULT_DB_FILE = envs.get("db")
 log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
-    format="%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s",
+    format=(
+        "%(asctime)s [%(levelname)s] "
+        "%(name)s.%(funcName)s:%(lineno)d - %(message)s"
+    ),
     force=True,
 )
 logger = logging.getLogger(__name__)
@@ -118,7 +121,6 @@ class AbstractBox:
                 dicc = dict(zip(COLS, TUPS))
                 clean = {}
                 for c, v in dicc.items():
-
                     # Sí compute; ejecutar y guardar valor
                     compute = schema[c]["metadata"]["compute"]
                     PK = schema[c]["metadata"].get("primary_key", False)
@@ -144,7 +146,7 @@ class AbstractBox:
                     if compute is not None:
                         for key, val in dicc.items():
                             setattr(MOCK, key, SimpleNamespace(value=val))
-                    
+
                     if isinstance(compute, str):
                         func = getattr(MODEL, compute)
                         value = func(MOCK)
@@ -238,14 +240,14 @@ class AbstractBox:
             "ltsm": "<=",
             "gt": ">",
             "gtsm": ">=",
-            "diff":"<>",
+            "diff": "<>",
             "in": "IN",
             "notin": "NOT IN",
             "btwn": "BETWEEN",
             "is": "IS",
             "isnot": "IS NOT",
             "like": "LIKE",
-            "notlike": "NOT LIKE"
+            "notlike": "NOT LIKE",
         }
         MODEL = self.model
         PATH = MODEL._db_file
@@ -254,6 +256,13 @@ class AbstractBox:
         # VALIDAR (UPDATE SYNTAX)
         validated = UpdateFilterValidator.model_validate({"filters": kwargs})
         kwargs = validated.filters
+
+        TABLES_TO_UPDATE = []
+        # Obtener las tablas que seran actualizadas
+        for KEY, LIST in kwargs.items():
+            TAB = KEY.split("__")[0]
+            if TAB not in TABLES_TO_UPDATE:
+                TABLES_TO_UPDATE.append(TAB)
 
         # VALIDAR POR CAMPO
         valid_kwargs = {}
@@ -269,44 +278,91 @@ class AbstractBox:
             VALID = ADAPTER.validate_python(VAL)
             valid_kwargs.update({key: [VALID, val[1]]})
 
-        # CAMPOS COMPUTADOS (Refactorizado: Una sola query unificada)
-        # Usamos list() para poder modificar valid_kwargs dinámicamente sin romper el bucle
+        # Creacion volatil linea de valores:
+        VOLATIL = {}
+        for TAB in TABLES_TO_UPDATE:
+            VOLATIL[TAB] = {}
+            COLUMNS = META[TAB]["columns"]
+            DICT = dict(zip(COLUMNS, [None for c in COLUMNS]))
+            for KEY, LIST in valid_kwargs.items():
+                PARTS = KEY.split("__")
+                KTAB = PARTS[0]
+                KCOL = PARTS[1]
+                KVAL = LIST[0]
+                if KTAB == TAB:
+                    DICT[KCOL] = KVAL
+            VOLATIL[TAB] = DICT
+
+        # CAMPOS COMPUTADOS (Refactorizado: Un solo query unificado)
+        # Usamos list() -> De esta manera se puede editar dict original
+        # CAMPOS COMPUTADOS Y CONSTRUCCIÓN DE PARÁMETROS
+        params = []
+
+        # Primero, añadimos los cambios estáticos originales a params
+        for key, val in valid_kwargs.items():
+            PARTS = key.split("__")
+            params.append(
+                {
+                    "table": PARTS[0],
+                    "name": PARTS[1],
+                    "data": val[0],
+                    "condition": [
+                        {
+                            "column": PARTS[2],
+                            "operator": WHERE[PARTS[3]],
+                            "value": val[1],
+                            "logic": "",
+                        }
+                    ],
+                }
+            )
+
+        # Ahora procesamos los calculados fila por fila
         for key, val in list(valid_kwargs.items()):
             PARTS = key.split("__")
-            TAB = PARTS[0]
-            CCL = PARTS[2]
-            OPE = PARTS[3]
-            CON = val[1]
+            TAB, CUR, CCL, OPE = PARTS[0], PARTS[1], PARTS[2], PARTS[3]
+            DAT, CON = val[0], val[1]
 
-            # QUERY A LOS DATOS REALES DE LA LINEA POR ACTUALIZAR
             COLUMNS = META[TAB]["columns"]
             SQL = [{"table": TAB, "name": col} for col in COLUMNS]
 
-            # Hacemos la consulta usando el operador original (sirve para =, BETWEEN, IN, etc.)
             rows, columns = query(
                 select=SQL,
                 _from=TAB,
                 db_path=PATH,
                 condition=[
-                    {"table": TAB, "column": CCL, "operator": WHERE[OPE], "value": CON}
+                    {
+                        "table": TAB,
+                        "column": CCL,
+                        "operator": WHERE[OPE],
+                        "value": CON,
+                    }
                 ],
             )
 
-            # Iteramos el resultado (funciona si devuelve 0, 1 o N filas)
             for row in rows:
                 MOCK = SimpleNamespace()
-                DICC = dict(zip(columns, row))  # <- CORREGIDO: Desempaqueta fila por fila de forma segura
+                DICC = dict(zip(columns, row))
 
-                for KEY, VAL in DICC.items():
-                    COL = KEY.split("__")[1]
-                    compute = META[TAB]["schema"][COL]["metadata"]["compute"]
-                    
+                # Encontrar la PK esta fila específica para la condición final
+                # Estandar {TAB}_id
+                pk_column = f"{TAB}_id"
+                pk_field = f"{TAB}__{pk_column}"
+                current_pk_value = DICC.get(pk_field)
+
+                # Construir el objeto Mock con datos fusionados (Real + Volátil)
+                for cl, cv in DICC.items():
+                    QCOL = cl.split("__")[1]
+                    DATA = VOLATIL[TAB].get(QCOL)
+                    VALUE = DATA if DATA is not None else cv
+                    setattr(MOCK, QCOL, SimpleNamespace(value=VALUE))
+
+                # Evaluar qué campos necesitan ser computados
+                for cl in DICC.keys():
+                    QCOL = cl.split("__")[1]
+                    compute = META[TAB]["schema"][QCOL]["metadata"]["compute"]
+
                     if compute is not None:
-                        # Poblamos el objeto dummy con los valores de la fila actual
-                        for cl, cv in DICC.items():
-                            setattr(MOCK, cl, SimpleNamespace(value=cv))
-
-                        # Obtenemos el valor computado
                         if isinstance(compute, Callable):
                             computed_val = compute(MOCK)
                         elif isinstance(compute, str):
@@ -315,45 +371,22 @@ class AbstractBox:
                         else:
                             continue
 
-                        # Para conservar el valor original de la condición en el bloque 'params' final,
-                        # extraemos el valor específico de esta fila usando la columna condicional (CCL)
-                        # Nota: Buscamos la llave en DICC que termine con nuestro campo condicional.
-                        current_row_con = CON
-                        if OPE in {"in", "notin", "btwn"}:
-                            match_key = f"{TAB}__{CCL}"
-                            current_row_con = DICC.get(match_key, CON)
-
-                        # Agregamos la nueva instrucción de actualización al diccionario
-                        # Usamos 'same' (=) porque la actualización final se vuelve fila por fila (por ID/Valor específico)
-                        new_key = f"{TAB}__{COL}__{CCL}__same"
-                        valid_kwargs.update({new_key: [computed_val, current_row_con]})
-
-        # CONSTRUCCIÓN DE PARÁMETROS
-        params = []
-        for key, val in valid_kwargs.items():
-            PARTS = key.split("__")
-            TAB = PARTS[0]
-            COL = PARTS[1]
-            CCL = PARTS[2]
-            OPE = PARTS[3]
-            VAL = val[0]
-            CON = val[1]
-
-            params.append(
-                {
-                    "table": TAB,
-                    "name": COL,
-                    "data": VAL,
-                    "condition": [
-                        {
-                            "column": CCL,
-                            "operator": WHERE[OPE],
-                            "value": CON, 
-                            "logic": ""
-                        }
-                    ]
-                }
-            )
+                        # Inyeccion directa a params apuntando ID único de fila
+                        params.append(
+                            {
+                                "table": TAB,
+                                "name": QCOL,
+                                "data": computed_val,
+                                "condition": [
+                                    {
+                                        "column": pk_column,
+                                        "operator": "=",
+                                        "value": current_pk_value,
+                                        "logic": "",
+                                    }
+                                ],
+                            }
+                        )
 
         # ACTUALIZACIÓN
         update(db_path=PATH, params=params, update_all=False)
