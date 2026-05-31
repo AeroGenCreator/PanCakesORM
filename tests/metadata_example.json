@@ -1,0 +1,278 @@
+{
+  "category": {
+    "depends": ["self"],
+    "group_constraint": false,
+    "fields": [
+      "pancakes.sql.datatype.Char",
+      "pancakes.sql.datatype.One2Many"
+    ],
+    "comments": ["CATEGORY ID", "Categoria Producto", null],
+    "columns": ["category_id", "name", "producto_ids"],
+    "schema": {
+      "category_id": {
+        "type": "int",
+        "required": false,
+        "default": null,
+        "readonly": true,
+        "constraints": {},
+        "metadata": {
+          "comment": "CATEGORY ID",
+          "primary_key": true,
+          "position": 0,
+          "sql_type": "INTEGER",
+          "compute": null
+        }
+      },
+      "name": {
+        "type": "str",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {
+          "max_length": 250,
+          "min_length": null
+        },
+        "metadata": {
+          "sql_type": "VARCHAR",
+          "compute": null,
+          "comment": "Categoria Producto",
+          "position": 1
+        }
+      },
+      "producto_ids": {
+        "type": null,
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "1:N",
+          "compute": null,
+          "comment": "CATEGORY 1:N",
+          "foreign_key": {
+            "second_table": "category",
+            "column_id": "category_id"
+          },
+          "position": null
+        }
+      }
+    },
+    "validators": {
+      "CreateValidator": "pancakes.models.model.CategoryCreateValidator",
+      "AdapterValidator": {
+        "category_id": "TypeAdapter(Annotated[Union[int, NoneType], FieldInfo(required=False, default=None, description='CATEGORY ID', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': true, 'sql_type': 'INTEGER', 'readonly': true, 'position': 0})])",
+        "name": "TypeAdapter(Annotated[Union[str, NoneType], FieldInfo(required=False, default=None, description='Categoria Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'VARCHAR', 'readonly': false, 'position': 1}, metadata=[MaxLen(max_length=250)])])"
+      },
+      "AnnotatedFields": {
+        "category_id": "typing.Annotated[int | None, FieldInfo(required=False, default=None, description='CATEGORY ID', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': true, 'sql_type': 'INTEGER', 'readonly': true, 'position': 0})]",
+        "name": "typing.Annotated[str | None, FieldInfo(required=False, default=None, description='Categoria Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'VARCHAR', 'readonly': false, 'position': 1}, metadata=[MaxLen(max_length=250)])]"
+      }
+    }
+  },
+  "producto": {
+    "depends": ["category"],
+    "group_constraint": false,
+    "fields": [
+      "pancakes.sql.datatype.Char",
+      "pancakes.sql.datatype.Int",
+      "pancakes.sql.datatype.Float",
+      "pancakes.sql.datatype.Bool",
+      "pancakes.sql.datatype.Text",
+      "pancakes.sql.datatype.TimeStamp",
+      "pancakes.sql.datatype.Date",
+      "pancakes.sql.datatype.ForeignKey",
+      "pancakes.sql.datatype.Float"
+    ],
+    "comments": [
+      "PRODUCTO ID",
+      "Nombre Producto",
+      "Cantidad Stock",
+      "Precio Producto",
+      "Es Vendible",
+      "Notas Extras",
+      "Fecha Hora Venta",
+      "Fecha Ingreso",
+      "Producto Categoria M:1",
+      "Precio + Impuesto"
+    ],
+    "columns": [
+      "producto_id",
+      "name",
+      "qty",
+      "price",
+      "saleable",
+      "extras",
+      "sold",
+      "registry",
+      "category_id",
+      "tax_price"
+    ],
+    "schema": {
+      "producto_id": {
+        "type": "int",
+        "required": false,
+        "default": null,
+        "readonly": true,
+        "constraints": {},
+        "metadata": {
+          "comment": "PRODUCTO ID",
+          "primary_key": true,
+          "position": 0,
+          "sql_type": "INTEGER",
+          "compute": null
+        }
+      },
+      "name": {
+        "type": "str",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {
+          "max_length": 250,
+          "min_length": null
+        },
+        "metadata": {
+          "sql_type": "VARCHAR",
+          "compute": null,
+          "comment": "Nombre Producto",
+          "position": 1
+        }
+      },
+      "qty": {
+        "type": "int",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "INTEGER",
+          "compute": null,
+          "comment": "Cantidad Stock",
+          "position": 2
+        }
+      },
+      "price": {
+        "type": "float",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "FLOAT",
+          "compute": null,
+          "comment": "Precio Producto",
+          "position": 3
+        }
+      },
+      "saleable": {
+        "type": "bool",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "BOOLEAN",
+          "compute": null,
+          "comment": "Es Vendible",
+          "position": 4
+        }
+      },
+      "extras": {
+        "type": "str",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "TEXT",
+          "compute": null,
+          "comment": "Notas Extras",
+          "position": 5
+        }
+      },
+      "sold": {
+        "type": "datetime.datetime",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "TIMESTAMP",
+          "compute": null,
+          "comment": "Fecha Hora Venta",
+          "position": 6
+        }
+      },
+      "registry": {
+        "type": "datetime.date",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "DATE",
+          "compute": null,
+          "comment": "Fecha Ingreso",
+          "position": 7
+        }
+      },
+      "category_id": {
+        "type": "int",
+        "required": false,
+        "default": null,
+        "readonly": true,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "FOREIGN KEY",
+          "compute": null,
+          "comment": "Producto Categoria M:1",
+          "foreign_key": {
+            "second_table": "category",
+            "column_id": "category_id"
+          },
+          "position": 8
+        }
+      },
+      "tax_price": {
+        "type": "float",
+        "required": false,
+        "default": null,
+        "readonly": false,
+        "constraints": {},
+        "metadata": {
+          "sql_type": "FLOAT",
+          "compute": "_tax_price",
+          "comment": "Precio + Impuesto",
+          "position": 9
+        }
+      }
+    },
+    "validators": {
+      "CreateValidator": "pancakes.models.model.ProductoCreateValidator",
+      "AdapterValidator": {
+        "producto_id": "TypeAdapter(Annotated[Union[int, NoneType], FieldInfo(required=False, default=None, description='PRODUCTO ID', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': true, 'sql_type': 'INTEGER', 'readonly': true, 'position': 0})])",
+        "name": "TypeAdapter(Annotated[Union[str, NoneType], FieldInfo(required=False, default=None, description='Nombre Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'VARCHAR', 'readonly': false, 'position': 1}, metadata=[MaxLen(max_length=250)])])",
+        "qty": "TypeAdapter(Annotated[Union[int, NoneType], FieldInfo(required=False, default=None, description='Cantidad Stock', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'INTEGER', 'readonly': false, 'position': 2})])",
+        "price": "TypeAdapter(Annotated[Union[float, NoneType], FieldInfo(required=False, default=None, description='Precio Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'FLOAT', 'readonly': false, 'position': 3})])",
+        "saleable": "TypeAdapter(Annotated[Union[bool, NoneType], FieldInfo(required=False, default=None, description='Es Vendible', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'BOOLEAN', 'readonly': false, 'position': 4})])",
+        "extras": "TypeAdapter(Annotated[Union[str, NoneType], FieldInfo(required=False, default=None, description='Notas Extras', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'TEXT', 'readonly': false, 'position': 5})])",
+        "sold": "TypeAdapter(Annotated[Union[datetime, NoneType], FieldInfo(required=False, default=None, description='Fecha Hora Venta', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'TIMESTAMP', 'readonly': false, 'position': 6})])",
+        "registry": "TypeAdapter(Annotated[Union[date, NoneType], FieldInfo(required=False, default=None, description='Fecha Ingreso', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'DATE', 'readonly': false, 'position': 7})])",
+        "category_id": "TypeAdapter(Annotated[Union[int, NoneType], FieldInfo(required=False, default=None, description='Producto Categoria M:1', json_schema_extra={'unique': False, 'second_table': 'category', 'column_id': 'category_id', 'primary_key': false, 'sql_type': 'FOREIGN KEY', 'readonly': true, 'position': 8})])",
+        "tax_price": "TypeAdapter(Annotated[Union[float, NoneType], FieldInfo(required=False, default=None, description='Precio + Impuesto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'FLOAT', 'readonly': false, 'position': 9})])"
+      },
+      "AnnotatedFields": {
+        "producto_id": "typing.Annotated[int | None, FieldInfo(required=False, default=None, description='PRODUCTO ID', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': true, 'sql_type': 'INTEGER', 'readonly': true, 'position': 0})]",
+        "name": "typing.Annotated[str | None, FieldInfo(required=False, default=None, description='Nombre Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'VARCHAR', 'readonly': false, 'position': 1}, metadata=[MaxLen(max_length=250)])]",
+        "qty": "typing.Annotated[int | None, FieldInfo(required=False, default=None, description='Cantidad Stock', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'INTEGER', 'readonly': false, 'position': 2})]",
+        "price": "typing.Annotated[float | None, FieldInfo(required=False, default=None, description='Precio Producto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'FLOAT', 'readonly': false, 'position': 3})]",
+        "saleable": "typing.Annotated[bool | None, FieldInfo(required=False, default=None, description='Es Vendible', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'BOOLEAN', 'readonly': false, 'position': 4})]",
+        "extras": "typing.Annotated[str | None, FieldInfo(required=False, default=None, description='Notas Extras', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'TEXT', 'readonly': false, 'position': 5})]",
+        "sold": "typing.Annotated[datetime.datetime | None, FieldInfo(required=False, default=None, description='Fecha Hora Venta', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'TIMESTAMP', 'readonly': false, 'position': 6})]",
+        "registry": "typing.Annotated[datetime.date | None, FieldInfo(required=False, default=None, description='Fecha Ingreso', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'DATE', 'readonly': false, 'position': 7})]",
+        "category_id": "typing.Annotated[int | None, FieldInfo(required=False, default=None, description='Producto Categoria M:1', json_schema_extra={'unique': False, 'second_table': 'category', 'column_id': 'category_id', 'primary_key': false, 'sql_type': 'FOREIGN KEY', 'readonly': true, 'position': 8})]",
+        "tax_price": "typing.Annotated[float | None, FieldInfo(required=False, default=None, description='Precio + Impuesto', json_schema_extra={'unique': False, 'second_table': None, 'column_id': None, 'primary_key': false, 'sql_type': 'FLOAT', 'readonly': false, 'position': 9})]"
+      }
+    }
+  }
+}

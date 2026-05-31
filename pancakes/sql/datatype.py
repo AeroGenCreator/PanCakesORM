@@ -32,7 +32,10 @@ Contenido
 4. Int
 5. Float
 6. Bool
-7. ForeignKey
+7. Date
+8. TimeStamp
+9. ForeignKey
+10. One2Many
 """
 from datetime import date, datetime
 from collections.abc import Callable
@@ -104,7 +107,10 @@ class DataTypeSQL:
             self.readonly = True
         else:
             self.default = self._get_default_value()
-        
+
+        # PARA FUNCIONES: obj.value -> Valor del campo
+        setattr(self, "value", self.default)
+
         self._schema = {
             "type": self._python,
             "required": self.required,

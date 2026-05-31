@@ -60,11 +60,11 @@ class Category(PanCakesORM):
 
 # --*-- INSERT --*--
 def test_method_i():
-    abs_box = AbstractBox(model=PanCakesORM)
+    abs_box = AbstractBox(model=User)
 
     abs_box.i(db_path=file, user=[(None, "Andres")])
     api = User.all().dictionary()
-
+    
     assert api == [{"user__user_id": 1, "user__name": "Andres"}]
 
 
@@ -79,42 +79,44 @@ def test_method_i_on_class():
 
 
 # --*-- UPDATE --*--
-def test_method_u_one_table_all():
-    abs_box = AbstractBox(model=PanCakesORM)
-    abs_box.u(db_path=file, user__name="Po", update_all=True)
+def test_method_u_same():
+    abs_box = AbstractBox(model=User)
+    abs_box.u(user__name__user_id__same=["Po", 1])
     api = User.all().dictionary()
 
-    api == [
-        {"user__user_id": 1, "user__name": "Po"},
-        {"user__user_id": 2, "user__name": "Po"},
-    ]
+    assert api == [{'user__user_id': 1, 'user__name': 'Po'}, {'user__user_id': 2, 'user__name': 'Polar'}]
 
+def test_method_u_between():
+    User.u(user__name__user_id__btwn=["Andres", [1,2]])
+    api = User.all().dictionary()
+
+    assert api == [{'user__user_id': 1, 'user__name': 'Andres'}, {'user__user_id': 2, 'user__name': 'Andres'}]
 
 def test_method_u_one_table_multiple_rows():
-    abs_box = AbstractBox(model=PanCakesORM)
-    abs_box.u(db_path=file, user__name__user_id__in=["Andres", [1, 2]])
+    abs_box = AbstractBox(model=User)
+    abs_box.u(user__name__user_id__in=["PanCakesORM", [1, 2]])
     api = User.all().dictionary()
 
     api == [
-        {"user__user_id": 1, "user__name": "Andres"},
-        {"user__user_id": 2, "user__name": "Andres"},
+        {"user__user_id": 1, "user__name": "PanCakesORM"},
+        {"user__user_id": 2, "user__name": "PanCakesORM"},
     ]
 
 
 def test_method_u_one_table_one_row():
-    abs_box = AbstractBox(model=PanCakesORM)
-    abs_box.u(db_path=file, user__name__user_id__same=("Malteada", 1))
+    abs_box = AbstractBox(model=User)
+    abs_box.u(user__name__user_id__same=("Malteada", 1))
     api = User.all().dictionary()
 
     assert api == [
         {"user__user_id": 1, "user__name": "Malteada"},
-        {"user__user_id": 2, "user__name": "Andres"},
+        {"user__user_id": 2, "user__name": "PanCakesORM"},
     ]
 
 
 # --*-- INSERT MULTIPLES TABLAS --*--
 def test_method_i_multiple_tables():
-    abs_box = AbstractBox(model=PanCakesORM)
+    abs_box = AbstractBox(model=User)
     abs_box.i(db_path=file, user=[(None, "Lupita")], product=[(None, "IPad")])
 
     res1 = User.all().dictionary()
@@ -122,7 +124,7 @@ def test_method_i_multiple_tables():
 
     assert res1 == [
         {"user__user_id": 1, "user__name": "Malteada"},
-        {"user__user_id": 2, "user__name": "Andres"},
+        {"user__user_id": 2, "user__name": "PanCakesORM"},
         {"user__user_id": 3, "user__name": "Lupita"},
     ]
     assert res2 == [{"product__product_id": 1, "product__name": "IPad"}]
@@ -130,9 +132,8 @@ def test_method_i_multiple_tables():
 
 # --*-- UPDATE MULTIPLES TABLAS --*--
 def test_method_u_multiple_tables():
-    abs_box = AbstractBox(model=PanCakesORM)
+    abs_box = AbstractBox(model=User)
     abs_box.u(
-        db_path=file,
         user__name__user_id__gtsm=("Guadalupe", 3),
         product__name__product_id__same=("Apple Ipad", 1),
     )
@@ -142,7 +143,7 @@ def test_method_u_multiple_tables():
 
     assert res1 == [
         {"user__user_id": 1, "user__name": "Malteada"},
-        {"user__user_id": 2, "user__name": "Andres"},
+        {"user__user_id": 2, "user__name": "PanCakesORM"},
         {"user__user_id": 3, "user__name": "Guadalupe"},
     ]
     assert res2 == [{"product__product_id": 1, "product__name": "Apple Ipad"}]
@@ -150,9 +151,9 @@ def test_method_u_multiple_tables():
 
 # --*-- DELETE --*--
 def test_method_d_one_table():
-    abs_box = AbstractBox(model=PanCakesORM)
+    abs_box = AbstractBox(model=User)
     row, col = (
-        User.filter(user__name__in=["Andres", "Guadalupe"])
+        User.filter(user__name__in=["PanCakesORM", "Guadalupe"])
         .all(ids=True)
         .raw(align=True)
     )
@@ -164,7 +165,7 @@ def test_method_d_one_table():
 
 
 def test_method_d_multi_table():
-    abs_box = AbstractBox(model=PanCakesORM)
+    abs_box = AbstractBox(model=User)
     abs_box.d(db_path=file, user__user_id__same=1, product__product_id__same=1)
     res1 = User.all().dictionary()
     res2 = Product.all().dictionary()
@@ -200,7 +201,6 @@ def test_classmethod_d():
 
 
 # --*-- TEST NOMBRES REPETIDOS --*--
-
 
 def test_duplicated_name_when_output():
     User.i(user=[(None, "Tabla1")])
@@ -325,7 +325,6 @@ def test_duplicated_name_when_output():
 def test_error_queries_relaciones():
     dicc = Category.link("user").all().dictionary()
     assert dicc == [{"category__category_id": None, "category__name": None}]
-
 
 def test_vacios():
     row, col = Category.all().raw()

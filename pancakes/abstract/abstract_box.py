@@ -25,11 +25,13 @@
 
 # Modulos Python
 import logging
+from types import SimpleNamespace
+from typing import Callable
 
+from ..orm.query import query  # Para computar campos
 from ..orm.delete import delete  # Funcion delete()
 from ..orm.insert import insert  # Funcion insert()
 from ..orm.update import update  # Funcion update()
-from ..sql.datatype import One2Many
 from ..tools.functions import environment  # Variables de entorno
 from ..valid.filter_validator import (
     DeleteFilterValidator,  # Val. Kwargs Del.
@@ -45,8 +47,7 @@ DEFAULT_DB_FILE = envs.get("db")
 log_level = getattr(logging, LOG, logging.WARNING)
 logging.basicConfig(
     level=log_level,
-    format="%(asctime)s [%(levelname)s] "
-    "%(name)s.%(funcName)s:%(lineno)d - %(message)s",
+    format="%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s",
     force=True,
 )
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ class AbstractBox:
     box = QueryBox(PanCakesORM)
     """
 
-    def __init__(self, model=None):
+    def __init__(self, model):
         self.model = model
 
     def i(self, db_path=None, **kwargs) -> None:
@@ -101,31 +102,59 @@ class AbstractBox:
         user = [(None, 'Mexico')]
         """
 
-        # Hay modelo, no ruta
-        if self.model and db_path is None:
-            path = self.model._db_file
-        # No hay modelo, no ruta
-        if self.model is None and db_path is None:
-            path = DEFAULT_DB_FILE
-        # Hay ruta
-        if db_path:
-            path = db_path
+        MODEL = self.model
+        path = MODEL._db_file
 
         # Pydantic Valida -> Inserts
         VALIDATED_KWARGS = {}
 
         for TAB, LISTS in kwargs.items():
+            schema = MODEL._metadata[TAB]["schema"]
             SCH = self.model._metadata[TAB]["validators"]["CreateValidator"]
             COLS = self.model._metadata[TAB]["columns"]
 
             VALIDATED = []
             for TUPS in LISTS:
                 dicc = dict(zip(COLS, TUPS))
-
                 clean = {}
                 for c, v in dicc.items():
-                    if v != "-miss":
-                        clean.update({c: v})
+
+                    # Sí compute; ejecutar y guardar valor
+                    compute = schema[c]["metadata"]["compute"]
+                    PK = schema[c]["metadata"].get("primary_key", False)
+                    FK = schema[c]["metadata"].get("foreign_key", False)
+                    MOCK = SimpleNamespace()
+
+                    # No PK, FK, COMPUTE, sí None -> Skip
+                    if not PK and not FK and not compute:
+                        if v is None:
+                            continue
+                        # Lo anterior pero si hay valor
+                        else:
+                            clean.update({c: v})
+                            continue
+
+                    # NO COMPUTE, SI PK o FK con valor
+                    if PK or FK and not compute:
+                        if v is not None:
+                            clean.update({c: v})
+                            continue
+
+                    # Si NO PK, NO FK, SI COMPUTE
+                    if compute is not None:
+                        for key, val in dicc.items():
+                            setattr(MOCK, key, SimpleNamespace(value=val))
+                    
+                    if isinstance(compute, str):
+                        func = getattr(MODEL, compute)
+                        value = func(MOCK)
+                        clean.update({c: value})
+                        continue
+
+                    if isinstance(compute, Callable):
+                        value = compute(MOCK)
+                        clean.update({c: value})
+                        continue
 
                 data = SCH.model_validate(clean)
                 val_dicc = data.model_dump()
@@ -149,7 +178,7 @@ class AbstractBox:
 
         return
 
-    def u(self, update_all: bool = False, db_path=None, **kwargs) -> None:
+    def u(self, **kwargs):
         """
         1. La actualizacion de datos de una tabla se da a traves de un
         diccionario en la funcion update(). Para poder usar este metodo
@@ -178,10 +207,8 @@ class AbstractBox:
             }]
         }]
 
-        update_all = True
-        params = [
-            {"table": "user", "name": "name", "data": Omar}
-        ]
+        NOTA: Este metodo no permite actualizar toda una columna; Para poder
+        computar campos en tiempo real.
 
         NOTA: Este helper no permite actulizar por multiples condiciones
         (AND, OR) esta pensado para ser usado por ids. Si se necesita una
@@ -204,159 +231,132 @@ class AbstractBox:
         notlike: "NOT LIKE"
         }
         """
+        # CONSTANTES
+        WHERE = {
+            "same": "=",
+            "lt": "<",
+            "ltsm": "<=",
+            "gt": ">",
+            "gtsm": ">=",
+            "diff":"<>",
+            "in": "IN",
+            "notin": "NOT IN",
+            "btwn": "BETWEEN",
+            "is": "IS",
+            "isnot": "IS NOT",
+            "like": "LIKE",
+            "notlike": "NOT LIKE"
+        }
+        MODEL = self.model
+        PATH = MODEL._db_file
+        META = MODEL._metadata
 
-        # Hay modelo, no ruta
-        if self.model and db_path is None:
-            path = self.model._db_file
-        # No Modelo, No Ruta -> TIP (Siempre pasar PanCakesORM) Al instanciar.
-        if self.model is None and db_path is None:
-            path = DEFAULT_DB_FILE
-        # Hay ruta
-        if db_path:
-            path = db_path
+        # VALIDAR (UPDATE SYNTAX)
+        validated = UpdateFilterValidator.model_validate({"filters": kwargs})
+        kwargs = validated.filters
 
-        # Validacion -> Filtros Declarativos
-        KWARGS = UpdateFilterValidator.model_validate(
-            {"filters": kwargs, "update_all": update_all}
-        )
-        UPDATE_ALL = KWARGS.update_all
-        ARGS = KWARGS.filters
-
-        # Validacion -> Data Ingresada Con Campo Pydatic Declarado
-        VALIDATED_KWARGS = {}
-        for key, val in ARGS.items():
+        # VALIDAR POR CAMPO
+        valid_kwargs = {}
+        for key, val in kwargs.items():
             PARTS = key.split("__")
             TAB = PARTS[0]
             COL = PARTS[1]
 
-            ADAPTER = self.model._metadata[TAB]["validators"][
-                "AdapterValidator"
-            ][COL]
+            ADAPTER = META[TAB]["validators"]["AdapterValidator"][COL]
 
-            if len(PARTS) == 4:
-                VAL = val[0]
-                VALID = ADAPTER.validate_python(VAL)
-                VALIDATED_KWARGS.update({key: (VALID, val[1])})
+            # Primer valor, nuevo dato por ingresar
+            VAL = val[0]
+            VALID = ADAPTER.validate_python(VAL)
+            valid_kwargs.update({key: [VALID, val[1]]})
 
-            else:
-                VAL = val
-                VALID = ADAPTER.validate_python(VAL)
-                VALIDATED_KWARGS.update({key: VALID})
+        # CAMPOS COMPUTADOS (Refactorizado: Una sola query unificada)
+        # Usamos list() para poder modificar valid_kwargs dinámicamente sin romper el bucle
+        for key, val in list(valid_kwargs.items()):
+            PARTS = key.split("__")
+            TAB = PARTS[0]
+            CCL = PARTS[2]
+            OPE = PARTS[3]
+            CON = val[1]
 
-        # Asignacion Valores Validados
-        kwargs = VALIDATED_KWARGS
-        update_all = UPDATE_ALL
+            # QUERY A LOS DATOS REALES DE LA LINEA POR ACTUALIZAR
+            COLUMNS = META[TAB]["columns"]
+            SQL = [{"table": TAB, "name": col} for col in COLUMNS]
 
-        # LOGICA
-        argument = []
+            # Hacemos la consulta usando el operador original (sirve para =, BETWEEN, IN, etc.)
+            rows, columns = query(
+                select=SQL,
+                _from=TAB,
+                db_path=PATH,
+                condition=[
+                    {"table": TAB, "column": CCL, "operator": WHERE[OPE], "value": CON}
+                ],
+            )
 
-        if not update_all:
-            for k, v in kwargs.items():
-                dicc = {}
+            # Iteramos el resultado (funciona si devuelve 0, 1 o N filas)
+            for row in rows:
+                MOCK = SimpleNamespace()
+                DICC = dict(zip(columns, row))  # <- CORREGIDO: Desempaqueta fila por fila de forma segura
 
-                # Validar que el argumento sea una tupla | lista:
-                if not isinstance(v, (tuple, list)):
-                    msg = "Invalid datatype - argument in method .u()."
-                    logger.critical(msg)
-                    raise TypeError(type(v))
+                for KEY, VAL in DICC.items():
+                    COL = KEY.split("__")[1]
+                    compute = META[TAB]["schema"][COL]["metadata"]["compute"]
+                    
+                    if compute is not None:
+                        # Poblamos el objeto dummy con los valores de la fila actual
+                        for cl, cv in DICC.items():
+                            setattr(MOCK, cl, SimpleNamespace(value=cv))
 
-                # Validar que los elementos de la tupla sean dos:
-                if len(v) != 2:
-                    msg = (
-                        "Invalid length of elements passed - argument .u(). "
-                        "If you are trying to update an entire column "
-                        "set update_all=True + table__column=data."
-                    )
-                    logger.critical(msg)
-                    raise ValueError(v)
+                        # Obtenemos el valor computado
+                        if isinstance(compute, Callable):
+                            computed_val = compute(MOCK)
+                        elif isinstance(compute, str):
+                            func = getattr(MODEL._family[TAB], compute)
+                            computed_val = func(MOCK)
+                        else:
+                            continue
 
-                # Validar syntax apropiada:
-                if "__" not in k:
-                    msg = (
-                        "Invalid syntax form **kwargs in method .u(). "
-                        "You must separate sentence using: '__'."
-                    )
-                    logger.critical(msg)
-                    raise ValueError(k)
+                        # Para conservar el valor original de la condición en el bloque 'params' final,
+                        # extraemos el valor específico de esta fila usando la columna condicional (CCL)
+                        # Nota: Buscamos la llave en DICC que termine con nuestro campo condicional.
+                        current_row_con = CON
+                        if OPE in {"in", "notin", "btwn"}:
+                            match_key = f"{TAB}__{CCL}"
+                            current_row_con = DICC.get(match_key, CON)
 
-                line = k.split("__")
+                        # Agregamos la nueva instrucción de actualización al diccionario
+                        # Usamos 'same' (=) porque la actualización final se vuelve fila por fila (por ID/Valor específico)
+                        new_key = f"{TAB}__{COL}__{CCL}__same"
+                        valid_kwargs.update({new_key: [computed_val, current_row_con]})
 
-                if len(line) == 4:
-                    tab = line[0]
-                    col = line[1]
-                    con = line[2]
-                    op = line[3]
+        # CONSTRUCCIÓN DE PARÁMETROS
+        params = []
+        for key, val in valid_kwargs.items():
+            PARTS = key.split("__")
+            TAB = PARTS[0]
+            COL = PARTS[1]
+            CCL = PARTS[2]
+            OPE = PARTS[3]
+            VAL = val[0]
+            CON = val[1]
 
-                    dat = v[0]
-                    val = v[1]
-
-                    if op not in OPERATOR.keys():
-                        msg = "Invalid operator passed - method .u()."
-                        logger.critical(msg)
-                        raise KeyError(op)
-
-                    dicc["table"] = tab
-                    dicc["name"] = col
-                    dicc["data"] = dat
-                    dicc["condition"] = [
-                        {"column": con, "operator": OPERATOR[op], "value": val}
+            params.append(
+                {
+                    "table": TAB,
+                    "name": COL,
+                    "data": VAL,
+                    "condition": [
+                        {
+                            "column": CCL,
+                            "operator": WHERE[OPE],
+                            "value": CON, 
+                            "logic": ""
+                        }
                     ]
-                    argument.append(dicc)
+                }
+            )
 
-                else:
-                    msg = (
-                        "Invalid length passed - **kwargs in method .u(). "
-                        "If you are trying to update an entire column "
-                        "set update_all=True + table__column=data."
-                    )
-                    logger.critical(msg)
-                    raise ValueError(k)
-
-        else:
-            for k, v in kwargs.items():
-                dicc = {}
-
-                # Validamos que la data no sea iterable
-                if not isinstance(v, (str, int, float, bool)):
-                    msg = (
-                        "Invalid data datatype passed. "
-                        "If update_all=True, data must be: "
-                        "str, int, float, bool"
-                    )
-                    logger.critical(msg)
-                    raise TypeError(type(v))
-
-                # Valida syntax de **kwargs
-                if "__" not in k:
-                    msg = (
-                        "Invalid syntax form **kwargs in method .u(). "
-                        "You must separate sentence using: '__'."
-                    )
-                    logger.critical(msg)
-                    raise ValueError(k)
-
-                line = k.split("__")
-
-                # Validar el extenso del **kwargs
-                if len(line) != 2:
-                    msg = (
-                        "Invalid length passed - **kwargs in method .u(). "
-                        "If you are trying to update by condition"
-                        "set update_all=False + "
-                        "table__column__column_con__operator=(data, data)."
-                    )
-
-                tab = line[0]
-                col = line[1]
-
-                dicc["table"] = tab
-                dicc["name"] = col
-                dicc["data"] = v
-
-                argument.append(dicc)
-
-        update(db_path=path, params=argument, update_all=update_all)
-
+        # ACTUALIZACIÓN
+        update(db_path=PATH, params=params, update_all=False)
         return
 
     def d(self, db_path=None, **kwargs) -> None:

@@ -216,7 +216,7 @@ def test_tipos_datos_mas_fechas():
 def test_One2Many_yields_data():
     container = Category.all().container()
 
-    # Los queries no devuelven columnas One2Many
+    # QUERY NO DEVUELVE ONE2MANY -> SE OBTIENE EN SCHEMA
     assert container == {
         "category": {
             "@main_table@": True,

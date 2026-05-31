@@ -225,7 +225,6 @@ class UpdateFilterValidator(BaseModel):
         "notlike"
     }
 
-    update_all: Annotated[bool, Field(False)]
     filters: Dict[
         str,
         Union[str, int, float, bool, List[Any], Tuple[Any, ...]]
@@ -256,7 +255,6 @@ class UpdateFilterValidator(BaseModel):
 
         # Argumentos .u()
         filters = params.get("filters", {})
-        update_all = params.get("update_all", False)
 
         for k, v in filters.items():
 
@@ -268,31 +266,8 @@ class UpdateFilterValidator(BaseModel):
 
             parts = k.split("__")
 
-            # Validar Update All
-            if len(parts) == 2 and update_all is True:
-
-                tab = parts[0]
-                col = parts[1]
-
-                # Validar Tabla
-                if tab not in DB_TABLES:
-                    raise ValueError(
-                        f"Passed table '{tab}' does not exist. "
-                        f"Valid tables are: {DB_TABLES}"
-                    )
-
-                # Validar Columna
-                if col not in DB_COLUMNS:
-                    raise ValueError(
-                        f"Passed column '{col}' does not exist. "
-                        f"Valid columns for '{tab}' "
-                        f"are: {DB_COLUMNS}."
-                    )
-
-                continue
-
             # Validar Update
-            elif len(parts) == 4 and update_all is False:
+            if len(parts) == 4:
 
                 tab = parts[0]
                 col = parts[1]
@@ -323,7 +298,7 @@ class UpdateFilterValidator(BaseModel):
             else:
                 raise ValueError(
                     f"Invalid length of kwargs passed. "
-                    f"Valid 2 and 4. Passed {parts}"
+                    f"Valid 4. Passed {parts}"
                 )
 
             if ope in {"in", "notin", "btwn"} and not con:

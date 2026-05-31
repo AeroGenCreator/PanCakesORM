@@ -119,26 +119,18 @@ Por tanto PanCakesORM
 -> Permite valores defecto (Modelos Pydantic)
 """
 
-
 def test_i():
     Inventory.i(
         category=[(None, "Categoria Numero 1")],
         inventory=[
             (None, "2026-28-04", "SuperProducto", 10, 10, True, 1),
             (None, "2026-28-05", "SuperProducto2", 12, 11, True, None),
-            (
-                None,
-                "-miss",
-                "SuperProducto3",
-                "-miss",
-                "-miss",
-                "-miss",
-                "-miss",
-            ),
+            (None, None, "SuperProducto3", None, None, None, None),
         ],
     )
 
     data = Inventory.return_all()
+
     assert data == [
         (1, "2026-28-04", "SuperProducto", 10, 10.0, 1, 1),
         (2, "2026-28-05", "SuperProducto2", 12, 11.0, 1, None),
@@ -183,7 +175,7 @@ def test_u_type_constraints():
 
 
 def test_u_all():
-    Inventory.u(inventory__saleable=False, update_all=True)
+    Inventory.u(inventory__saleable__inventory_id__btwn=[False, [1, 3]])
     data = Inventory.return_all()
 
     assert data == [

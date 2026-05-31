@@ -430,6 +430,8 @@ class PanCakesORM:
                     )
                 # Agrega 'nombre', 'obj. columna', 'comentario frontend'
                 value._name = clean_name
+                # CADA CAMPO: se vuelve atributo de clase
+                setattr(cls, clean_name, value)
                 cls._fields.append(value)
                 cls.comment.append(value.comment)
                 # Esquema; actualizado
@@ -696,7 +698,7 @@ class PanCakesORM:
                 else:
                     TYPE = Optional[f_type]
                     DEFAULT = None
-
+                
                 # 8. Guardar Campo Pydantic "Anottated"
                 FIELDS[name] = Annotated[TYPE, Field(DEFAULT, **KWARGS)]
 
@@ -797,8 +799,7 @@ class PanCakesORM:
             def make_update(model):
                 def update(kwargs: UpdateFilterValidator, model=model):
                     argument = kwargs.filters
-                    entire = kwargs.update_all
-                    model.u(**argument, update_all=entire)
+                    model.u(**argument)
                     return {"ms": "Data Updated"}
 
                 return update
@@ -1088,8 +1089,8 @@ class PanCakesORM:
 
     # Update declarativo
     @classmethod  # Inyeccion Segura
-    def u(cls, update_all=False, **kwargs):
-        return cls.manager().u(update_all=update_all, **kwargs)
+    def u(cls, **kwargs):
+        return cls.manager().u(**kwargs)
 
     # Delete declarativo
     @classmethod  # noqa: W191
