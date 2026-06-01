@@ -76,9 +76,9 @@ users = User.filter(user__age__gt=18).all().dictionary()
 
 ![image](assets/application/mounted-module.png)
 
-# [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
+- [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
 
-# [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
+- [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
 
 ### 💪 Fortalezas y Robustez
 
@@ -98,6 +98,8 @@ PanCakesORM no es solo una cara bonita; está construido para ser el motor confi
 
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
     de más de 180 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
+
+![image](assets/application/fastapi.png)
 
 ### 🏗️ Arquitectura de Consultas (QueryBox)
 

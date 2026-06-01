@@ -24,7 +24,7 @@ class Category(PanCakesORM):
 
     name = datatype.Char(comment="Categoria Producto")
     producto_ids = datatype.One2Many(
-        references="category", inverse_column="category_id"
+        references="producto", inverse_column="category_id"
     )
 
 
