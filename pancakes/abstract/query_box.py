@@ -451,6 +451,17 @@ class QueryBox:
         return self
 
     def link(self, *tables):
+        """
+        INNER JOIN inteligente
+
+        Sintaxis:
+        tabla_a, tabla_b, tabla_c, ...
+
+        La funcion a continuacion genera los kwargs que recibe .add()
+
+        tab_origen__inner__tab_extra = shared_id
+        """
+        # CONSTANTES
         MODEL = self.model
         DB_TABLES = list(MODEL._family.keys())
         MAIN = MODEL._table
@@ -470,12 +481,18 @@ class QueryBox:
 
         # 2. Extraer TODAS las relaciones posibles entre estas tablas
         possible_edges = []
+        # 2.1 Se iteran todas las tablas incluyendo 'main'
         for TAB in ALL_TABLES:
+            # 2.2 Extraccion de campos por tabla
             FIELDS = MODEL._family[TAB]._metadata[TAB]["fields"]
+            # 2.3 Iterar campos y buscar instancias de ForeignKey()
             for field in FIELDS:
                 if isinstance(field, ForeignKey):
+                    # 2.4 Si existe la instancia:
                     second_table = getattr(field, "second_table")
+                    # 2.5 Se valida que es una tabla de relacion en el query.
                     if second_table in ALL_TABLES:
+                        # 2.6 Si es; tupla(tab, second_tab, nombre_campo)
                         name = field._name
                         possible_edges.append((TAB, second_table, name))
 
@@ -483,10 +500,17 @@ class QueryBox:
         available_tables = {MAIN}
         ordered_kwargs = {}
 
+        # 3.1 Siempre que aun haya tuplas pendientes, ejecutar bucle
         while possible_edges:
+            # 3.2 Bandera: Si True; continuar con siguiente tupla
+            # Se setea a False siempre que se repite el bucle
             match_found = False
+            # 3.3 Se iteran las tuplas, list(), permite la modificacion
             for edge in list(possible_edges):
+                # 3.4 Desempaquetar la tupla
                 tab_a, tab_b, field_name = edge
+
+                # ALGORITMO - GARANTIZA QUE FROM SEA LA 1ra TABLA.
 
                 # Caso A: tab_a ya es conocida, pero tab_b es NUEVA
                 if tab_a in available_tables and tab_b not in available_tables:
@@ -516,6 +540,7 @@ class QueryBox:
                     )
                     break
 
+            # Si se llega a redundancia salir del bucle.
             if not match_found:
                 break
 
