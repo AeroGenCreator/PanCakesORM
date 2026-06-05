@@ -14,6 +14,12 @@
 
 # PanCakesORM 🥞
 
+_Version 6.0.0_
+
+- Metodo `container()` mejorado - Permite ser integrado rapidamente con flet. Entrega metadata mejor organizada.
+- Campos compute="" - Definir funciones y asignarlas como valor a las celdas de un campo.
+- Campos `Date`, `TimeStamp` & `One2Many` agregados. Metodo `container()` parsea los datos a `strings` y viceversa a `datetime`.
+
 **Simplifica tu manejo de bases de datos**
 
 PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLite3 que prioriza la legibilidad y la velocidad de desarrollo. Si buscas la potencia de SQL con la elegancia de una sintaxis declarativa y moderna, PanCakesORM es para ti.

@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJECT:       PanCakesORM
-# VERSION:       5.0.0
+# VERSION:       6.0.0
 # AUTHOR:        AeroGenCreator
 # GITHUB:        https://github.com/AeroGenCreator
 # LICENSE:       Apache License 2.0
@@ -150,7 +150,7 @@ class PanCakesORM:
     -> _family: (Atributo Clase) Comunicacion entre clases hermanas.
     -> _metadata: (Atributo Clase) Diccionario de diccionarios;
     Primer nivel -> {tabla: metadata}
-    LLaves Glables = [
+    LLaves Globales = [
       'depends',
       'group_constraint',
       'fields',

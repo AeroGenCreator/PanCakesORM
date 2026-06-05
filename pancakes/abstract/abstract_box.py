@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJECT:       PanCakesORM
-# VERSION:       5.0.0
+# VERSION:       6.0.0
 # AUTHOR:        AeroGenCreator
 # GITHUB:        https://github.com/AeroGenCreator
 # LICENSE:       Apache License 2.0
