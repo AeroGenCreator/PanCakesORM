@@ -1023,7 +1023,10 @@ class QueryBox:
                     POSITION = "-1"
 
                 if SQL == "BOOLEAN":
-                    vector = [bool(item) for item in vector]
+                    vector = [
+                        bool(item) if item is not None else item
+                        for item in vector
+                    ]
 
                 if any(((SQL == "TIMESTAMP"), (SQL == "DATE"))):
                     copy = vector.copy()
