@@ -992,18 +992,20 @@ class QueryBox:
 
                 CONTAINER[TAB][COL] = {}
 
-                TYPE = META[TAB]["schema"][COL]["type"]
+                POSITION = META[TAB]["schema"][COL]["metadata"]["position"]
+                LABEL = META[TAB]["schema"][COL]["metadata"]["comment"]
+                READONLY = META[TAB]["schema"][COL]["readonly"]
                 REQUIRED = META[TAB]["schema"][COL]["required"]
                 DEFAULT = META[TAB]["schema"][COL]["default"]
-                READONLY = META[TAB]["schema"][COL]["readonly"]
-                LABEL = META[TAB]["schema"][COL]["metadata"]["comment"]
-                POSITION = META[TAB]["schema"][COL]["metadata"]["position"]
+                TYPE = META[TAB]["schema"][COL]["type"]
+
                 PK = META[TAB]["schema"][COL]["metadata"].get(
                     "primary_key", False
                 )
                 FK = META[TAB]["schema"][COL]["metadata"].get(
                     "foreign_key", False
                 )
+
                 SQL = META[TAB]["schema"][COL]["metadata"].get("sql_type", "")
                 SEC_TAB = False
                 SEC_COL = False
@@ -1018,13 +1020,19 @@ class QueryBox:
 
                 if AGG:
                     LABEL = f"{LABEL}" + " " + f"{AGG}".capitalize().strip()
-                    POSITION = None
+                    POSITION = "-1"
 
                 if SQL == "BOOLEAN":
                     vector = [bool(item) for item in vector]
 
                 if any(((SQL == "TIMESTAMP"), (SQL == "DATE"))):
-                    vector = [item.isoformat() for item in vector]
+                    copy = vector.copy()
+                    vector = []
+                    for item in copy:
+                        if item is not None:
+                            vector.append(item.isoformat())
+                        else:
+                            vector.append(item)
 
                 CONTAINER[TAB][COL]["vector"] = vector
                 CONTAINER[TAB][COL]["label"] = LABEL

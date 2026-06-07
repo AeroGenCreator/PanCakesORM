@@ -51,7 +51,9 @@ fecha = datetime.date(2026, 1, 1)
 
 Category.i(category=[(None, "Vinos y Licores")])
 Category.i(
-    producto=[(None, "Lambrusco", 10, 120, True, "Espumosos", timestamp, fecha, 1)]
+    producto=[
+        (None, "Lambrusco", 10, 120, True, "Espumosos", timestamp, fecha, 1)
+    ]
 )
 
 

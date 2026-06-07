@@ -1811,7 +1811,7 @@ def test_container_label_select_multi_agg():
             "name": {
                 "vector": [2, 1, 1, 4, 1],
                 "label": "Sale Code Count",
-                "position": None,
+                "position": "-1",
                 "readonly": False,
                 "default": None,
                 "required": False,
@@ -1859,7 +1859,7 @@ def test_container_label_select_full_agg():
             "name": {
                 "vector": [2, 1, 1, 4, 1],
                 "label": "Sale Code Count",
-                "position": None,
+                "position": "-1",
                 "readonly": False,
                 "default": None,
                 "required": False,
