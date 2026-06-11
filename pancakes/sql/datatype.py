@@ -45,10 +45,10 @@ from typing import Any
 class DataTypeSQL:
     """
     Base De Construccion Para Los Tipos de Datos SQL
-    Valores por defecto "pydantic":
+    Valores por defecto se validan con "pydantic":
     comment: str
-    nls: bools -> NOT NULL en SQL
-    required: bool -> Requerido Para la API
+    nls: NOT NULL en SQL
+    required: bool -> Metadata: Permite mapear si un campo es requerido.
     """
     _data_type = ''
     _python = Any
@@ -72,15 +72,19 @@ class DataTypeSQL:
         self._schema = {}
         # atributo '_name' se asigna cuando se declara modelo
         # Revisar: '_get_fields', mold.py
+        # Cada instancia obtiene el atributo .value
+        # value -> Almacena (valor defecto, computado, o None)
 
     def _get_default_value(self) -> Any:
         """Evalúa y retorna el valor por defecto de manera segura."""
+        # Caso 1. raw_default es None, retorna None
         if self.raw_default is None:
             return None
-
-        # Si es un callable (ej. datetime.now), lo ejecuta
-        if isinstance(self.raw_default, Callable):
+        # Casos 2 y 3. Hay valores, disntinguimos si es dinamico o estatico.
+        # Si es dinamico -> Ejecuta
+        elif isinstance(self.raw_default, Callable):
             value = self.raw_default()
+        # Si es estatico solo se almacena.
         else:
             value = self.raw_default
 
@@ -91,11 +95,6 @@ class DataTypeSQL:
                 f"this SQL typer is: {self._python} or 'None'."
             )
         return value
-
-    def _compute_value(self, **kwargs) -> Any:
-        if self.compute is not None:
-            return self.compute(**kwargs)
-        return None
 
     def _sentence(self):
         self.nls = "NOT NULL" if bool(self.required) else ""
@@ -111,6 +110,11 @@ class DataTypeSQL:
 
         # PARA FUNCIONES: obj.value -> Valor del campo
         setattr(self, "value", self.default)
+
+        # Cuando algun campo tiene contenido para 'default' o 'compute'
+        # El campo se vuelve de lectura automaticamente.
+        if self.default or self.compute:
+            self.readonly = True
 
         self._schema = {
             "type": self._python,

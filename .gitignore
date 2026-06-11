@@ -12,6 +12,11 @@ pancakes/.pytest_cache/
 pancakes/__pycache__/
 tests/__pycache__/
 .pytest_cache/
+__pycache__/
+text
+.cache/
+pycache/
+*.pyc
 
 # USELES DIRECTORY
 pancakes/data/

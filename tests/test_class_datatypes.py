@@ -5,6 +5,79 @@
 # You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
 # ==============================================================================
 
+"""
+Este fichero pretende 'testear' todos los tipos de datos aceptados
+por PanCakesORM.
+
+================================================================================
+
+Tabla 'Category':
+Contiene 'One2Many' (Este campo NO es devulto por ningun Query) sea:
+'metodo o funcion';
+
+'One2Many'
+
+- Existe en: Schema ✅ Ejemplo: modelo._metadata[TABLA]["Schema"]
+- No existe en: Container, Dictionary o Raw ❌
+    Ejemplo:
+        - modelo.all().container()
+        - modelo.all().dictionary()
+        - modelo.all().raw()
+
+Función: Poder ser interpretado por el frontend para generar tabla
+de registros hijos.
+
+================================================================================
+
+'Data' y 'TimeStamp'
+
+Ambos tipos de datos son interpretados por el motor Sqlite3.
+Esta compatibilidad se declara en -> /pancakes/tools/functions.py
+
+Podemos pasar datetime.date o datetime.datetime nativos a las clases
+- datatype.Date()
+- datatype.datetime()
+
+Estas existiran en la base de datos como formatos ISO.
+Al ser extraidas Sqlite3 las tranforma en instancias .date | .datetime.
+
+Sin embargo solo el metodo 'Container' devuelve ambos campos en formato ISO.
+
+Ejemplo:
+    - modelo.all().raww() -> datetime 🐍
+    - modelo.all().container() -> ISO ✏️
+
+================================================================================
+
+'ORDEN' & 'datatype.ForeignKey()'
+
+Por el momento PanCakesORM en conjunto con Flet en ClayPy mapean las
+relaciones Many2One de la siguiente manera.
+
+Indice 0 de las columnas del modelo = tabla_id <- No se declara ❌
+Indice 1 de las columnas del modelo = contexto <- Si se declara ...
+    Primer instancia sql.datatype ✅
+
+Por tanto en ClayPy formulario de registros del modelo 'Producto'
+se renderiza un Flet.Dropdown() que mapea los unicos de la instancia primera
+sql.datatype declarada en el modelo 'Product'.
+
+Ejemplo: 'En este fichero'
+class Product(PanCakesORM):
+    name = datatype.Char(
+        comment="Nombre Producto",
+        unique=True
+    )
+
+Las opciones de este campo seran las que ClayPy renderizara como Flet.Dropdown()
+ForeignKey() Many2One para cualquier registro del modelo 'Product'
+================================================================================
+
+Se plane agregar el campo clave de seleccion mas adelante para poder tener
+control pleno de esta situacion. Por el momento esta es la unica manera de
+coordinar tus mdoelos con el frontend cuando se trata de relacionar Many2One.
+¡Gracias por la comprensión! 🥞
+"""
 
 # Modulos Python
 import datetime

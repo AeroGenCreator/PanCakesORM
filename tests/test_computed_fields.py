@@ -36,9 +36,9 @@ class Category(PanCakesORM):
 
 class Producto(PanCakesORM):
     """
-    NOTA: 
+    NOTA:
     Los campos computados no pueden ser tomados como valor estatico:
-    
+
     Por ejemplo:
     Puedes calcular el precio con impuesto multiplicando un valor estatico
     por otro, incluso si son campos de la columna.
@@ -46,15 +46,15 @@ class Producto(PanCakesORM):
     Estatico1 = 0.16
     Estatico2 = self.price.value
     tax_price = Estatico1 * Estatico2
-    
+
     Pero si queremos calcular a traves de algun campo computado, como valor
     estatico se obtendra un error; el dato no existe en buffer.
 
     Ejemplo: Queremos calcular la posible cantidad monetaria de venta:
-    
+
     Erroneo:
     posible_venta = self.tax_price.value * self.qty.value ❌
-    
+
     Para poder realizar algo similar debemos calcular nuevamente los valores
     independientes 'estaticos':
 
@@ -65,7 +65,7 @@ class Producto(PanCakesORM):
 
     A FUTURO SE CONSIDERA UN DECORADOR QUE MEJORE ESTA SITUACION:
     Por el momento esta sintaxis es la unica forma de computar por
-    dependencias. Gracias por la comprension! 🥞
+    dependencias. Gracias por la atención! 🥞
     """
 
     _table = "producto"
@@ -103,10 +103,10 @@ class Producto(PanCakesORM):
 
     def _sale_it(self):
         if (
-            ((self.price.value * 0.16) + self.price.value) > 150 or 
+            ((self.price.value * 0.16) + self.price.value) > 150 or
             self.qty.value > 20
         ):
-            return True 
+            return True
         else:
             return False
 
