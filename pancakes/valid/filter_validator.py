@@ -38,6 +38,7 @@ Construccion de 'Validacion De Filtro'
 """
 
 # Modulos Python
+import datetime
 from typing import (
     Annotated,
     Any,
@@ -207,7 +208,9 @@ class UpdateFilterValidator(BaseModel):
         str,
         int,
         float,
-        bool
+        bool,
+        datetime.date,
+        datetime.datetime
     )
     VALID_OPERATORS: ClassVar[set[str]] = {
         "same",
