@@ -210,8 +210,7 @@ class UpdateFilterValidator(BaseModel):
         float,
         bool,
         datetime.date,
-        datetime.datetime,
-        None
+        datetime.datetime
     )
     VALID_OPERATORS: ClassVar[set[str]] = {
         "same",
@@ -352,6 +351,9 @@ class UpdateFilterValidator(BaseModel):
                         "accept (list, tuple). "
                         "Datatype dict is an invalid syntax."
                     )
+
+            if val is None:
+                continue
 
             if not isinstance(val, cls.TYPES):
                 raise ValueError(
