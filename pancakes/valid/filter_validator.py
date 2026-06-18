@@ -210,7 +210,8 @@ class UpdateFilterValidator(BaseModel):
         float,
         bool,
         datetime.date,
-        datetime.datetime
+        datetime.datetime,
+        None
     )
     VALID_OPERATORS: ClassVar[set[str]] = {
         "same",
