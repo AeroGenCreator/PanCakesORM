@@ -453,6 +453,7 @@ class PanCakesORM:
         cls._metadata[cls._table]["columns"] = columns
         # Esquema Pydantic
         cls._metadata[cls._table]["schema"] = schema_cache
+        setattr(cls, "schema", schema_cache)
 
         return
 
