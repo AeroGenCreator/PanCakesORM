@@ -447,8 +447,11 @@ class PanCakesORM:
         cls._metadata[cls._table]["fields"] = cls._fields
         # Etiquetas Guardadas
         cls._metadata[cls._table]["comments"] = cls.comment
-        # Nombres de campos guardados + campo PK
-        columns = [f._name for f in cls._fields]
+        # Nombres de campos guardados + campo PK (Sin columnas 1:N)
+        columns = []
+        for f in cls._fields:
+            if f._schema["metadata"]["sql_type"] != "1:N":
+                columns.append(f._name)
         columns.insert(0, f"{cls._table}_id")
         cls._metadata[cls._table]["columns"] = columns
         # Esquema Pydantic
