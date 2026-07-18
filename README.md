@@ -14,26 +14,25 @@
 
 # PanCakesORM 🥞
 
-_Version 6.0.0_
+`Version 6.0.8`
 
-- Metodo `container()` mejorado - Permite ser integrado rapidamente con flet. Entrega metadata mejor organizada.
+- Metodo `container()` - Permite mejor integración con flet (Entrega de Metadata).
 - Campos compute="" - Definir funciones y asignarlas como valor a las celdas de un campo.
-- Campos `Date`, `TimeStamp` & `One2Many` agregados. Metodo `container()` parsea los datos a `strings` y viceversa a `datetime`.
+- Campos `Date`, `TimeStamp` & `One2Many` agregados. 
+- Metodo `container()` parsea los datos a `strings` y viceversa a `datetime`.
 
 **Simplifica tu manejo de bases de datos**
 
 PanCakesORM es una librería de mapeo objeto-relacional (ORM) para Python y SQLite3 que prioriza la legibilidad y la velocidad de desarrollo. Si buscas la potencia de SQL con la elegancia de una sintaxis declarativa y moderna, PanCakesORM es para ti.
 
-Pancakes ORM se integra con facilidad con `pandas, streamlit, flet, fastapi` asi como con el framework modular ERP tambien desarrollado por el autor AeroGenCreator `ClayPy`.
-
----
+Pancakes ORM se integra con facilidad con `pandas, streamlit, flet, fastapi`.
 
 ## 🚀 Inicio Rápido
 
-Obtener PanCakesORM es tan sencillo como un comando. Disponible directamente en **PyPI**:
+Obtener PanCakesORM es tan sencillo como un par de comandos. Disponible directamente en **PyPI**:
 
 ```bash
-# En tu directoriod e proyecto
+# En tu directorio de proyecto
 
 # Crea entorno de desarrollo
 python3 -m venv .venv
@@ -48,7 +47,7 @@ pip install pancakes-orm
 
 **Agrega tus rutas**
 
-En la raiz de proyecto agrega el archivo .env "De esta manera controlas `directorio` base de datos y fichero `Sqlite3` -> Base de Datos."
+En la raiz de proyecto agrega el archivo .env "De esta manera controlas `directorio` base de datos y fichero `Sqlite3`".
 
 ```env
 LOG=INFO
@@ -80,7 +79,7 @@ User.u(user__user_name__user_id__same=["Juan", 1])
 users = User.filter(user__age__gt=18).all().dictionary()
 ```
 
-## Alcance
+## Machiatto
 
 Perfecta integracion fon `Flet` & `Streamlit`.
 
@@ -94,9 +93,9 @@ El complementeo ideal es `Machiatto`. Mi segundo proyecto y continuación de est
 
 - [Documentacion Oficial](https://fringe-edge-3f8.notion.site/PanCakesORM-3408851a844d80a39dd9c813c88cfb16)
 
-### 💪 Fortalezas y Robustez
+## ⚙️ Ventajas
 
-PanCakesORM no es solo una cara bonita; está construido para ser el motor confiable de tus aplicaciones:
+PanCakesORM no es solo una cara bonita; está construido para ser confiable.
 
     Sintaxis Declarativa Fluida: Olvídate de concatenar strings de SQL. 
     Usa métodos encadenados (.filter(), .link(), .sort()) que se leen como lenguaje natural.
