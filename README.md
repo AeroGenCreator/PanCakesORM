@@ -80,7 +80,15 @@ User.u(user__user_name__user_id__same=["Juan", 1])
 users = User.filter(user__age__gt=18).all().dictionary()
 ```
 
-![image](assets/application/mounted-module.png)
+## Alcance
+
+Perfecta integracion fon `Flet` & `Streamlit`.
+
+El complementeo ideal es `Machiatto`. Mi segundo proyecto y continuación de este: Diseño de un `shell` y `componentes` que trabajan en conjunto renderizando el frontend de cada modelo `PanCakesORM`.
+
+![image](assets/application/tabla-formulario.png)
+
+## Enlaces
 
 - [Repositorio Pypi](https://pypi.org/project/pancakes-orm/)
 
