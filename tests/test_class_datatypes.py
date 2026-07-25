@@ -94,6 +94,8 @@ file = dir_ / "sql_datatype.sqlite"
 class Category(PanCakesORM):
     _table = "category"
     _depends = "self"
+    _db_dir = dir_
+    _db_file = file
 
     name = datatype.Char(comment="Categoria Producto")
     producto_ids = datatype.One2Many(
@@ -104,6 +106,8 @@ class Category(PanCakesORM):
 class Producto(PanCakesORM):
     _table = "producto"
     _depends = ["category"]
+    _db_dir = dir_
+    _db_file = file
 
     name = datatype.Char(comment="Nombre Producto")
     qty = datatype.Int(comment="Cantidad Stock")
