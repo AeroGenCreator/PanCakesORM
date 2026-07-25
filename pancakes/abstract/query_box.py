@@ -23,8 +23,10 @@
 # [Abtraccion de queries a traves de encadenamiento de metodos.]
 # ==============================================================================
 
-# Modulos Propios
+# Modulos Python
 import logging
+from collections.abc import Callable
+from types import SimpleNamespace
 
 from ..orm.query import query
 from ..sql.datatype import ForeignKey
@@ -67,6 +69,81 @@ def _NOT_DUPLICATED_LABELS_(labels: list, columns: list):
     else:
         columns = labels
         return columns
+
+
+def _COMPUTE_FIELDS_(self, rows, cols):
+    """
+    Se computan los campos:
+    antes de ser contenerizados por algun metodo de salida
+
+    Los queries regresan las columnas asi; tabla__columna__agregacion.
+    """
+
+    # Error de diseño:
+    # No puedo computar sin hacer query de vuelta & filtrar.
+    # (Solucion) -> Rediseñar queries para solo buscar 1 tabla a la vez.
+    ONE_TABLE = []
+    for columna in cols:
+        # Solucion temporal. Solo computar si estamos valorando 1 tabla.
+        if columna.split("__", 1)[0] not in ONE_TABLE:
+            ONE_TABLE.append(columna.split("__", 1)[0])
+
+    # Si es query complejo. Regresar datos sin cambios.
+    if len(ONE_TABLE) > 1 or not ONE_TABLE:
+        return rows, cols
+
+    # Evaluar si algun campo del query es computado;
+    MODEL = self.model._family[ONE_TABLE[0]]
+
+    # Solución temporal: Solo computar si el query es a todas las columnas
+    COLUMNAS = MODEL._metadata[MODEL._table]["columns"]
+    if len(COLUMNAS) != len(cols):
+        return rows, cols
+
+    # Por tanto: SOLO SE COMPMUTA SÍ: Una tabla & todas las columnas.
+    SCHEMA = MODEL.schema
+
+    # Iterar filas del query
+    NEW_ROWS = []
+    for row in rows:
+
+        # Alinear fila con columnas
+        line = dict(zip(cols, row))
+
+        # Crear & cargar data a modelo MOCK
+        MOCK = SimpleNamespace()
+        for column, value in line.items():
+            COL = column.split("__", 2)[1]
+            setattr(MOCK, COL, SimpleNamespace(value=value))
+
+        NEW_LINE = []
+        # Buscar campos computados
+        for column, value in line.items():
+            COL = column.split("__", 2)[1]
+            compute = SCHEMA[COL]["metadata"].get("compute", "")
+
+            # Saltar campos no computados
+            if not compute or compute is None:
+                NEW_LINE.append(value)
+                continue
+
+            # Computar strings:
+            if isinstance(compute, str):
+                function = getattr(MODEL, compute)
+                result = function(MOCK)
+                NEW_LINE.append(result)
+                continue
+
+            # Computar funciones
+            if isinstance(compute, Callable):
+                result = compute(MOCK)
+                NEW_LINE.append(result)
+                continue
+
+        # Nueva tupla guardada como filas del query,
+        NEW_ROWS.append(tuple(NEW_LINE))
+
+    return NEW_ROWS, cols
 
 
 class QueryBox:
@@ -748,7 +825,8 @@ class QueryBox:
 
             RESULT.append(dicc)
 
-        self.group = RESULT
+        self.GROUP = RESULT
+
         return self
 
     def sort(self, *sort):
@@ -871,7 +949,7 @@ class QueryBox:
         if ids:
             self._IDS_(main_table=FROM)
 
-        # OBTENCION DE AGRUPACIÓN
+        # OBTENCION DE AGRUPACIÓN - EVALUAR ESTA FUNCION
         self._DYNAMIC_GROUP_()
 
         # VALIDAR OPCIONALES
@@ -904,8 +982,10 @@ class QueryBox:
         if not self.ROW and not self.COL:
             return self.ROW, self.COL
 
-        ROWS = self.ROW.copy()
-        COLS = self.COL.copy()
+        rows, cols = _COMPUTE_FIELDS_(self, rows=self.ROW, cols=self.COL)
+
+        ROWS = rows.copy()
+        COLS = cols.copy()
 
         if label:
             LABELS = self.SE_LABEL.copy()
@@ -923,8 +1003,10 @@ class QueryBox:
         if not self.ROW and not self.COL:
             return []
 
-        ROWS = self.ROW.copy()
-        COLS = self.COL.copy()
+        rows, cols = _COMPUTE_FIELDS_(self, rows=self.ROW, cols=self.COL)
+
+        ROWS = rows.copy()
+        COLS = cols.copy()
 
         if label:
             LABELS = self.SE_LABEL.copy()
@@ -947,9 +1029,12 @@ class QueryBox:
         if not self.ROW and not self.COL:
             return {}
 
+        rows, cols = _COMPUTE_FIELDS_(self, rows=self.ROW, cols=self.COL)
+
+        ROWS = rows.copy()
+        COLS = cols.copy()
+
         MAIN = self.model._table
-        ROWS = self.ROW
-        COLS = self.COL
         META = self.model._metadata
 
         TABLES = []

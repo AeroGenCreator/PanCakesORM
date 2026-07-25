@@ -14,12 +14,13 @@
 
 # PanCakesORM 🥞
 
-`Version 6.0.8`
+`Version 6.1.8`
 
 - Metodo `container()` - Permite mejor integración con flet (Entrega de Metadata).
 - Campos compute="" - Definir funciones y asignarlas como valor a las celdas de un campo.
 - Campos `Date`, `TimeStamp` & `One2Many` agregados. 
 - Metodo `container()` parsea los datos a `strings` y viceversa a `datetime`.
+- Agregado en `v6.1.8` computar campos para queries.
 
 **Simplifica tu manejo de bases de datos**
 
