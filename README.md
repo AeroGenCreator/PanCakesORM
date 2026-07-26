@@ -111,7 +111,7 @@ PanCakesORM no es solo una cara bonita; está construido para ser confiable.
         Streamlit: Ideal para aplicaciones de datos donde la velocidad de desarrollo es clave.
 
     Calidad Garantizada: La robustez de la librería está respaldada por una batería
-    de más de 180 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
+    de de 185 pruebas automatizadas utilizando pytest. Puedes consultar la suite completa en la carpeta /tests.
 
 ![image](assets/application/fastapi.png)
 
