@@ -122,23 +122,28 @@ def _COMPUTE_FIELDS_(self, rows, cols):
             COL = column.split("__", 2)[1]
             compute = SCHEMA[COL]["metadata"].get("compute", "")
 
-            # Saltar campos no computados
-            if not compute or compute is None:
-                NEW_LINE.append(value)
-                continue
+            # Solo buscar computes si no hay valores.
+            if value is None:
+                # Saltar campos no computados
+                if not compute or compute is None:
+                    NEW_LINE.append(value)
+                    continue
 
-            # Computar strings:
-            if isinstance(compute, str):
-                function = getattr(MODEL, compute)
-                result = function(MOCK)
-                NEW_LINE.append(result)
-                continue
+                # Computar strings:
+                if isinstance(compute, str):
+                    function = getattr(MODEL, compute)
+                    result = function(MOCK)
+                    NEW_LINE.append(result)
+                    continue
 
-            # Computar funciones
-            if isinstance(compute, Callable):
-                result = compute(MOCK)
-                NEW_LINE.append(result)
-                continue
+                # Computar funciones
+                if isinstance(compute, Callable):
+                    result = compute(MOCK)
+                    NEW_LINE.append(result)
+                    continue
+
+            # Esto garantiza no reescribir los computes en queries
+            NEW_LINE.append(value)
 
         # Nueva tupla guardada como filas del query,
         NEW_ROWS.append(tuple(NEW_LINE))
