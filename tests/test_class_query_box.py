@@ -685,9 +685,9 @@ def test_direct_select():
     assert api == [
         {"client__name": "Andres"},
         {"client__name": "Lupita"},
-        {"client__name": "Malteada"},
         {"client__name": "Peke"},
         {"client__name": "Polar"},
+        {"client__name": "Malteada"},
     ]
 
 
@@ -1112,7 +1112,7 @@ def test_raw_labels_full_join():
 def test_raw_labels_select():
     vec, col = Client.select("client__name").all().raw(label=True, align=True)
 
-    assert vec == [("Andres", "Lupita", "Malteada", "Peke", "Polar")]
+    assert vec == [("Andres", "Lupita", "Peke", "Polar", "Malteada")]
     assert col == ["Client Name"]
 
 
@@ -1127,14 +1127,14 @@ def test_raw_labels_select_multi():
 
     assert row == [
         ("Andres", "F1"),
-        ("Andres", "F4"),
-        ("Lupita", "F9"),
-        ("Malteada", "F7"),
         ("Peke", "F2"),
+        ("Polar", "F3"),
+        ("Andres", "F4"),
         ("Peke", "F5"),
         ("Peke", "F6"),
+        ("Malteada", "F7"),
         ("Peke", "F8"),
-        ("Polar", "F3"),
+        ("Lupita", "F9"),
     ]
     assert col == ["Client Name", "Sale Code"]
 
@@ -1337,9 +1337,9 @@ def test_dict_label_select():
     assert dicc == [
         {"client__name": "Andres"},
         {"client__name": "Lupita"},
-        {"client__name": "Malteada"},
         {"client__name": "Peke"},
         {"client__name": "Polar"},
+        {"client__name": "Malteada"},
     ]
 
 
@@ -1354,14 +1354,14 @@ def test_dict_label_select_multi():
 
     assert dicc == [
         {"Client Name": "Andres", "Sale Code": "F1"},
-        {"Client Name": "Andres", "Sale Code": "F4"},
-        {"Client Name": "Lupita", "Sale Code": "F9"},
-        {"Client Name": "Malteada", "Sale Code": "F7"},
         {"Client Name": "Peke", "Sale Code": "F2"},
+        {"Client Name": "Polar", "Sale Code": "F3"},
+        {"Client Name": "Andres", "Sale Code": "F4"},
         {"Client Name": "Peke", "Sale Code": "F5"},
         {"Client Name": "Peke", "Sale Code": "F6"},
+        {"Client Name": "Malteada", "Sale Code": "F7"},
         {"Client Name": "Peke", "Sale Code": "F8"},
-        {"Client Name": "Polar", "Sale Code": "F3"},
+        {"Client Name": "Lupita", "Sale Code": "F9"},
     ]
 
 
@@ -1695,7 +1695,7 @@ def test_container_label_select():
             "@main_table@": True,
             "@depends@": ["country"],
             "name": {
-                "vector": ["Andres", "Lupita", "Malteada", "Peke", "Polar"],
+                "vector": ["Andres", "Lupita", "Peke", "Polar", "Malteada"],
                 "label": "Client Name",
                 "position": 1,
                 "readonly": False,
@@ -1726,14 +1726,14 @@ def test_container_label_select_multi():
             "name": {
                 "vector": [
                     "Andres",
-                    "Andres",
-                    "Lupita",
-                    "Malteada",
-                    "Peke",
-                    "Peke",
-                    "Peke",
                     "Peke",
                     "Polar",
+                    "Andres",
+                    "Peke",
+                    "Peke",
+                    "Malteada",
+                    "Peke",
+                    "Lupita",
                 ],
                 "label": "Client Name",
                 "position": 1,
@@ -1753,14 +1753,14 @@ def test_container_label_select_multi():
             "name": {
                 "vector": [
                     "F1",
-                    "F4",
-                    "F9",
-                    "F7",
                     "F2",
+                    "F3",
+                    "F4",
                     "F5",
                     "F6",
+                    "F7",
                     "F8",
-                    "F3",
+                    "F9",
                 ],
                 "label": "Sale Code",
                 "position": 1,

@@ -126,17 +126,17 @@ def test_real_4():
         {
             "Category": "Dessert",
             "Product Name": "Concha",
+            "Recipe Ingredient": "Sugar",
+        },
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
             "Recipe Ingredient": "Milk",
         },
         {
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Salt",
-        },
-        {
-            "Category": "Dessert",
-            "Product Name": "Concha",
-            "Recipe Ingredient": "Sugar",
         },
     ]
 

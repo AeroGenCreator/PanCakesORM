@@ -194,6 +194,7 @@ class QueryBox:
         2. 'tabla__columna__Agregacion', ...
 
         Agregaciones validas:
+        OJO: Hay agregaciones como dcount - Une DISTINCT con COUNT.
 
         {
             "min": "MIN",
@@ -266,13 +267,14 @@ class QueryBox:
             AGG = ""
             if len(PARTS) == 3:
                 AGG = PARTS[2]
-                if AGG not in AGGS:
-                    logger.critical(
+                AGG = AGGS.get(AGG, "")
+                if not AGG:
+                    msg = (
                         "Invalid aggregation function passed in select. "
                         f"Column: {col}, agregation: {AGG}"
                     )
-                    raise ValueError
-                AGG = AGGS[AGG]
+                    logger.critical(msg)
+                    raise ValueError(msg)
 
             # Extraccion de TABLA y COLUMNA
             TAB = PARTS[0]
@@ -415,23 +417,6 @@ class QueryBox:
 
                     self.SE_LABEL.extend(LABS2)
                     self.SE_SELECT.extend(listado2)
-
-    def _DYNAMIC_GROUP_(self):
-
-        SELECT = self.SE_SELECT.copy()
-
-        # VALIDACION COLUMNAS DE SELECT
-        GROUP = []
-        for dicc in SELECT:
-            AGG = dicc.get("agg", "")
-            if not AGG:
-                TAB = dicc.get("table")
-                COL = dicc.get("name")
-
-                GROUP.append({"table": TAB, "name": COL})
-
-        self.GROUP = GROUP
-        return
 
     def add(self, **kwargs):
         """
@@ -953,9 +938,6 @@ class QueryBox:
         # OBTNER IDS DE MAIN TABLE DEL QUERY (Prioridad de select)
         if ids:
             self._IDS_(main_table=FROM)
-
-        # OBTENCION DE AGRUPACIÓN - EVALUAR ESTA FUNCION
-        self._DYNAMIC_GROUP_()
 
         # VALIDAR OPCIONALES
         JOIN = None if not self.JOIN else self.JOIN

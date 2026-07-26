@@ -205,8 +205,8 @@ def test_no_select_add_2():
         (1, "Mexico", 1, "Andres", 1),
         (1, "Mexico", 2, "Lupita", 1),
         (1, "Mexico", 4, "Polar", 1),
-        (2, "Brasil", 3, "Peke", 2),
         (2, "Brasil", 5, "Malteada", 2),
+        (2, "Brasil", 3, "Peke", 2),
     ]
     assert col == [
         "country__country_id",
@@ -311,14 +311,14 @@ def test_add_full_control():
 
     assert row == [
         (1, "Andres", "F1", "Mexico"),
-        (1, "Andres", "F4", "Mexico"),
-        (2, "Lupita", "F9", "Mexico"),
         (3, "Peke", "F2", "Brasil"),
+        (4, "Polar", "F3", "Mexico"),
+        (1, "Andres", "F4", "Mexico"),
         (3, "Peke", "F5", "Brasil"),
         (3, "Peke", "F6", "Brasil"),
-        (3, "Peke", "F8", "Brasil"),
-        (4, "Polar", "F3", "Mexico"),
         (5, "Malteada", "F7", "Brasil"),
+        (3, "Peke", "F8", "Brasil"),
+        (2, "Lupita", "F9", "Mexico"),
     ]
     assert col == [
         "client__client_id",
@@ -335,6 +335,7 @@ def test_select_agg_distincti_count_group_by():
         .add(
             client__inner__country="country_id", client__inner__sale="client_id"
         )
+        .group(country="name")
         .all()
         .raw()
     )
@@ -343,11 +344,12 @@ def test_select_agg_distincti_count_group_by():
     assert col == ["country__name", "client__name__dcount"]
 
 
-def test_order_by_add_select_agg():
+def test_order_by_group_by_add_select_agg():
     row, col = (
         q_country.select("country__name", "client__name__dcount")
         .add(country__left__client="country_id")
         .filter(country__country_id__in__or=[1, 2], country__country_id__same=3)
+        .group(country="name")
         .sort("country__name__desc")
         .all()
         .raw()
@@ -371,7 +373,7 @@ def test_add_full_control_limit():
         .raw()
     )
 
-    assert row == [(1, "Andres", "F1", "Mexico"), (1, "Andres", "F4", "Mexico")]
+    assert row == [(1, "Andres", "F1", "Mexico"), (3, "Peke", "F2", "Brasil")]
     assert col == [
         "client__client_id",
         "client__name",
@@ -394,7 +396,7 @@ def test_add_full_control_limit_offset():
         .raw()
     )
 
-    assert row == [(2, "Lupita", "F9", "Mexico"), (3, "Peke", "F2", "Brasil")]
+    assert row == [(4, "Polar", "F3", "Mexico"), (1, "Andres", "F4", "Mexico")]
     assert col == [
         "client__client_id",
         "client__name",
@@ -453,10 +455,10 @@ def test_align_multiple_columns():
     )
 
     assert row == [
-        (2, 3, 3, 3, 3, 4, 5),
-        ("Lupita", "Peke", "Peke", "Peke", "Peke", "Polar", "Malteada"),
-        ("F9", "F2", "F5", "F6", "F8", "F3", "F7"),
-        ("Mexico", "Brasil", "Brasil", "Brasil", "Brasil", "Mexico", "Brasil"),
+        (3, 4, 3, 3, 5, 3, 2),
+        ("Peke", "Polar", "Peke", "Peke", "Malteada", "Peke", "Lupita"),
+        ("F2", "F3", "F5", "F6", "F7", "F8", "F9"),
+        ("Brasil", "Mexico", "Brasil", "Brasil", "Brasil", "Brasil", "Mexico"),
     ]
     assert col == ["CLIENT ID", "Client Name", "Sale Code", "Country"]
 
@@ -1108,17 +1110,17 @@ def test_real_4():
         {
             "Category": "Dessert",
             "Product Name": "Concha",
+            "Recipe Ingredient": "Sugar",
+        },
+        {
+            "Category": "Dessert",
+            "Product Name": "Concha",
             "Recipe Ingredient": "Milk",
         },
         {
             "Category": "Dessert",
             "Product Name": "Concha",
             "Recipe Ingredient": "Salt",
-        },
-        {
-            "Category": "Dessert",
-            "Product Name": "Concha",
-            "Recipe Ingredient": "Sugar",
         },
     ]
 
