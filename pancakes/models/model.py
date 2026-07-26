@@ -783,10 +783,18 @@ class PanCakesORM:
             # --*-- CREACION DE ENDPOINTS --*--
 
             def make_read_all(model):
-                def read_all():
-                    return model.all().dictionary(label=True)
+                def read_all(model=model):
+                    return model.all().dictionary(label=False)
 
                 return read_all
+
+            def make_read_record(model):
+                def read_record(id: int, model=model):
+                    kw = {f"{model._table}__{model._table}_id__same": id}
+                    record = model.filter(**kw).all().dictionary(label=False)
+                    return record
+
+                return read_record
 
             def make_create(model):
                 def create(data: CREATE, model=model):
@@ -847,7 +855,7 @@ class PanCakesORM:
                             limit=limit
                         )
                         .all()
-                        .dictionary(label=True)
+                        .dictionary(label=False)
                     )
                     return dicc
 
@@ -884,7 +892,7 @@ class PanCakesORM:
                             limit=limit
                         )
                         .all()
-                        .dictionary(label=True)
+                        .dictionary(label=False)
                     )
                     return dicc
 
@@ -893,6 +901,9 @@ class PanCakesORM:
             # --*-- EXPOSICION DE ENDPOINTS --*--
 
             router.add_api_route("/", make_read_all(m), methods=["GET"])
+            router.add_api_route(
+                "/record/{id}", make_read_record(m), methods=["GET"]
+            )
             router.add_api_route("/", make_create(m), methods=["POST"])
             router.add_api_route("/", make_update(m), methods=["PUT"])
             router.add_api_route("/", make_delete(m), methods=["DELETE"])

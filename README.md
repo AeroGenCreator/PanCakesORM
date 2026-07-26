@@ -21,6 +21,7 @@
 - Campos `Date`, `TimeStamp` & `One2Many` agregados. 
 - Metodo `container()` parsea los datos a `strings` y viceversa a `datetime`.
 - Agregado en `v6.1.8` computar campos para queries.
+- Agregado en `v6.2.9` Endpoint `/modelo/record/{id}`. Metodo - GET "solo un registro por id".
 
 **Simplifica tu manejo de bases de datos**
 
